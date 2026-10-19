@@ -1,0 +1,25 @@
+.main {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 32px 24px;
+}
+
+.content {
+  width: 100%;
+  max-width: 600px;
+}
+
+.title {
+  margin: 0 0 20px;
+  font-size: clamp(2.5rem, 7vw, 4rem);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.description {
+  margin: 0;
+  color: #4b5e55;
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
