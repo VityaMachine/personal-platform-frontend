@@ -66,9 +66,10 @@
   font-weight: 400;
 }
 
-.field input, .field textarea {
+.field input, .field textarea, .field select {
   display: block;
   width: 100%;
+  min-width: 0;
   margin-top: 8px;
   padding: 12px 14px;
   border: 1px solid #b9c9bd;
@@ -115,13 +116,25 @@
   opacity: 0.55;
 }
 
-.field input:focus-visible, .field textarea:focus-visible, .primaryButton:focus-visible, .secondaryButton:focus-visible, .deleteButton:focus-visible, .checkbox:focus-visible {
+.field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible, .primaryButton:focus-visible, .secondaryButton:focus-visible, .deleteButton:focus-visible, .checkbox:focus-visible {
   outline: 3px solid #7ba88c;
   outline-offset: 3px;
 }
 
 .feedback {
   margin: 16px 0 24px;
+}
+
+.fieldError {
+  display: block;
+  margin-top: 6px;
+  color: #873c2c;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.field [aria-invalid="true"] {
+  border-color: #873c2c;
 }
 
 .notice {

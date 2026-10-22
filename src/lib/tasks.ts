@@ -1,50 +1,63 @@
-export type Task = {
-  id: string | number;
-  title: string;
-  description?: string | null;
-  isCompleted: boolean;
-};
+import { jsonRequest, requestDelete, requestDto } from "./api";
+import type { CreateSubtaskInput, CreateTaskInput, UpdateSubtaskInput, UpdateTaskInput } from "./task-types";
+import { isSubtask, isSubtaskList, isTask, isTaskList } from "./task-validation";
 
-async function request(path: string, options: RequestInit = {}): Promise<Response> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, "");
-  if (!baseUrl) {
-    throw new Error("Не налаштовано адресу API. Вкажіть NEXT_PUBLIC_API_URL у .env.local та перезапустіть frontend.");
-  }
-  let response: Response;
-  try {
-    response = await fetch(`${baseUrl}${path}`, { ...options, cache: "no-store" });
-  } catch (error) {
-    if (options.signal?.aborted) throw error;
-    throw new Error("Не вдалося з’єднатися з API. Перевірте з’єднання та спробуйте ще раз.");
-  }
-  if (!response.ok) throw new Error(`API повернув помилку (${response.status}). Спробуйте ще раз.`);
-  return response;
+export type { Task, Subtask, TaskStatus, TaskPriority, CreateTaskInput, UpdateTaskInput, CreateSubtaskInput, UpdateSubtaskInput } from "./task-types";
+
+const taskPath = (id: string) => `/tasks/${encodeURIComponent(id)}`;
+const subtasksPath = (taskId: string) => `${taskPath(taskId)}/subtasks`;
+const subtaskPath = (taskId: string, id: string) => `${subtasksPath(taskId)}/${encodeURIComponent(id)}`;
+
+// NEXT_PUBLIC_API_URL retains the existing configuration, including its /api prefix.
+export function getTasks(signal?: AbortSignal) {
+  return requestDto("/tasks", isTaskList, { signal });
 }
 
-function isTask(value: unknown): value is Task {
-  if (typeof value !== "object" || value === null) return false;
-  const task = value as Record<string, unknown>;
-  return (typeof task.id === "string" || typeof task.id === "number")
-    && typeof task.title === "string"
-    && typeof task.isCompleted === "boolean"
-    && (task.description == null || typeof task.description === "string");
+export function getArchivedTasks(signal?: AbortSignal) {
+  return requestDto("/tasks?archived=true", isTaskList, { signal });
 }
 
-export async function getTasks(signal?: AbortSignal): Promise<Task[]> {
-  const response = await request("/tasks", { signal });
-  const data: unknown = await response.json().catch(() => null);
-  if (!Array.isArray(data) || !data.every(isTask)) throw new Error("API повернув неочікуваний формат списку задач.");
-  return data;
+export function getTask(id: string, signal?: AbortSignal) {
+  return requestDto(taskPath(id), isTask, { signal });
 }
 
-export async function createTask(task: { title: string; description?: string }): Promise<void> {
-  await request("/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(task) });
+export function createTask(input: CreateTaskInput, signal?: AbortSignal) {
+  return requestDto("/tasks", isTask, jsonRequest("POST", input, signal));
 }
 
-export async function setTaskCompleted(id: Task["id"], isCompleted: boolean): Promise<void> {
-  await request(`/tasks/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isCompleted }) });
+export function updateTask(id: string, input: UpdateTaskInput, signal?: AbortSignal) {
+  return requestDto(taskPath(id), isTask, jsonRequest("PATCH", input, signal));
 }
 
-export async function deleteTask(id: Task["id"]): Promise<void> {
-  await request(`/tasks/${encodeURIComponent(id)}`, { method: "DELETE" });
+export function archiveTask(id: string, signal?: AbortSignal) {
+  return updateTask(id, { archived: true }, signal);
+}
+
+export function unarchiveTask(id: string, signal?: AbortSignal) {
+  return updateTask(id, { archived: false }, signal);
+}
+
+/** Thin compatibility wrapper for the current page's Promise<void> action. */
+export async function setTaskCompleted(id: string, isCompleted: boolean, signal?: AbortSignal): Promise<void> {
+  await updateTask(id, { isCompleted }, signal);
+}
+
+export function deleteTask(id: string, signal?: AbortSignal): Promise<void> {
+  return requestDelete(taskPath(id), signal);
+}
+
+export function getSubtasks(taskId: string, signal?: AbortSignal) {
+  return requestDto(subtasksPath(taskId), isSubtaskList, { signal });
+}
+
+export function createSubtask(taskId: string, input: CreateSubtaskInput, signal?: AbortSignal) {
+  return requestDto(subtasksPath(taskId), isSubtask, jsonRequest("POST", input, signal));
+}
+
+export function updateSubtask(taskId: string, id: string, input: UpdateSubtaskInput, signal?: AbortSignal) {
+  return requestDto(subtaskPath(taskId, id), isSubtask, jsonRequest("PATCH", input, signal));
+}
+
+export function deleteSubtask(taskId: string, id: string, signal?: AbortSignal): Promise<void> {
+  return requestDelete(subtaskPath(taskId, id), signal);
 }

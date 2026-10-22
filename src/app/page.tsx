@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
-import { createTask, deleteTask, getTasks, setTaskCompleted, type Task } from "@/lib/tasks";
+import { useEffect, useState } from "react";
+import { deleteTask, getTasks, setTaskCompleted, type Task } from "@/lib/tasks";
+import { CreateTaskForm } from "./_components/create-task-form";
 import styles from "./page.module.css";
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,17 +58,6 @@ export default function Home() {
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle) return;
-    void runAction("create", async () => {
-      await createTask({ title: trimmedTitle, ...(description.trim() ? { description: description.trim() } : {}) });
-      setTitle("");
-      setDescription("");
-    }, "Задачу створено.");
-  }
-
   const completedCount = tasks.filter((task) => task.isCompleted).length;
 
   return (
@@ -81,22 +69,21 @@ export default function Home() {
           <p className={styles.description}>Звільніть голову для важливого. Решту запишіть тут.</p>
         </header>
 
-        <section className={styles.panel} aria-labelledby="create-heading">
-          <h2 id="create-heading" className={styles.sectionTitle}>Нова задача</h2>
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <label className={styles.field}>
-              Назва <span className={styles.required}>(обов’язково)</span>
-              <input name="title" required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Що потрібно зробити?" disabled={pending === "create"} />
-            </label>
-            <label className={styles.field}>
-              Опис <span className={styles.required}>(необов’язково)</span>
-              <textarea name="description" rows={3} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Деталі, які допоможуть почати" disabled={pending === "create"} />
-            </label>
-            <button className={styles.primaryButton} type="submit" disabled={busy || !title.trim()}>
-              {pending === "create" ? "Створення…" : "+ Додати задачу"}
-            </button>
-          </form>
-        </section>
+        <CreateTaskForm
+          disabled={busy}
+          onSubmittingChange={(submitting) => {
+            setPending(submitting ? "create" : null);
+            if (submitting) {
+              setNotice("");
+              setError(null);
+            }
+          }}
+          onCreated={(created) => {
+            setTasks((previous) => [created, ...previous.filter((task) => task.id !== created.id)]);
+            setError(null);
+            setNotice("Задачу створено.");
+          }}
+        />
 
         <div className={styles.feedback}>
           <p role="status" className={styles.notice}>{notice}</p>
