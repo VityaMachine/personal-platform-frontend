@@ -3,10 +3,9 @@
 import { useRef, useState, type FormEvent } from "react";
 import { createTask, type Task } from "@/lib/tasks";
 import { TASK_PRIORITIES } from "@/lib/task-types";
+import { TASK_PRIORITY_LABELS } from "@/lib/task-labels";
 import { EMPTY_TASK_FIELDS, parseCreateTaskFields, type CreateTaskErrors, type CreateTaskFields } from "@/lib/create-task-input";
 import styles from "../page.module.css";
-
-const priorityLabels = { LOW: "Низький", MEDIUM: "Середній", HIGH: "Високий", CRITICAL: "Критичний" };
 
 type Props = {
   disabled: boolean;
@@ -108,7 +107,7 @@ export function CreateTaskForm({ disabled, onCreated, onSubmittingChange }: Prop
         <label className={styles.field} htmlFor="create-priority">
           Пріоритет
           <select {...fieldProps("priority")} onChange={(event) => change("priority", event.target.value)}>
-            {TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{priorityLabels[priority]}</option>)}
+            {TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{TASK_PRIORITY_LABELS[priority]}</option>)}
           </select>
           {fieldError("priority")}
         </label>

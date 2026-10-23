@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { deleteTask, getTasks, setTaskCompleted, type Task } from "@/lib/tasks";
 import { CreateTaskForm } from "./_components/create-task-form";
+import { TaskCard } from "./_components/task-card";
 import styles from "./page.module.css";
 
 export default function Home() {
@@ -58,7 +59,7 @@ export default function Home() {
     }
   }
 
-  const completedCount = tasks.filter((task) => task.isCompleted).length;
+  const completedCount = tasks.filter((task) => task.status === "DONE").length;
 
   return (
     <main className={styles.main}>
@@ -97,7 +98,7 @@ export default function Home() {
 
         <section aria-labelledby="tasks-heading" aria-busy={loading}>
           <div className={styles.listHeader}>
-            <h2 id="tasks-heading" className={styles.sectionTitle}>Усі задачі</h2>
+            <h2 id="tasks-heading" className={styles.sectionTitle}>Поточні задачі</h2>
             <span className={styles.counter}>{completedCount} / {tasks.length} завершено</span>
           </div>
           {loading && <p role="status" className={styles.loading}>Завантаження задач…</p>}
@@ -111,17 +112,15 @@ export default function Home() {
           {tasks.length > 0 && (
             <ul className={styles.taskList}>
               {tasks.map((task) => (
-                <li key={task.id} className={`${styles.task} ${task.isCompleted ? styles.completed : ""}`}>
-                  <input className={styles.checkbox} type="checkbox" checked={task.isCompleted} disabled={busy} aria-label={`${task.isCompleted ? "Відкрити повторно" : "Завершити"}: ${task.title}`} onChange={() => void runAction(`toggle:${task.id}`, () => setTaskCompleted(task.id, !task.isCompleted), task.isCompleted ? "Задачу відкрито повторно." : "Задачу завершено.")} />
-                  <div className={styles.taskContent}>
-                    <h3 className={styles.taskTitle}>{task.title}</h3>
-                    {task.description && <p className={styles.taskDescription}>{task.description}</p>}
-                    <span className={styles.taskStatus}>{pending === `toggle:${task.id}` ? "Збереження…" : task.isCompleted ? "Завершено" : "До виконання"}</span>
-                  </div>
-                  <button className={styles.deleteButton} type="button" disabled={busy} aria-label={`Видалити: ${task.title}`} onClick={() => void runAction(`delete:${task.id}`, () => deleteTask(task.id), "Задачу видалено.")}>
-                    {pending === `delete:${task.id}` ? "Видалення…" : "Видалити"}
-                  </button>
-                </li>
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  disabled={busy}
+                  toggling={pending === `toggle:${task.id}`}
+                  deleting={pending === `delete:${task.id}`}
+                  onToggle={() => void runAction(`toggle:${task.id}`, () => setTaskCompleted(task.id, task.status !== "DONE"), task.status === "DONE" ? "Задачу відкрито повторно." : "Задачу завершено.")}
+                  onDelete={() => void runAction(`delete:${task.id}`, () => deleteTask(task.id), "Задачу видалено.")}
+                />
               ))}
             </ul>
           )}
