@@ -39,14 +39,21 @@ export type Task = {
  * Input dates must include a timezone. Omission uses defaults on creation and
  * preserves existing values on update; null clears only explicitly nullable fields.
  */
+export type InitialSubtaskInput = {
+  title: string;
+  estimatedDurationMinutes: number;
+};
+
 export type CreateTaskInput = {
   title: string;
   description?: string | null;
   plannedAt?: string;
   priority?: TaskPriority;
   dueAt: string;
-  estimatedDurationMinutes: number;
-};
+} & (
+  | { estimatedDurationMinutes: number; subtasks?: never }
+  | { estimatedDurationMinutes?: never; subtasks: [InitialSubtaskInput, ...InitialSubtaskInput[]] }
+);
 
 type StatusInput =
   | { status: "CANCELED"; cancellationNote: string }

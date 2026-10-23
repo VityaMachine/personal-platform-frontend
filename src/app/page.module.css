@@ -185,7 +185,7 @@
 
 .form {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: 28px;
 }
 
@@ -231,7 +231,112 @@
 
 .field textarea {
   resize: vertical;
-  min-height: 240px;
+  min-height: 96px;
+}
+
+.field input[type="datetime-local"] {
+  max-width: 100%;
+  padding-inline: 10px;
+}
+
+.field input[readonly] {
+  background: #edf1eb;
+  color: #4b5e55;
+  cursor: default;
+}
+
+.fieldHint {
+  display: block;
+  margin-top: 6px;
+  color: #58685e;
+  font-weight: 400;
+}
+
+.subtasksEditor {
+  --subtask-delete-size: 36px;
+  min-width: 0;
+}
+
+.subtasksHeading {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.subtaskList {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.subtaskColumns, .subtaskRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px var(--subtask-delete-size);
+  column-gap: 8px;
+}
+
+.subtaskColumns {
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.subtaskRow {
+  grid-template-rows: auto auto;
+  align-items: start;
+}
+
+.subtaskField {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: 1 / -1;
+  overflow-wrap: anywhere;
+}
+
+.subtaskLabel, .visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.subtaskField input {
+  grid-row: 1;
+  margin-top: 0;
+}
+
+.subtaskField .fieldError {
+  grid-row: 2;
+  margin-top: 6px;
+}
+
+.subtaskRow > .subtaskRemove {
+  display: grid;
+  place-items: center;
+  grid-column: 3;
+  grid-row: 1;
+  align-self: center;
+  width: var(--subtask-delete-size);
+  height: var(--subtask-delete-size);
+  padding: 0;
+  color: #873c2c;
+}
+
+.subtaskRemove:hover:not(:disabled) {
+  background: #fff3ef;
+}
+
+@media (any-pointer: coarse) {
+  .subtasksEditor {
+    --subtask-delete-size: 44px;
+  }
 }
 
 .field input::placeholder, .field textarea::placeholder {
@@ -515,13 +620,17 @@
   text-decoration: underline;
 }
 
-@media (max-width: 760px) {
+/* Keep native date/time controls roomy before the planning column gets too narrow. */
+@media (max-width: 960px) {
   .form {
     grid-template-columns: minmax(0, 1fr);
     gap: 18px;
   }
+}
+
+@media (max-width: 760px) {
   .field textarea {
-    min-height: 160px;
+    min-height: 96px;
   }
   .shell {
     grid-template-columns: minmax(0, 1fr);
@@ -545,6 +654,45 @@
 }
 
 @media (max-width: 540px) {
+  .subtaskColumns {
+    display: none;
+  }
+  .subtaskRow {
+    grid-template-columns: minmax(0, 1fr) var(--subtask-delete-size);
+    grid-template-rows: repeat(6, auto);
+  }
+  .subtaskField:first-child {
+    grid-column: 1 / -1;
+    grid-row: 1 / 4;
+  }
+  .subtaskField:nth-child(2) {
+    grid-column: 1;
+    grid-row: 4 / 7;
+    width: min(100%, 120px);
+  }
+  .subtaskLabel {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0 0 6px;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    grid-row: 1;
+  }
+  .subtaskField:nth-child(2) > .subtaskLabel {
+    margin-top: 8px;
+  }
+  .subtaskField input {
+    grid-row: 2;
+  }
+  .subtaskField .fieldError {
+    grid-row: 3;
+  }
+  .subtaskRow > .subtaskRemove {
+    grid-column: 2;
+    grid-row: 5;
+  }
   .discardDialog {
     padding: 20px;
   }

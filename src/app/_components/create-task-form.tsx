@@ -4,7 +4,8 @@ import { useRef, useState, type FormEvent } from "react";
 import { createTask, type Task } from "@/lib/tasks";
 import { TASK_PRIORITIES } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS } from "@/lib/task-labels";
-import { EMPTY_TASK_FIELDS, parseCreateTaskFields, type CreateTaskErrors, type CreateTaskFields } from "@/lib/create-task-input";
+import { EMPTY_TASK_FIELDS, MAX_DURATION_MINUTES, getSubtaskDuration, parseCreateTaskFields, type CreateTaskErrors, type CreateTaskFields, type SubtaskErrors, type SubtaskFields } from "@/lib/create-task-input";
+import { SubtasksEditor } from "./subtasks-editor";
 import styles from "../page.module.css";
 
 type Props = {
@@ -17,17 +18,37 @@ type Props = {
 
 export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange, onDirtyChange }: Props) {
   const [fields, setFields] = useState<CreateTaskFields>(EMPTY_TASK_FIELDS);
+  const [subtasks, setSubtasks] = useState<SubtaskFields[]>([]);
+  const [subtaskErrors, setSubtaskErrors] = useState<SubtaskErrors>({});
   const [errors, setErrors] = useState<CreateTaskErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // A synchronous lock also blocks duplicate submits before React rerenders.
   const inFlight = useRef(false);
   const locked = disabled || submitting;
+  const hasSubtasks = subtasks.length > 0;
+  const subtaskDuration = getSubtaskDuration(subtasks);
+
+  function updateDirty(nextFields: CreateTaskFields, nextSubtasks: SubtaskFields[]) {
+    onDirtyChange(nextSubtasks.length > 0 || (Object.keys(nextFields) as (keyof CreateTaskFields)[]).some((key) => nextFields[key] !== EMPTY_TASK_FIELDS[key]));
+  }
+
+  function changeSubtasks(next: SubtaskFields[]) {
+    if (disabled || inFlight.current) return;
+    setSubtasks(next);
+    updateDirty(fields, next);
+    const validation = parseCreateTaskFields(fields, next);
+    setSubtaskErrors((previous) => Object.fromEntries(
+      next.filter((row) => previous[row.localId]).map((row) => [row.localId, validation.subtaskErrors?.[row.localId] ?? {}]),
+    ));
+    setErrors((previous) => ({ ...previous, estimatedDurationMinutes: undefined }));
+  }
 
   function change(field: keyof CreateTaskFields, value: string) {
+    if (disabled || inFlight.current) return;
     const nextFields = { ...fields, [field]: value };
     setFields(nextFields);
-    onDirtyChange((Object.keys(nextFields) as (keyof CreateTaskFields)[]).some((key) => nextFields[key] !== EMPTY_TASK_FIELDS[key]));
+    updateDirty(nextFields, subtasks);
     setErrors((previous) => ({ ...previous, [field]: undefined }));
   }
 
@@ -49,13 +70,13 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (disabled || inFlight.current) return;
-    const result = parseCreateTaskFields(fields);
+    const result = parseCreateTaskFields(fields, subtasks);
     setErrors(result.errors ?? {});
+    setSubtaskErrors(result.subtaskErrors ?? {});
     setError(null);
     if (!result.input) {
-      const firstField = Object.keys(result.errors)[0];
-      const element = event.currentTarget.elements.namedItem(firstField);
-      if (element instanceof HTMLElement) element.focus();
+      const form = event.currentTarget;
+      requestAnimationFrame(() => form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
       return;
     }
 
@@ -76,6 +97,10 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
     }
 
     setFields({ ...EMPTY_TASK_FIELDS });
+    setSubtasks([]);
+    setSubtaskErrors({});
+    setErrors({});
+    onDirtyChange(false);
     // A validated POST response is enough to insert the task without a second GET.
     onCreated(created);
   }
@@ -90,8 +115,9 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
         </label>
         <label className={styles.field} htmlFor="create-description">
           Опис <span className={styles.required}>(необов’язково)</span>
-          <textarea {...fieldProps("description")} rows={10} onChange={(event) => change("description", event.target.value)} placeholder="Деталі, які допоможуть почати" />
+          <textarea {...fieldProps("description")} rows={3} onChange={(event) => change("description", event.target.value)} placeholder="Деталі, які допоможуть почати" />
         </label>
+        <SubtasksEditor subtasks={subtasks} errors={subtaskErrors} disabled={locked} onChange={changeSubtasks} />
       </div>
       <div className={styles.formColumn}>
         <label className={styles.field} htmlFor="create-dueAt">
@@ -113,7 +139,18 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
         </label>
         <label className={styles.field} htmlFor="create-estimatedDurationMinutes">
           Орієнтовна тривалість у хвилинах <span className={styles.required}>(обов’язково)</span>
-          <input {...fieldProps("estimatedDurationMinutes")} type="number" min={1} max={2147483647} step={1} required onChange={(event) => change("estimatedDurationMinutes", event.target.value)} />
+          <input
+            {...fieldProps("estimatedDurationMinutes")}
+            type="number" min={1} max={MAX_DURATION_MINUTES} step={1} required
+            value={hasSubtasks ? subtaskDuration ?? "" : fields.estimatedDurationMinutes}
+            readOnly={hasSubtasks}
+            aria-describedby={[
+              hasSubtasks ? "create-duration-hint" : "",
+              errors.estimatedDurationMinutes ? "create-estimatedDurationMinutes-error" : "",
+            ].filter(Boolean).join(" ") || undefined}
+            onChange={(event) => { if (!hasSubtasks) change("estimatedDurationMinutes", event.target.value); }}
+          />
+          {hasSubtasks && <span id="create-duration-hint" className={styles.fieldHint}>Сума тривалостей підзадач</span>}
           {fieldError("estimatedDurationMinutes")}
         </label>
       </div>
