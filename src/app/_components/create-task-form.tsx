@@ -8,12 +8,14 @@ import { EMPTY_TASK_FIELDS, parseCreateTaskFields, type CreateTaskErrors, type C
 import styles from "../page.module.css";
 
 type Props = {
+  formId: string;
   disabled: boolean;
   onCreated: (task: Task) => void;
   onSubmittingChange: (submitting: boolean) => void;
+  onDirtyChange: (dirty: boolean) => void;
 };
 
-export function CreateTaskForm({ disabled, onCreated, onSubmittingChange }: Props) {
+export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange, onDirtyChange }: Props) {
   const [fields, setFields] = useState<CreateTaskFields>(EMPTY_TASK_FIELDS);
   const [errors, setErrors] = useState<CreateTaskErrors>({});
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,9 @@ export function CreateTaskForm({ disabled, onCreated, onSubmittingChange }: Prop
   const locked = disabled || submitting;
 
   function change(field: keyof CreateTaskFields, value: string) {
-    setFields((previous) => ({ ...previous, [field]: value }));
+    const nextFields = { ...fields, [field]: value };
+    setFields(nextFields);
+    onDirtyChange((Object.keys(nextFields) as (keyof CreateTaskFields)[]).some((key) => nextFields[key] !== EMPTY_TASK_FIELDS[key]));
     setErrors((previous) => ({ ...previous, [field]: undefined }));
   }
 
@@ -77,9 +81,8 @@ export function CreateTaskForm({ disabled, onCreated, onSubmittingChange }: Prop
   }
 
   return (
-    <section className={styles.panel} aria-labelledby="create-heading">
-      <h2 id="create-heading" className={styles.sectionTitle}>Нова задача</h2>
-      <form onSubmit={handleSubmit} className={styles.form} noValidate aria-busy={submitting}>
+    <form id={formId} onSubmit={handleSubmit} className={styles.form} noValidate aria-busy={submitting}>
+      <div className={styles.formColumn}>
         <label className={styles.field} htmlFor="create-title">
           Назва <span className={styles.required}>(обов’язково, до 160 символів)</span>
           <input {...fieldProps("title")} required onChange={(event) => change("title", event.target.value)} placeholder="Що потрібно зробити?" />
@@ -87,17 +90,14 @@ export function CreateTaskForm({ disabled, onCreated, onSubmittingChange }: Prop
         </label>
         <label className={styles.field} htmlFor="create-description">
           Опис <span className={styles.required}>(необов’язково)</span>
-          <textarea {...fieldProps("description")} rows={3} onChange={(event) => change("description", event.target.value)} placeholder="Деталі, які допоможуть почати" />
+          <textarea {...fieldProps("description")} rows={10} onChange={(event) => change("description", event.target.value)} placeholder="Деталі, які допоможуть почати" />
         </label>
+      </div>
+      <div className={styles.formColumn}>
         <label className={styles.field} htmlFor="create-dueAt">
           Дедлайн: дата й час <span className={styles.required}>(обов’язково)</span>
           <input {...fieldProps("dueAt")} type="datetime-local" required onChange={(event) => change("dueAt", event.target.value)} />
           {fieldError("dueAt")}
-        </label>
-        <label className={styles.field} htmlFor="create-estimatedDurationMinutes">
-          Орієнтовна тривалість у хвилинах <span className={styles.required}>(обов’язково)</span>
-          <input {...fieldProps("estimatedDurationMinutes")} type="number" min={1} max={2147483647} step={1} required onChange={(event) => change("estimatedDurationMinutes", event.target.value)} />
-          {fieldError("estimatedDurationMinutes")}
         </label>
         <label className={styles.field} htmlFor="create-plannedAt">
           Планування: дата й час <span className={styles.required}>(необов’язково)</span>
@@ -111,11 +111,13 @@ export function CreateTaskForm({ disabled, onCreated, onSubmittingChange }: Prop
           </select>
           {fieldError("priority")}
         </label>
-        {error && <div role="alert" className={styles.error}><p>{error}</p></div>}
-        <button className={styles.primaryButton} type="submit" disabled={locked}>
-          {submitting ? "Створення…" : "+ Додати задачу"}
-        </button>
-      </form>
-    </section>
+        <label className={styles.field} htmlFor="create-estimatedDurationMinutes">
+          Орієнтовна тривалість у хвилинах <span className={styles.required}>(обов’язково)</span>
+          <input {...fieldProps("estimatedDurationMinutes")} type="number" min={1} max={2147483647} step={1} required onChange={(event) => change("estimatedDurationMinutes", event.target.value)} />
+          {fieldError("estimatedDurationMinutes")}
+        </label>
+      </div>
+      {error && <div role="alert" className={`${styles.error} ${styles.formError}`}><p>{error}</p></div>}
+    </form>
   );
 }

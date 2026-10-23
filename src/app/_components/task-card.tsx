@@ -38,7 +38,7 @@ export function TaskCard({ task, disabled, toggling, deleting, onToggle, onDelet
 
   return (
     <li className={`${styles.task} ${completed ? styles.completed : ""}`}>
-      {!canceled && (
+      {!canceled ? (
         <input
           className={styles.checkbox}
           type="checkbox"
@@ -47,17 +47,16 @@ export function TaskCard({ task, disabled, toggling, deleting, onToggle, onDelet
           aria-label={`${completed ? "Відкрити повторно" : "Завершити"}: ${task.title}`}
           onChange={onToggle}
         />
-      )}
+      ) : <span className={styles.checkboxSpace} aria-hidden="true" />}
       <div className={styles.taskContent}>
         <h3 className={styles.taskTitle}>{task.title}</h3>
         {task.description && <p className={styles.taskDescription}>{task.description}</p>}
-        <span className={styles.taskStatus}>Статус: {TASK_STATUS_LABELS[task.status]}</span>
+        <div className={styles.taskBadges}>
+          <span className={styles.taskStatus} data-status={task.status}>Статус: {TASK_STATUS_LABELS[task.status]}</span>
+          <span className={styles.taskPriority} data-priority={task.priority}>Пріоритет: {TASK_PRIORITY_LABELS[task.priority]}</span>
+        </div>
         {toggling && <span className={styles.taskStatus} role="status">Збереження…</span>}
         <dl className={styles.taskDetails}>
-          <div>
-            <dt>Пріоритет</dt>
-            <dd>{TASK_PRIORITY_LABELS[task.priority]}</dd>
-          </div>
           <TaskDate label="Дедлайн" value={task.dueAt} />
           <TaskDate label="Заплановано" value={task.plannedAt} />
           <div>
@@ -72,7 +71,7 @@ export function TaskCard({ task, disabled, toggling, deleting, onToggle, onDelet
           )}
         </dl>
         {canceled && task.cancellationNote && (
-          <p className={styles.taskDescription}>Причина скасування: {task.cancellationNote}</p>
+          <p className={styles.cancellationNote}>Причина скасування: {task.cancellationNote}</p>
         )}
       </div>
       <button className={styles.deleteButton} type="button" disabled={disabled} aria-label={`Видалити: ${task.title}`} onClick={onDelete}>
