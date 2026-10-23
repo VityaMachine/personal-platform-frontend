@@ -1,5 +1,7 @@
 import type { Task } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
+import { formatDuration } from "@/lib/format-duration";
+import { TaskSubtaskList } from "./task-subtask-list";
 import styles from "../page.module.css";
 
 type Props = {
@@ -7,6 +9,8 @@ type Props = {
   disabled: boolean;
   toggling: boolean;
   deleting: boolean;
+  expanded: boolean;
+  onToggleSubtasks: () => void;
   onToggle: () => void;
   onDelete: () => void;
 };
@@ -24,17 +28,11 @@ function TaskDate({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-function formatDuration(minutes: number) {
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  if (hours === 0) return `${minutes} хв`;
-  return remainder === 0 ? `${hours} год` : `${hours} год ${remainder} хв`;
-}
-
-export function TaskCard({ task, disabled, toggling, deleting, onToggle, onDelete }: Props) {
+export function TaskCard({ task, disabled, toggling, deleting, expanded, onToggleSubtasks, onToggle, onDelete }: Props) {
   const completed = task.status === "DONE";
   const canceled = task.status === "CANCELED";
   const completedSubtasks = task.subtasks.filter((subtask) => subtask.status === "DONE").length;
+  const subtasksId = `task-${task.id}-subtasks`;
 
   return (
     <li className={`${styles.task} ${completed ? styles.completed : ""}`}>
@@ -63,15 +61,29 @@ export function TaskCard({ task, disabled, toggling, deleting, onToggle, onDelet
             <dt>Орієнтовна тривалість</dt>
             <dd>{formatDuration(task.estimatedDurationMinutes)}</dd>
           </div>
-          {task.subtasks.length > 0 && (
-            <div>
-              <dt>Підзадачі</dt>
-              <dd>{completedSubtasks} / {task.subtasks.length} завершено</dd>
-            </div>
-          )}
         </dl>
         {canceled && task.cancellationNote && (
           <p className={styles.cancellationNote}>Причина скасування: {task.cancellationNote}</p>
+        )}
+        {task.subtasks.length > 0 && (
+          <>
+            <button
+              type="button"
+              className={`${styles.secondaryButton} ${styles.subtaskDisclosure}`}
+              aria-expanded={expanded}
+              aria-controls={subtasksId}
+              aria-label={`${expanded ? "Згорнути" : "Розгорнути"} підзадачі задачі «${task.title}»: завершено ${completedSubtasks} із ${task.subtasks.length}`}
+              onClick={onToggleSubtasks}
+            >
+              <svg className={styles.disclosureArrow} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                <path d="m9 5 7 7-7 7" />
+              </svg>
+              Підзадачі {completedSubtasks}/{task.subtasks.length}
+            </button>
+            <div id={subtasksId} hidden={!expanded}>
+              <TaskSubtaskList subtasks={task.subtasks} taskTitle={task.title} />
+            </div>
+          </>
         )}
       </div>
       <button className={styles.deleteButton} type="button" disabled={disabled} aria-label={`Видалити: ${task.title}`} onClick={onDelete}>

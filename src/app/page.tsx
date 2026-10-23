@@ -9,6 +9,8 @@ import styles from "./page.module.css";
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  // Keep disclosure state separate from refreshed DTOs and keyed by task ID.
+  const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(() => new Set());
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -120,6 +122,13 @@ export default function Home() {
                 disabled={busy}
                 toggling={pending === `toggle:${task.id}`}
                 deleting={pending === `delete:${task.id}`}
+                expanded={expandedTaskIds.has(task.id)}
+                onToggleSubtasks={() => setExpandedTaskIds((previous) => {
+                  const next = new Set(previous);
+                  if (next.has(task.id)) next.delete(task.id);
+                  else next.add(task.id);
+                  return next;
+                })}
                 onToggle={() => void runAction(`toggle:${task.id}`, () => setTaskCompleted(task.id, task.status !== "DONE"), task.status === "DONE" ? "Задачу відкрито повторно." : "Задачу завершено.")}
                 onDelete={() => void runAction(`delete:${task.id}`, () => deleteTask(task.id), "Задачу видалено.")}
               />

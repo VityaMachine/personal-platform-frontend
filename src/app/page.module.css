@@ -599,6 +599,85 @@
   margin: 0;
 }
 
+.subtaskDisclosure {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  max-width: 100%;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-color: #dce4dc;
+  color: #4b5e55;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.subtaskDisclosure:hover {
+  background: #f2f6ef;
+}
+
+.disclosureArrow {
+  flex-shrink: 0;
+}
+
+.subtaskDisclosure[aria-expanded="true"] .disclosureArrow {
+  transform: rotate(90deg);
+}
+
+.nestedSubtaskContainer {
+  min-width: 0;
+  padding-inline-start: 8px;
+}
+
+.nestedSubtaskList {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content 80px;
+  gap: 4px 12px;
+  width: 100%;
+  max-width: 900px;
+  margin: 8px 0 0;
+  padding: 0 0 0 12px;
+  border-inline-start: 2px solid #dce4dc;
+  list-style: none;
+}
+
+.nestedSubtask {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: start;
+  gap: 4px 12px;
+  min-width: 0;
+  padding: 6px 0;
+}
+
+.nestedSubtaskTitle {
+  min-width: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.nestedSubtask[data-status="DONE"] .nestedSubtaskTitle {
+  color: #58685e;
+  text-decoration: line-through;
+}
+
+.nestedSubtaskStatus {
+  justify-self: start;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nestedSubtaskDuration {
+  min-width: 0;
+  color: #58685e;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .completed {
   background: #f7faf5;
 }
@@ -654,6 +733,21 @@
 }
 
 @media (max-width: 540px) {
+  .nestedSubtaskList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nestedSubtask {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+  }
+  .nestedSubtaskTitle {
+    flex-basis: 100%;
+  }
+  .nestedSubtaskStatus, .nestedSubtaskDuration {
+    max-width: 100%;
+  }
   .subtaskColumns {
     display: none;
   }
