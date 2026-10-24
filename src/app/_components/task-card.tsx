@@ -1,4 +1,4 @@
-import type { Subtask, SubtaskStatusChange, Task } from "@/lib/task-types";
+import type { Subtask, SubtaskDetailsChange, SubtaskStatusChange, Task } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { formatDuration } from "@/lib/format-duration";
 import { TaskSubtaskList } from "./task-subtask-list";
@@ -12,6 +12,7 @@ type Props = {
   retryDisabled: boolean;
   onRetryRefresh: () => void;
   onSubtaskStatusChange: (subtask: Subtask, change: SubtaskStatusChange) => Promise<boolean>;
+  onEditSubtask: (id: string, change: SubtaskDetailsChange) => Promise<boolean>;
   expanded: boolean;
   onToggleSubtasks: () => void;
   onToggle: () => void;
@@ -31,7 +32,7 @@ function TaskDate({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, expanded, onToggleSubtasks, onToggle, onDelete }: Props) {
+export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, expanded, onToggleSubtasks, onToggle, onDelete }: Props) {
   const completed = task.status === "DONE";
   const canceled = task.status === "CANCELED";
   const completedSubtasks = task.subtasks.filter((subtask) => subtask.status === "DONE").length;
@@ -91,7 +92,7 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
               Підзадачі {completedSubtasks}/{task.subtasks.length}
             </button>
             <div id={subtasksId} hidden={!expanded}>
-              <TaskSubtaskList subtasks={task.subtasks} taskTitle={task.title} disabled={disabled} onStatusChange={onSubtaskStatusChange} />
+              <TaskSubtaskList subtasks={task.subtasks} taskTitle={task.title} disabled={disabled} onStatusChange={onSubtaskStatusChange} onEdit={onEditSubtask} />
             </div>
           </>
         )}

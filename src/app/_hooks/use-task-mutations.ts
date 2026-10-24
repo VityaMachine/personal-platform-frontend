@@ -2,7 +2,7 @@
 
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { deleteTask, getTask, setTaskCompleted, updateSubtask, type Task } from "@/lib/tasks";
-import type { Subtask, SubtaskStatusChange } from "@/lib/task-types";
+import type { Subtask, SubtaskDetailsChange, SubtaskStatusChange } from "@/lib/task-types";
 
 export type TaskMutationState = {
   pending?: "toggle" | "delete" | "subtask" | "refresh";
@@ -79,6 +79,8 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
       // Omit cancellationNote when reopening; the backend retains its history.
       return mutate(taskId, "subtask", () => updateSubtask(taskId, subtask.id, change), "Статус підзадачі змінено.");
     },
+    editSubtask: (taskId: string, subtaskId: string, change: SubtaskDetailsChange) =>
+      mutate(taskId, "subtask", () => updateSubtask(taskId, subtaskId, change), "Підзадачу оновлено."),
     retryRefresh: async (id: string) => {
       if (disabled || !needsRefresh.current.has(id) || refreshing.current.has(id)) return;
       await refresh(id, "Дані задачі оновлено.");

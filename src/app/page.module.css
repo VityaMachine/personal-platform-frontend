@@ -132,6 +132,11 @@
   overflow-wrap: anywhere;
 }
 
+.editSubtaskForm {
+  display: grid;
+  gap: 18px;
+}
+
 .dangerButton {
   border: 1px solid #873c2c;
   border-radius: 8px;
@@ -632,7 +637,7 @@
 
 .nestedSubtaskList {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content 80px;
+  grid-template-columns: minmax(0, 1fr) max-content 80px max-content;
   gap: 4px 12px;
   width: 100%;
   max-width: 900px;
@@ -690,6 +695,16 @@
   font-size: 0.75rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+.subtaskEditButton {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+.subtaskEditButton[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .completed {

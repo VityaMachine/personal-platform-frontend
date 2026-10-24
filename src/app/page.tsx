@@ -110,6 +110,7 @@ export default function Home() {
                 retryDisabled={busy}
                 onRetryRefresh={() => void mutations.retryRefresh(task.id)}
                 onSubtaskStatusChange={(subtask, change) => mutations.changeSubtaskStatus(task.id, subtask, change)}
+                onEditSubtask={(id, change) => mutations.editSubtask(task.id, id, change)}
                 expanded={expandedTaskIds.has(task.id)}
                 onToggleSubtasks={() => setExpandedTaskIds((previous) => {
                   const next = new Set(previous);

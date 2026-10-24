@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { TASK_STATUSES, type Subtask, type SubtaskStatusChange, type TaskStatus } from "@/lib/task-types";
+import { TASK_STATUSES, type Subtask, type SubtaskDetailsChange, type SubtaskStatusChange, type TaskStatus } from "@/lib/task-types";
 import { TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { formatDuration } from "@/lib/format-duration";
 import { CancelSubtaskDialog } from "./cancel-subtask-dialog";
+import { EditSubtaskDialog } from "./edit-subtask-dialog";
 import styles from "../page.module.css";
 
 type Props = {
@@ -12,10 +13,12 @@ type Props = {
   taskTitle: string;
   disabled: boolean;
   onStatusChange: (subtask: Subtask, change: SubtaskStatusChange) => Promise<boolean>;
+  onEdit: (id: string, change: SubtaskDetailsChange) => Promise<boolean>;
 };
 
-export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange }: Props) {
+export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange, onEdit }: Props) {
   const [canceling, setCanceling] = useState<{ subtask: Subtask; opener: HTMLSelectElement } | null>(null);
+  const [editing, setEditing] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
 
   function selectStatus(subtask: Subtask, select: HTMLSelectElement) {
     const status = select.value as TaskStatus;
@@ -53,6 +56,14 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange 
             {TASK_STATUSES.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
           </select>
           <span className={styles.nestedSubtaskDuration}><span className={styles.visuallyHidden}>Орієнтовна тривалість: </span>{formatDuration(subtask.estimatedDurationMinutes)}</span>
+          <button
+            type="button"
+            className={`${styles.secondaryButton} ${styles.subtaskEditButton}`}
+            aria-label={`Редагувати підзадачу: ${subtask.title}`}
+            // Keep the opener focusable after a saved PATCH with a failed GET.
+            aria-disabled={disabled}
+            onClick={(event) => { if (!disabled) setEditing({ subtask, opener: event.currentTarget }); }}
+          >Редагувати</button>
         </li>
       ))}
       </ul>
@@ -65,6 +76,13 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange 
           onConfirm={(cancellationNote) => onStatusChange(canceling.subtask, { status: "CANCELED", cancellationNote })}
         />
       )}
+      {editing && <EditSubtaskDialog
+        subtask={editing.subtask}
+        opener={editing.opener}
+        disabled={disabled}
+        onClose={() => setEditing(null)}
+        onSave={(change) => onEdit(editing.subtask.id, change)}
+      />}
     </div>
   );
 }
