@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { createSubtask, deleteSubtask, deleteTask, getTask, setTaskCompleted, updateSubtask, type Task } from "@/lib/tasks";
-import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange } from "@/lib/task-types";
+import { createSubtask, deleteSubtask, deleteTask, getTask, setTaskCompleted, updateSubtask, updateTask, type Task } from "@/lib/tasks";
+import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange, TaskDetailsChange } from "@/lib/task-types";
 
 export type TaskMutationState = {
-  pending?: "toggle" | "delete" | "subtask" | "refresh";
+  pending?: "toggle" | "delete" | "subtask" | "refresh" | "edit";
+  editing?: boolean;
   refreshRequired?: boolean;
   error?: string;
   notice?: string;
@@ -22,6 +23,8 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
   const needsRefresh = useRef(new Map<string, string>());
   // Keep this intent through failed GETs; only fresh details reveal the new child.
   const expandAfterRefresh = useRef(new Set<string>());
+  const editing = useRef(new Set<string>());
+  const saving = useRef(new Set<string>());
 
   function setState(id: string, state: TaskMutationState) {
     setStates((previous) => ({ ...previous, [id]: state }));
@@ -74,7 +77,37 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
 
   return {
     states,
-    hasLockedTasks: Object.values(states).some((state) => state.pending || state.refreshRequired),
+    hasLockedTasks: Object.values(states).some((state) => state.pending || state.refreshRequired || state.editing),
+    beginTaskEdit: (id: string) => {
+      if (disabled || locks.current.has(id)) return false;
+      locks.current.add(id);
+      editing.current.add(id);
+      setState(id, { editing: true });
+      return true;
+    },
+    endTaskEdit: (id: string) => {
+      if (saving.current.has(id) || !editing.current.delete(id)) return;
+      locks.current.delete(id);
+      setState(id, {});
+    },
+    editTask: async (id: string, input: TaskDetailsChange) => {
+      if (disabled || !editing.current.has(id) || saving.current.has(id)) return false;
+      saving.current.add(id);
+      setState(id, { editing: true, pending: "edit" });
+      try {
+        const task = await updateTask(id, input);
+        setTasks((previous) => previous.map((item) => item.id === id ? task : item));
+        editing.current.delete(id);
+        locks.current.delete(id);
+        setState(id, { notice: "Задачу оновлено." });
+        return true;
+      } catch {
+        setState(id, { editing: true, error: "Не вдалося зберегти задачу. Спробуйте ще раз." });
+        return false;
+      } finally {
+        saving.current.delete(id);
+      }
+    },
     toggleTask: (task: Task) => mutate(task.id, "toggle", () => setTaskCompleted(task.id, task.status !== "DONE"), task.status === "DONE" ? "Задачу відкрито повторно." : "Задачу завершено."),
     deleteTask: (id: string) => mutate(id, "delete", () => deleteTask(id), "Задачу видалено."),
     changeSubtaskStatus: async (taskId: string, subtask: Subtask, change: SubtaskStatusChange) => {

@@ -66,6 +66,8 @@ type AtLeastOne<T> = { [K in keyof T]-?: Required<Pick<T, K>> & Partial<Omit<T, 
 
 export type SubtaskDetailsChange = AtLeastOne<Pick<Subtask, "title" | "estimatedDurationMinutes">>;
 
+export type TaskDetailsChange = AtLeastOne<Pick<Task, "title" | "description" | "priority" | "plannedAt" | "dueAt" | "estimatedDurationMinutes">>;
+
 type TaskChanges = {
   title: string;
   description: string | null;

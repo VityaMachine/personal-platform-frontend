@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange, Task } from "@/lib/task-types";
+import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange, Task, TaskDetailsChange } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { formatDuration } from "@/lib/format-duration";
 import { TaskSubtaskList } from "./task-subtask-list";
 import { DeleteSubtaskDialog } from "./delete-subtask-dialog";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
+import { EditTaskModal } from "./edit-task-modal";
 import type { TaskMutationState } from "../_hooks/use-task-mutations";
 import styles from "../page.module.css";
 
@@ -20,6 +21,9 @@ type Props = {
   onEditSubtask: (id: string, change: SubtaskDetailsChange) => Promise<boolean>;
   onDeleteSubtask: (id: string) => Promise<boolean>;
   onCreateSubtask: (input: InitialSubtaskInput) => Promise<boolean>;
+  onBeginEdit: () => boolean;
+  onEndEdit: () => void;
+  onEdit: (input: TaskDetailsChange) => Promise<boolean>;
   expanded: boolean;
   onToggleSubtasks: () => void;
   onToggle: () => void;
@@ -39,10 +43,11 @@ function TaskDate({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, expanded, onToggleSubtasks, onToggle, onDelete }: Props) {
+export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, onBeginEdit, onEndEdit, onEdit, expanded, onToggleSubtasks, onToggle, onDelete }: Props) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [deleting, setDeleting] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
   const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
+  const [editing, setEditing] = useState<{ task: Task; opener: HTMLButtonElement } | null>(null);
   const completed = task.status === "DONE";
   const canceled = task.status === "CANCELED";
   const completedSubtasks = task.subtasks.filter((subtask) => subtask.status === "DONE").length;
@@ -115,9 +120,23 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
           )}
           {task.subtasks.length === 0 && addSubtaskButton}
         </div>
-        <button className={styles.deleteButton} type="button" disabled={disabled} aria-label={`Видалити: ${task.title}`} onClick={onDelete}>
-          {mutation?.pending === "delete" ? "Видалення…" : "Видалити"}
-        </button>
+        <div className={styles.taskActions}>
+          <button
+            className={styles.iconButton}
+            type="button"
+            // Keep the opener focusable while the edit reservation is released.
+            aria-disabled={disabled}
+            aria-label={`Редагувати задачу: ${task.title}`}
+            onClick={(event) => { if (!disabled && onBeginEdit()) setEditing({ task, opener: event.currentTarget }); }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="m16 3 5 5L8 21H3v-5L16 3Z M13 6l5 5" />
+            </svg>
+          </button>
+          <button className={styles.deleteButton} type="button" disabled={disabled} aria-label={`Видалити: ${task.title}`} onClick={onDelete}>
+            {mutation?.pending === "delete" ? "Видалення…" : "Видалити"}
+          </button>
+        </div>
       </div>
       {task.subtasks.length > 0 && (
         <div id={subtasksId} className={styles.subtaskGroup} hidden={!expanded}>
@@ -140,6 +159,13 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
         disabled={disabled}
         onSave={onCreateSubtask}
         onClose={() => setCreateOpener(null)}
+      />}
+      {editing && <EditTaskModal
+        task={editing.task}
+        opener={editing.opener}
+        disabled={retryDisabled || Boolean(mutation?.pending || mutation?.refreshRequired)}
+        onSave={onEdit}
+        onClose={() => { onEndEdit(); setEditing(null); }}
       />}
     </li>
   );

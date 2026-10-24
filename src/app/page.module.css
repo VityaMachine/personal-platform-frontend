@@ -527,6 +527,14 @@
   min-width: 0;
 }
 
+.taskActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 4px;
+}
+
 .taskTitleRow {
   display: flex;
   align-items: center;
@@ -872,11 +880,11 @@
   .subtaskDisclosure {
     width: 36px;
   }
-  .taskHeader > .deleteButton {
+  .taskHeader > .taskActions {
     grid-column: 2 / -1;
     justify-self: start;
   }
-  .task[data-has-subtasks="true"] .taskHeader > .deleteButton {
+  .task[data-has-subtasks="true"] .taskHeader > .taskActions {
     grid-column: 3 / -1;
   }
   .subtaskGroup {

@@ -1,5 +1,5 @@
 import { TASK_PRIORITIES, type CreateTaskInput } from "./task-types";
-import { DURATION_ERROR, MAX_DURATION_MINUTES, getTitleError, parseDuration } from "./task-field-input";
+import { DURATION_ERROR, MAX_DURATION_MINUTES, getTitleError, localDateToIso, parseDuration } from "./task-field-input";
 
 export { MAX_DURATION_MINUTES } from "./task-field-input";
 
@@ -39,12 +39,6 @@ export const EMPTY_TASK_FIELDS: CreateTaskFields = {
   plannedAt: "",
   priority: "MEDIUM",
 };
-
-function localDateToIso(value: string): string | undefined {
-  // datetime-local has no offset: Date interprets it in the browser's timezone.
-  const date = new Date(value);
-  return Number.isFinite(date.getTime()) ? date.toISOString() : undefined;
-}
 
 export function parseCreateTaskFields(fields: CreateTaskFields, subtasks: readonly SubtaskFields[] = []):
   | { input: CreateTaskInput; errors?: never; subtaskErrors?: never }
