@@ -32,6 +32,7 @@ type Props = {
   onToggleSubtasks: () => void;
   onToggle: () => void;
   onDelete: () => void;
+  onArchive: () => void;
 };
 
 function TaskDate({ label, value }: { label: string; value: string | null }) {
@@ -47,13 +48,14 @@ function TaskDate({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, onBeginEdit, onEndEdit, onEdit, onBeginStatusDialog, onEndStatusDialog, onStatusChange, expanded, onToggleSubtasks, onToggle, onDelete }: Props) {
+export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, onBeginEdit, onEndEdit, onEdit, onBeginStatusDialog, onEndStatusDialog, onStatusChange, expanded, onToggleSubtasks, onToggle, onDelete, onArchive }: Props) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [deleting, setDeleting] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
   const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
   const [editing, setEditing] = useState<{ task: Task; opener: HTMLButtonElement } | null>(null);
   const [statusDialog, setStatusDialog] = useState<{ task: Task; status: "CANCELED" | "POSTPONED"; opener: HTMLSelectElement } | null>(null);
   const completed = task.status === "DONE";
+  const archived = task.archivedAt !== null;
   const canceled = task.status === "CANCELED";
   const completedSubtasks = task.subtasks.filter((subtask) => subtask.status === "DONE").length;
   const subtasksId = `task-${task.id}-subtasks`;
@@ -67,7 +69,7 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
       if (onBeginStatusDialog()) setStatusDialog({ task, status, opener: select });
     } else void onStatusChange({ status });
   }
-  const addSubtaskButton = (
+  const addSubtaskButton = !archived && (
     <button
       type="button"
       className={styles.addSubtaskButton}
@@ -145,6 +147,9 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
           {task.subtasks.length === 0 && addSubtaskButton}
         </div>
         <div className={styles.taskActions}>
+          <button className={styles.secondaryButton} type="button" disabled={disabled} onClick={onArchive}>
+            {mutation?.pending === "archive" ? "Збереження…" : archived ? "Повернути з архіву" : "Архівувати"}
+          </button>
           <button
             className={styles.iconButton}
             type="button"
@@ -164,7 +169,7 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
       </div>
       {task.subtasks.length > 0 && (
         <div id={subtasksId} className={styles.subtaskGroup} hidden={!expanded}>
-          <TaskSubtaskList subtasks={task.subtasks} taskTitle={task.title} disabled={disabled} onStatusChange={onSubtaskStatusChange} onEdit={onEditSubtask} onRequestDelete={(subtask, opener) => setDeleting({ subtask, opener })} />
+          <TaskSubtaskList readOnly={archived} subtasks={task.subtasks} taskTitle={task.title} disabled={disabled} onStatusChange={onSubtaskStatusChange} onEdit={onEditSubtask} onRequestDelete={(subtask, opener) => setDeleting({ subtask, opener })} />
           {addSubtaskButton}
         </div>
       )}

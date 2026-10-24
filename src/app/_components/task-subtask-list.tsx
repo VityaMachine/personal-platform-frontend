@@ -12,12 +12,13 @@ type Props = {
   subtasks: Subtask[];
   taskTitle: string;
   disabled: boolean;
+  readOnly?: boolean;
   onStatusChange: (subtask: Subtask, change: SubtaskStatusChange) => Promise<boolean>;
   onEdit: (id: string, change: SubtaskDetailsChange) => Promise<boolean>;
   onRequestDelete: (subtask: Subtask, opener: HTMLButtonElement) => void;
 };
 
-export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange, onEdit, onRequestDelete }: Props) {
+export function TaskSubtaskList({ subtasks, taskTitle, disabled, readOnly = false, onStatusChange, onEdit, onRequestDelete }: Props) {
   const [canceling, setCanceling] = useState<{ subtask: Subtask; opener: HTMLSelectElement } | null>(null);
   const [editing, setEditing] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
 
@@ -34,12 +35,12 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange,
         <span className={styles.subtaskNameColumn}>Підзадача</span>
         <span>Статус</span>
         <span>Час</span>
-        <span className={styles.subtaskActionsColumn}>Дії</span>
+        {!readOnly && <span className={styles.subtaskActionsColumn}>Дії</span>}
       </div>
       <ul className={styles.nestedSubtaskList} aria-label={`Підзадачі задачі «${taskTitle}»`}>
         {subtasks.map((subtask) => (
           <li key={subtask.id} className={styles.nestedSubtask} data-status={subtask.status}>
-            {subtask.status !== "CANCELED" ? (
+            {!readOnly && subtask.status !== "CANCELED" ? (
               <input
                 type="checkbox"
                 className={styles.checkbox}
@@ -50,7 +51,7 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange,
               />
             ) : <span className={styles.checkboxSpace} aria-hidden="true" />}
             <span className={styles.nestedSubtaskTitle}>{subtask.title}</span>
-            <select
+            {readOnly ? <span className={`${styles.taskStatus} ${styles.nestedSubtaskStatus}`} data-status={subtask.status}>{TASK_STATUS_LABELS[subtask.status]}</span> : <select
               className={`${styles.taskStatus} ${styles.nestedSubtaskStatus}`}
               data-status={subtask.status}
               aria-label={`Статус підзадачі: ${subtask.title}`}
@@ -59,9 +60,9 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange,
               onChange={(event) => selectStatus(subtask, event.currentTarget)}
             >
               {TASK_STATUSES.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
-            </select>
+            </select>}
             <span className={styles.nestedSubtaskDuration}><span className={styles.visuallyHidden}>Орієнтовна тривалість: </span>{formatDuration(subtask.estimatedDurationMinutes)}</span>
-            <button
+            {!readOnly && <button
               type="button"
               className={styles.iconButton}
               aria-label={`Редагувати підзадачу: ${subtask.title}`}
@@ -72,8 +73,8 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange,
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                 <path d="m16 3 5 5L8 21H3v-5L16 3Z M13 6l5 5" />
               </svg>
-            </button>
-            <button
+            </button>}
+            {!readOnly && <button
               type="button"
               className={`${styles.iconButton} ${styles.subtaskDeleteAction}`}
               disabled={disabled}
@@ -83,7 +84,7 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange,
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                 <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" />
               </svg>
-            </button>
+            </button>}
           </li>
         ))}
       </ul>

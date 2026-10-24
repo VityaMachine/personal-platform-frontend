@@ -1,11 +1,11 @@
 "use client";
 
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { createSubtask, deleteSubtask, deleteTask, getTask, updateSubtask, updateTask, type Task } from "@/lib/tasks";
+import { archiveTask, unarchiveTask, createSubtask, deleteSubtask, deleteTask, getTask, updateSubtask, updateTask, type Task } from "@/lib/tasks";
 import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange, TaskDetailsChange, TaskStatusChange } from "@/lib/task-types";
 
 export type TaskMutationState = {
-  pending?: "toggle" | "delete" | "subtask" | "refresh" | "edit" | "status";
+  pending?: "toggle" | "delete" | "archive" | "subtask" | "refresh" | "edit" | "status";
   editing?: boolean;
   statusDialog?: boolean;
   refreshRequired?: boolean;
@@ -49,7 +49,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     }
   }
 
-  async function mutate(id: string, pending: "toggle" | "delete" | "subtask", action: () => Promise<unknown>, notice: string, refreshError = REFRESH_ERROR) {
+  async function mutate(id: string, pending: "toggle" | "delete" | "archive" | "subtask", action: () => Promise<unknown>, notice: string, refreshError = REFRESH_ERROR) {
     if (disabled || locks.current.has(id)) return false;
     locks.current.add(id);
     setState(id, { pending });
@@ -61,7 +61,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
       return false;
     }
 
-    if (pending === "delete") {
+    if (pending === "delete" || pending === "archive") {
       setTasks((previous) => previous.filter((task) => task.id !== id));
       locks.current.delete(id);
       setStates((previous) => {
@@ -131,6 +131,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     },
     toggleTask: (task: Task) => patchTask(task.id, { status: task.status === "DONE" ? "TODO" : "DONE" }, "toggle"),
     deleteTask: (id: string) => mutate(id, "delete", () => deleteTask(id), "Задачу видалено."),
+    changeArchived: (task: Task) => mutate(task.id, "archive", () => task.archivedAt ? unarchiveTask(task.id) : archiveTask(task.id), ""),
     changeSubtaskStatus: async (taskId: string, subtask: Subtask, change: SubtaskStatusChange) => {
       if (subtask.status === change.status) return true;
       // Omit cancellationNote when reopening; the backend retains its history.
