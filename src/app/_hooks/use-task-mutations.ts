@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { deleteTask, getTask, setTaskCompleted, updateSubtask, type Task } from "@/lib/tasks";
+import { deleteSubtask, deleteTask, getTask, setTaskCompleted, updateSubtask, type Task } from "@/lib/tasks";
 import type { Subtask, SubtaskDetailsChange, SubtaskStatusChange } from "@/lib/task-types";
 
 export type TaskMutationState = {
@@ -19,15 +19,15 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
   // A saved change awaiting refresh keeps its lock until GET succeeds.
   const locks = useRef(new Set<string>());
   const refreshing = useRef(new Set<string>());
-  const needsRefresh = useRef(new Set<string>());
+  const needsRefresh = useRef(new Map<string, string>());
 
   function setState(id: string, state: TaskMutationState) {
     setStates((previous) => ({ ...previous, [id]: state }));
   }
 
-  async function refresh(id: string, notice: string) {
+  async function refresh(id: string, notice: string, refreshError = needsRefresh.current.get(id) ?? REFRESH_ERROR) {
     refreshing.current.add(id);
-    needsRefresh.current.add(id);
+    needsRefresh.current.set(id, refreshError);
     setState(id, { pending: "refresh", refreshRequired: true });
     try {
       const task = await getTask(id);
@@ -36,13 +36,13 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
       locks.current.delete(id);
       setState(id, { notice });
     } catch {
-      setState(id, { refreshRequired: true, error: REFRESH_ERROR });
+      setState(id, { refreshRequired: true, error: refreshError });
     } finally {
       refreshing.current.delete(id);
     }
   }
 
-  async function mutate(id: string, pending: "toggle" | "delete" | "subtask", action: () => Promise<unknown>, notice: string) {
+  async function mutate(id: string, pending: "toggle" | "delete" | "subtask", action: () => Promise<unknown>, notice: string, refreshError = REFRESH_ERROR) {
     if (disabled || locks.current.has(id)) return false;
     locks.current.add(id);
     setState(id, { pending });
@@ -64,8 +64,8 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
       });
       return true;
     }
-    await refresh(id, notice);
-    // PATCH succeeded even when refresh failed: callers must not resend it.
+    await refresh(id, notice, refreshError);
+    // The mutation succeeded even when refresh failed: callers must not resend it.
     return true;
   }
 
@@ -81,6 +81,9 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     },
     editSubtask: (taskId: string, subtaskId: string, change: SubtaskDetailsChange) =>
       mutate(taskId, "subtask", () => updateSubtask(taskId, subtaskId, change), "Підзадачу оновлено."),
+    deleteSubtask: (taskId: string, subtaskId: string) =>
+      mutate(taskId, "subtask", () => deleteSubtask(taskId, subtaskId), "Підзадачу видалено.",
+        "Підзадачу видалено, але дані не вдалося оновити. Повторіть завантаження даних."),
     retryRefresh: async (id: string) => {
       if (disabled || !needsRefresh.current.has(id) || refreshing.current.has(id)) return;
       await refresh(id, "Дані задачі оновлено.");

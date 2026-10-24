@@ -14,9 +14,10 @@ type Props = {
   disabled: boolean;
   onStatusChange: (subtask: Subtask, change: SubtaskStatusChange) => Promise<boolean>;
   onEdit: (id: string, change: SubtaskDetailsChange) => Promise<boolean>;
+  onRequestDelete: (subtask: Subtask, opener: HTMLButtonElement) => void;
 };
 
-export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange, onEdit }: Props) {
+export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange, onEdit, onRequestDelete }: Props) {
   const [canceling, setCanceling] = useState<{ subtask: Subtask; opener: HTMLSelectElement } | null>(null);
   const [editing, setEditing] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
 
@@ -64,6 +65,17 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange,
             aria-disabled={disabled}
             onClick={(event) => { if (!disabled) setEditing({ subtask, opener: event.currentTarget }); }}
           >Редагувати</button>
+          <button
+            type="button"
+            className={`${styles.deleteButton} ${styles.subtaskDeleteButton}`}
+            disabled={disabled}
+            aria-label={`Видалити підзадачу: ${subtask.title}`}
+            onClick={(event) => { if (!disabled) onRequestDelete(subtask, event.currentTarget); }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" />
+            </svg>
+          </button>
         </li>
       ))}
       </ul>

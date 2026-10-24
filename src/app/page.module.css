@@ -368,12 +368,12 @@
   background: #193e2c;
 }
 
-.primaryButton:disabled, .secondaryButton:disabled, .deleteButton:disabled, .closeButton:disabled, .checkbox:disabled, .dangerButton:disabled, .nestedSubtaskStatus:disabled {
+.primaryButton:disabled, .secondaryButton:disabled, .deleteButton:disabled, .closeButton:disabled, .checkbox:disabled, .dangerButton:disabled, .nestedSubtaskStatus:disabled, .discardActions > button[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.55;
 }
 
-.field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible, .primaryButton:focus-visible, .secondaryButton:focus-visible, .deleteButton:focus-visible, .closeButton:focus-visible, .checkbox:focus-visible, .nestedSubtaskStatus:focus-visible, .navItem:focus-visible, .brand:focus-visible {
+.field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible, .primaryButton:focus-visible, .secondaryButton:focus-visible, .deleteButton:focus-visible, .dangerButton:focus-visible, .closeButton:focus-visible, .checkbox:focus-visible, .nestedSubtaskStatus:focus-visible, .navItem:focus-visible, .brand:focus-visible {
   outline: 3px solid #7ba88c;
   outline-offset: 3px;
 }
@@ -637,7 +637,7 @@
 
 .nestedSubtaskList {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content 80px max-content;
+  grid-template-columns: minmax(0, 1fr) max-content 80px max-content max-content;
   gap: 4px 12px;
   width: 100%;
   max-width: 900px;
@@ -726,6 +726,15 @@
 
 .deleteButton:hover:not(:disabled) {
   text-decoration: underline;
+}
+
+.subtaskDeleteButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  min-width: 28px;
+  min-height: 28px;
 }
 
 /* Keep native date/time controls roomy before the planning column gets too narrow. */
