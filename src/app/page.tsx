@@ -7,6 +7,9 @@ import { AreasProvider, useAreas } from "./_hooks/use-areas";
 import { AreasModal } from "./_components/areas-modal";
 import { useOpenDialog } from "./_hooks/use-open-dialog";
 import { useTaskMutations } from "./_hooks/use-task-mutations";
+import { useTaskFilters } from "./_hooks/use-task-filters";
+import { selectTasks } from "@/lib/task-filters";
+import { TaskFiltersPanel } from "./_components/task-filters-panel";
 import { CreateTaskModal } from "./_components/create-task-modal";
 import { TaskCard } from "./_components/task-card";
 import { TasksShell } from "./_components/tasks-shell";
@@ -34,6 +37,9 @@ function TasksPage() {
   const mutations = useTaskMutations(setTasks, busy, (id) => {
     setExpandedTaskIds((previous) => new Set(previous).add(id));
   });
+  const filtersBlocked = creating || dialogOpen || pending !== null || mutations.hasLockedTasks;
+  const view = useTaskFilters(filtersBlocked);
+  const shownTasks = selectTasks(tasks, view.filters);
 
   // History can change behind a modal. Preserve its draft and parent locks
   // until the form closes and pending mutations finish.
@@ -46,7 +52,7 @@ function TasksPage() {
   const completedCount = tasks.filter((task) => task.status === "DONE").length;
 
   return (
-    <TasksShell archived={archived} areasDisabled={busy || dialogOpen || mutations.hasLockedTasks} onManageAreas={(opener) => {
+    <TasksShell archived={archived} query={searchParams.toString()} areasDisabled={busy || dialogOpen || mutations.hasLockedTasks} onManageAreas={(opener) => {
       if (!busy && !mutations.hasLockedTasks && !document.querySelector("dialog[open]")) {
         areas.reload(); setAreasOpener(opener);
       }
@@ -78,7 +84,7 @@ function TasksPage() {
 
       <div className={styles.feedback}>
         <p role="status" className={styles.notice}>{notice}</p>
-        {navigationDeferred && <p role="status" className={styles.notice}>Перехід між розділами відбудеться після закриття форми та завершення поточних змін.</p>}
+        {(navigationDeferred || view.deferred) && <p role="status" className={styles.notice}>Перехід та зміну умов списку буде застосовано після закриття форми та завершення поточних змін.</p>}
         {loadError && (
           <div role="alert" className={styles.error}>
             <p>{loadError}</p>
@@ -86,6 +92,9 @@ function TasksPage() {
           </div>
         )}
       </div>
+
+      <TaskFiltersPanel filters={view.filters} onChange={view.change} onReset={view.reset} disabled={filtersBlocked}
+        total={tasks.length} found={shownTasks.length} loading={loading} error={Boolean(loadError)} />
 
       <section aria-labelledby="tasks-heading" aria-busy={loading}>
         {loading && <p role="status" className={styles.loading}>Завантаження задач…</p>}
@@ -96,9 +105,14 @@ function TasksPage() {
             <p>{archived ? "Архівовані задачі з’являться тут. Їх можна повернути до поточних задач." : "Натисніть «+ Нова задача», щоб додати першу справу."}</p>
           </div>
         )}
-        {tasks.length > 0 && (
+        {!loading && !loadError && tasks.length > 0 && shownTasks.length === 0 && <div className={styles.empty}>
+          <h3>За цими умовами задач не знайдено</h3>
+          <p>Змініть умови або скиньте пошук, фільтри й сортування.</p>
+          <button type="button" className={styles.secondaryButton} disabled={filtersBlocked} onClick={view.reset}>Скинути</button>
+        </div>}
+        {shownTasks.length > 0 && (
           <ul className={styles.taskList}>
-            {tasks.map((task) => (
+            {shownTasks.map((task) => (
               <TaskCard
                 key={task.id}
                 task={task}
