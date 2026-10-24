@@ -4,6 +4,8 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { getCancellationNoteError } from "@/lib/task-field-input";
 import { getPostponeTaskFields, parsePostponeTaskFields, type PostponeTaskErrors, type PostponeTaskFields } from "@/lib/task-status-input";
 import type { Task, TaskStatusChange } from "@/lib/task-types";
+import { useFormDates } from "../_hooks/use-form-dates";
+import { ZonedDateTimeField } from "./zoned-date-time-field";
 import styles from "../page.module.css";
 
 type Props = {
@@ -22,7 +24,8 @@ export function TaskStatusDialog({ task, status, opener, disabled, onConfirm, on
   const plannedRef = useRef<HTMLInputElement>(null);
   const saveRef = useRef<HTMLButtonElement>(null);
   const inFlight = useRef(false);
-  const [initial] = useState(() => getPostponeTaskFields(task));
+  const dates = useFormDates();
+  const [initial] = useState(() => getPostponeTaskFields(task, dates.timeZone));
   const [fields, setFields] = useState<PostponeTaskFields>(initial);
   const [note, setNote] = useState("");
   const [noteError, setNoteError] = useState<string | null>(null);
@@ -53,6 +56,7 @@ export function TaskStatusDialog({ task, status, opener, disabled, onConfirm, on
 
   function changeDate(field: keyof PostponeTaskFields, value: string) {
     if (locked || inFlight.current) return;
+    dates.clear(field);
     setFields((previous) => ({ ...previous, [field]: value }));
     setErrors((previous) => ({ ...previous, [field]: undefined }));
     setError(null);
@@ -72,7 +76,7 @@ export function TaskStatusDialog({ task, status, opener, disabled, onConfirm, on
       }
       change = { status: "CANCELED", cancellationNote: note.trim() };
     } else {
-      const result = parsePostponeTaskFields(fields, task, initial);
+      const result = parsePostponeTaskFields(fields, task, initial, dates.options);
       setErrors(result.errors ?? {});
       if (result.errors) {
         const form = event.currentTarget;
@@ -112,7 +116,7 @@ export function TaskStatusDialog({ task, status, opener, disabled, onConfirm, on
           if (inFlight.current) event.preventDefault();
         }
         if (event.key !== "Tab") return;
-        const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('input:not(:disabled), textarea:not(:disabled), button:not(:disabled)')];
+        const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('input:not(:disabled), textarea:not(:disabled), select:not(:disabled), button:not(:disabled)')];
         if (event.shiftKey && document.activeElement === controls[0]) {
           event.preventDefault();
           controls.at(-1)?.focus();
@@ -144,18 +148,24 @@ export function TaskStatusDialog({ task, status, opener, disabled, onConfirm, on
           </label>
         ) : (
           <>
-            <label className={styles.field} htmlFor={`${id}-plannedAt`}>
-              Запланований час виконання (необов’язково)
-              <input ref={plannedRef} id={`${id}-plannedAt`} name="plannedAt" type="datetime-local" step="0.001" value={fields.plannedAt} disabled={locked} aria-invalid={Boolean(errors.plannedAt)} aria-describedby={`${id}-planned-hint${errors.plannedAt ? ` ${id}-plannedAt-error` : ""}`} onChange={(event) => changeDate("plannedAt", event.target.value)} />
-              <span id={`${id}-planned-hint`} className={styles.fieldHint}>Незмінений запланований час буде збережено. Очистіть поле, щоб прибрати планування.</span>
-              {errors.plannedAt && <span id={`${id}-plannedAt-error`} className={styles.fieldError}>{errors.plannedAt}</span>}
-            </label>
-            <label className={styles.field} htmlFor={`${id}-dueAt`}>
-              Дедлайн: дата й час (необов’язково)
-              <input id={`${id}-dueAt`} name="dueAt" type="datetime-local" step="0.001" value={fields.dueAt} disabled={locked} aria-invalid={Boolean(errors.dueAt)} aria-describedby={`${id}-due-hint${errors.dueAt ? ` ${id}-dueAt-error` : ""}`} onChange={(event) => changeDate("dueAt", event.target.value)} />
-              <span id={`${id}-due-hint`} className={styles.fieldHint}>Незмінений дедлайн буде збережено. Порожнє поле прибирає дедлайн.</span>
-              {errors.dueAt && <span id={`${id}-dueAt-error`} className={styles.fieldError}>{errors.dueAt}</span>}
-            </label>
+            <ZonedDateTimeField
+              id={`${id}-plannedAt`} name="plannedAt" label="Планування: дата й час (необов’язково)"
+              value={fields.plannedAt} timeZone={dates.timeZone} hint={dates.hint}
+              choice={dates.choices.plannedAt} original={fields.plannedAt === initial.plannedAt ? task.plannedAt : null}
+              disabled={locked} inputRef={plannedRef}
+              error={errors.plannedAt}
+              onChange={(value) => changeDate("plannedAt", value)}
+              onChoice={(iso) => dates.choose("plannedAt", iso)}
+            />
+            <ZonedDateTimeField
+              id={`${id}-dueAt`} name="dueAt" label="Дедлайн: дата й час (необов’язково)"
+              value={fields.dueAt} timeZone={dates.timeZone} hint={dates.hint}
+              choice={dates.choices.dueAt} original={fields.dueAt === initial.dueAt ? task.dueAt : null}
+              disabled={locked}
+              error={errors.dueAt}
+              onChange={(value) => changeDate("dueAt", value)}
+              onChoice={(iso) => dates.choose("dueAt", iso)}
+            />
           </>
         )}
         {error && <p role="alert" className={styles.error}>{error}</p>}

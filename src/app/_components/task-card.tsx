@@ -1,9 +1,11 @@
 "use client";
 
+
 import { useRef, useState } from "react";
 import { TASK_STATUSES, type InitialSubtaskInput, type Subtask, type SubtaskDetailsChange, type SubtaskStatusChange, type Task, type TaskDetailsChange, type TaskStatusChange } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { formatDuration } from "@/lib/format-duration";
+import { useSettings } from "../_hooks/use-settings";
 import { formatDate } from "@/lib/format-date";
 import { TaskDetailsModal } from "./task-details-modal";
 import { TaskTimeMetrics } from "./task-time-summary";
@@ -39,6 +41,7 @@ type Props = {
 };
 
 function TaskDate({ label, value }: { label: string; value: string | null }) {
+  const { settings: { timeZone } } = useSettings();
   if (value === null) return null;
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return null;
@@ -46,7 +49,7 @@ function TaskDate({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <dt>{label}</dt>
-      <dd><time dateTime={value}>{formatDate(value)}</time></dd>
+      <dd><time dateTime={value}>{formatDate(value, timeZone)}</time></dd>
     </div>
   );
 }

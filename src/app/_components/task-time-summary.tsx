@@ -1,6 +1,8 @@
+"use client";
 import type { Task, TaskSummary } from "@/lib/task-types";
 import { TASK_TIME_STATUSES } from "@/lib/task-types";
 import { TASK_STATUS_LABELS } from "@/lib/task-labels";
+import { useSettings } from "../_hooks/use-settings";
 import { formatDate } from "@/lib/format-date";
 import { formatDuration, formatSeconds } from "@/lib/format-duration";
 import styles from "./task-time-summary.module.css";
@@ -29,6 +31,7 @@ export function TaskTimeMetrics({ summary }: { summary: TaskSummary }) {
 }
 
 export function TaskTimeSummary({ task }: { task: Task }) {
+  const { settings: { timeZone } } = useSettings();
   const { summary } = task;
   return <section className={styles.panel} aria-label="Підсумок часу">
     <h3>Підсумок часу</h3>
@@ -48,6 +51,6 @@ export function TaskTimeSummary({ task }: { task: Task }) {
     </dl>
     <TimeHelp />
     <HistoryNote summary={summary} />
-    <p className={styles.note}>Розраховано: <time dateTime={summary.asOf}>{formatDate(summary.asOf)}</time>. Дані наведено на цей момент.</p>
+    <p className={styles.note}>Розраховано: <time dateTime={summary.asOf}>{formatDate(summary.asOf, timeZone)}</time>. Дані наведено на цей момент.</p>
   </section>;
 }

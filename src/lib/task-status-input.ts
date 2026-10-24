@@ -1,14 +1,15 @@
-import { localDateToIso, toLocalDateTime } from "./task-field-input";
+import { toLocalDateTime } from "./task-field-input";
 import type { PostponeTaskChange, Task } from "./task-types";
+import { resolveLocalDate, sameInstant, type DateOptions } from "./zoned-date";
 
 export type PostponeTaskFields = { plannedAt: string; dueAt: string };
 export type PostponeTaskErrors = Partial<Record<keyof PostponeTaskFields, string>>;
 
-export function getPostponeTaskFields(task: Task): PostponeTaskFields {
-  return { plannedAt: toLocalDateTime(task.plannedAt), dueAt: toLocalDateTime(task.dueAt) };
+export function getPostponeTaskFields(task: Task, timeZone = "UTC"): PostponeTaskFields {
+  return { plannedAt: toLocalDateTime(task.plannedAt, timeZone), dueAt: toLocalDateTime(task.dueAt, timeZone) };
 }
 
-export function parsePostponeTaskFields(fields: PostponeTaskFields, original: Task, initial: PostponeTaskFields):
+export function parsePostponeTaskFields(fields: PostponeTaskFields, original: Task, initial: PostponeTaskFields, dates: DateOptions = { timeZone: "UTC" }):
   | { input: PostponeTaskChange; errors?: never }
   | { input?: never; errors: PostponeTaskErrors } {
   const errors: PostponeTaskErrors = {};
@@ -16,10 +17,10 @@ export function parsePostponeTaskFields(fields: PostponeTaskFields, original: Ta
   // Preserve the original instant (including DST offset and milliseconds) if untouched.
   const input: PostponeTaskChange = { status: "POSTPONED", plannedAt: original.plannedAt };
   for (const field of ["plannedAt", "dueAt"] as const) {
-    if (fields[field] === initial[field]) continue;
-    const date = fields[field] === "" ? null : localDateToIso(fields[field]);
-    if (date === undefined) errors[field] = "Вкажіть коректні дату й час або залиште поле порожнім.";
-    else if (field === "plannedAt" || date !== original[field]) input[field] = date;
+    if (fields[field] === initial[field] && (!dates.choices?.[field] || sameInstant(dates.choices[field], original[field]))) continue;
+    const result = fields[field] === "" ? { iso: null, error: undefined } : resolveLocalDate(fields[field], dates.timeZone, dates.choices?.[field]);
+    if (result.error) errors[field] = result.error;
+    else if (result.iso !== undefined && (field === "plannedAt" || !sameInstant(result.iso, original[field]))) input[field] = result.iso;
   }
   return Object.keys(errors).length ? { errors } : { input };
 }

@@ -10,14 +10,14 @@
   align-self: start;
   height: 100svh;
   padding: 32px 16px;
-  border-right: 1px solid #e6e7df;
-  background: #fff;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .brand {
   display: block;
   margin: 0 12px 36px;
-  color: #172b24;
+  color: var(--text);
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -30,14 +30,14 @@
   gap: 10px;
   padding: 12px;
   border-radius: 8px;
-  color: #254f3c;
+  color: var(--accent);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
 }
 
 .navItem[aria-current="page"], .navItem:hover {
-  background: #eaf1e8;
+  background: var(--nav);
 }
 
 .navButton {
@@ -49,7 +49,7 @@
   text-align: left;
 }
 
-.navButton[aria-disabled="true"] {
+.navItem[aria-disabled="true"] {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -77,7 +77,7 @@
 
 .counter {
   margin: 8px 0 0;
-  color: #58685e;
+  color: var(--muted);
   font-size: 0.8125rem;
 }
 
@@ -96,16 +96,16 @@
   max-height: calc(100dvh - 48px);
   margin: auto;
   padding: 0;
-  border: 1px solid #e0e5dc;
+  border: 1px solid var(--border-soft);
   border-radius: 16px;
-  background: #fff;
-  color: #172b24;
-  box-shadow: 0 24px 80px #172b2433;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 24px 80px var(--shadow);
   overflow: hidden;
 }
 
 .modal::backdrop {
-  background: #172b2466;
+  background: var(--backdrop);
 }
 
 .discardDialog {
@@ -116,22 +116,22 @@
   max-height: calc(100dvh - 32px);
   margin: auto;
   padding: 28px;
-  border: 1px solid #e0e5dc;
+  border: 1px solid var(--border-soft);
   border-radius: 14px;
-  background: #fbfaf7;
-  color: #172b24;
-  box-shadow: 0 16px 64px #172b2433;
+  background: var(--surface-muted);
+  color: var(--text);
+  box-shadow: 0 16px 64px var(--shadow);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .discardDialog::backdrop {
-  background: #172b244d;
+  background: var(--backdrop-nested);
 }
 
 .discardDescription {
   margin: 12px 0 24px;
-  color: #4b5e55;
+  color: var(--secondary);
   line-height: 1.5;
 }
 
@@ -155,18 +155,18 @@
 }
 
 .dangerButton {
-  border: 1px solid #873c2c;
+  border: 1px solid var(--danger);
   border-radius: 8px;
-  background: #873c2c;
-  color: #fff;
+  background: var(--danger);
+  color: var(--on-accent);
 }
 
 .dangerButton:hover {
-  background: #6c2e21;
+  background: var(--danger-hover);
 }
 
 .dangerButton:focus-visible {
-  outline: 3px solid #873c2c;
+  outline: 3px solid var(--danger);
   outline-offset: 3px;
 }
 
@@ -183,14 +183,14 @@
   justify-content: space-between;
   gap: 16px;
   padding: 20px 28px;
-  border-bottom: 1px solid #e6e7df;
+  border-bottom: 1px solid var(--border);
 }
 
 .modalBody {
   min-height: 0;
   min-width: 0;
   padding: 28px;
-  background: #fbfaf7;
+  background: var(--surface-muted);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -201,8 +201,8 @@
   flex-wrap: wrap;
   gap: 12px;
   padding: 16px 28px;
-  border-top: 1px solid #e6e7df;
-  background: #fff;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .form {
@@ -231,7 +231,7 @@
 }
 
 .required {
-  color: #58685e;
+  color: var(--muted);
   font-weight: 400;
 }
 
@@ -241,10 +241,10 @@
   min-width: 0;
   margin-top: 8px;
   padding: 10px 12px;
-  border: 1px solid #b9c9bd;
+  border: 1px solid var(--input-border);
   border-radius: 8px;
-  background: #fcfdfb;
-  color: #172b24;
+  background: var(--input);
+  color: var(--text);
   font: inherit;
   font-size: 1rem;
   font-weight: 400;
@@ -262,15 +262,15 @@
 }
 
 .field input[readonly] {
-  background: #edf1eb;
-  color: #4b5e55;
+  background: var(--readonly);
+  color: var(--secondary);
   cursor: default;
 }
 
 .fieldHint {
   display: block;
   margin-top: 6px;
-  color: #58685e;
+  color: var(--muted);
   font-weight: 400;
 }
 
@@ -348,11 +348,11 @@
   width: var(--subtask-delete-size);
   height: var(--subtask-delete-size);
   padding: 0;
-  color: #873c2c;
+  color: var(--danger);
 }
 
 .subtaskRemove:hover:not(:disabled) {
-  background: #fff3ef;
+  background: var(--error-bg);
 }
 
 @media (any-pointer: coarse) {
@@ -362,7 +362,7 @@
 }
 
 .field input::placeholder, .field textarea::placeholder {
-  color: #66766c;
+  color: var(--placeholder);
 }
 
 .primaryButton, .secondaryButton, .deleteButton, .closeButton, .dangerButton {
@@ -375,14 +375,14 @@
 .primaryButton {
   justify-self: start;
   padding: 12px 18px;
-  border: 1px solid #254f3c;
+  border: 1px solid var(--accent);
   border-radius: 8px;
-  background: #254f3c;
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .primaryButton:hover:not(:disabled) {
-  background: #193e2c;
+  background: var(--accent-hover);
 }
 
 .primaryButton:disabled, .secondaryButton:disabled, .deleteButton:disabled, .closeButton:disabled, .checkbox:disabled, .dangerButton:disabled, .nestedSubtaskStatus:disabled, .discardActions > button[aria-disabled="true"] {
@@ -391,7 +391,7 @@
 }
 
 .field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible, .primaryButton:focus-visible, .secondaryButton:focus-visible, .deleteButton:focus-visible, .dangerButton:focus-visible, .closeButton:focus-visible, .checkbox:focus-visible, .nestedSubtaskStatus:focus-visible, .navItem:focus-visible, .brand:focus-visible {
-  outline: 3px solid #7ba88c;
+  outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
 
@@ -401,10 +401,10 @@
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 1px solid #dce4dc;
+  border: 1px solid var(--button-border);
   border-radius: 8px;
-  background: #fff;
-  color: #4b5e55;
+  background: var(--surface);
+  color: var(--secondary);
 }
 
 .feedback {
@@ -414,18 +414,18 @@
 .fieldError {
   display: block;
   margin-top: 6px;
-  color: #873c2c;
+  color: var(--danger);
   font-weight: 400;
   line-height: 1.5;
 }
 
 .field [aria-invalid="true"] {
-  border-color: #873c2c;
+  border-color: var(--danger);
 }
 
 .notice {
   margin: 0;
-  color: #305d40;
+  color: var(--notice);
   font-size: 0.875rem;
 }
 
@@ -440,10 +440,10 @@
   gap: 16px;
   padding: 16px;
   margin-top: 12px;
-  border: 1px solid #e6bfb7;
+  border: 1px solid var(--error-border);
   border-radius: 10px;
-  background: #fff3ef;
-  color: #873c2c;
+  background: var(--error-bg);
+  color: var(--danger);
   overflow-wrap: anywhere;
 }
 
@@ -464,15 +464,15 @@
 
 .loading {
   padding: 20px 0;
-  color: #4b5e55;
+  color: var(--secondary);
 }
 
 .empty {
   padding: 48px 20px;
   text-align: center;
-  border: 1px dashed #bbcdbd;
+  border: 1px dashed var(--empty-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .emptyIcon {
@@ -481,8 +481,8 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #e5ede2;
-  color: #305d40;
+  background: var(--empty-icon);
+  color: var(--notice);
   font-size: 1.5rem;
 }
 
@@ -493,7 +493,7 @@
 
 .empty p {
   margin: 0;
-  color: #4b5e55;
+  color: var(--secondary);
   line-height: 1.6;
 }
 
@@ -509,9 +509,9 @@
 .task {
   container: task-card / inline-size;
   min-width: 0;
-  border: 1px solid #dfe4db;
+  border: 1px solid var(--card-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .taskHeader {
@@ -537,7 +537,7 @@
 }
 
 .checkbox {
-  accent-color: #305d40;
+  accent-color: var(--notice);
   cursor: pointer;
 }
 
@@ -572,7 +572,7 @@
 
 .taskDescription, .cancellationNote {
   margin: 4px 0 0;
-  color: #4b5e55;
+  color: var(--secondary);
   font-size: 0.875rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -583,8 +583,8 @@
   flex-shrink: 0;
   padding: 2px 9px;
   border-radius: 20px;
-  background: #e8eeea;
-  color: #40574b;
+  background: var(--progress);
+  color: var(--icon);
   font-size: 0.8125rem;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
@@ -603,8 +603,8 @@
   display: inline-block;
   padding: 3px 8px;
   border-radius: 5px;
-  background: #eff1ed;
-  color: #4b5e55;
+  background: var(--badge);
+  color: var(--secondary);
   max-width: 100%;
   font-size: 0.8125rem;
   line-height: 1.5;
@@ -612,8 +612,8 @@
 }
 
 .taskStatus[data-status="IN_PROGRESS"] {
-  background: #e3effb;
-  color: #22518a;
+  background: var(--blue-bg);
+  color: var(--blue);
 }
 
 .taskStatusSelect {
@@ -621,7 +621,7 @@
   min-width: 0;
   width: 11rem;
   padding: 6px 28px 6px 10px;
-  border: 1px solid #d5e0d8;
+  border: 1px solid var(--select-border);
   font-family: inherit;
   font-size: 0.875rem;
   cursor: pointer;
@@ -633,28 +633,28 @@
 }
 
 .taskStatusSelect:focus-visible {
-  outline: 3px solid #7ba88c;
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
 .taskStatus[data-status="DONE"] {
-  background: #e6f1e7;
-  color: #254f3c;
+  background: var(--done-bg);
+  color: var(--accent);
 }
 
 .taskStatus[data-status="PAUSED"], .taskStatus[data-status="POSTPONED"], .taskPriority[data-priority="HIGH"] {
-  background: #fff2d9;
-  color: #79551f;
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
 .taskStatus[data-status="CANCELED"], .taskPriority[data-priority="CRITICAL"] {
-  background: #fbece7;
-  color: #873c2c;
+  background: var(--cancel-bg);
+  color: var(--danger);
 }
 
 .taskPriority[data-priority="LOW"] {
-  background: #eaf1e8;
-  color: #305d40;
+  background: var(--nav);
+  color: var(--notice);
 }
 
 .taskDetails {
@@ -662,7 +662,7 @@
   flex-wrap: wrap;
   gap: 4px 18px;
   margin: 0;
-  color: #58685e;
+  color: var(--muted);
   font-size: 0.8125rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -685,7 +685,7 @@
 }
 
 .subtaskDisclosure {
-  color: #254f3c;
+  color: var(--accent);
 }
 
 .iconButton {
@@ -697,12 +697,12 @@
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: #40574b;
+  color: var(--icon);
   cursor: pointer;
 }
 
 .iconButton:hover:not(:disabled):not([aria-disabled="true"]) {
-  background: #e6eee8;
+  background: var(--icon-hover);
 }
 
 .iconButton:disabled, .iconButton[aria-disabled="true"] {
@@ -711,7 +711,7 @@
 }
 
 .iconButton:focus-visible, .addSubtaskButton:focus-visible, .taskTitle:focus-visible {
-  outline: 3px solid #7ba88c;
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -724,7 +724,7 @@
   border: 0;
   border-radius: 5px;
   background: transparent;
-  color: #305d40;
+  color: var(--notice);
   font: inherit;
   font-size: 0.875rem;
   cursor: pointer;
@@ -753,9 +753,9 @@
 .subtaskGroup {
   min-width: 0;
   padding: 12px 20px 8px;
-  border-top: 1px solid #dfe8e1;
+  border-top: 1px solid var(--subtask-border);
   border-radius: 0 0 12px 12px;
-  background: #f3f7f4;
+  background: var(--subtask-bg);
 }
 
 .nestedSubtaskContainer {
@@ -764,7 +764,7 @@
   column-gap: 10px;
   min-width: 0;
   padding-inline-start: 12px;
-  border-inline-start: 1px solid #cbd9cf;
+  border-inline-start: 1px solid var(--timeline);
 }
 
 .nestedSubtaskColumns, .nestedSubtaskList, .nestedSubtask {
@@ -777,7 +777,7 @@
 .nestedSubtaskColumns {
   align-items: center;
   padding-bottom: 8px;
-  color: #58685e;
+  color: var(--muted);
   font-size: 0.8125rem;
   line-height: 1.5;
 }
@@ -800,7 +800,7 @@
 .nestedSubtask {
   align-items: center;
   padding: 5px 0;
-  border-top: 1px solid #dde7df;
+  border-top: 1px solid var(--nested-border);
 }
 
 .nestedSubtaskTitle {
@@ -811,7 +811,7 @@
 }
 
 .nestedSubtask[data-status="DONE"] .nestedSubtaskTitle {
-  color: #58685e;
+  color: var(--muted);
   text-decoration: line-through;
 }
 
@@ -821,7 +821,7 @@
   min-width: 0;
   max-width: 100%;
   padding: 6px 28px 6px 10px;
-  border: 1px solid #d5e0d8;
+  border: 1px solid var(--select-border);
   font-family: inherit;
   font-size: 0.875rem;
   cursor: pointer;
@@ -830,7 +830,7 @@
 
 .nestedSubtaskDuration {
   min-width: 0;
-  color: #58685e;
+  color: var(--muted);
   font-size: 0.875rem;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
@@ -838,15 +838,15 @@
 }
 
 .subtaskDeleteAction {
-  color: #8b4436;
+  color: var(--delete);
 }
 
 .completed {
-  background: #f7faf5;
+  background: var(--completed-bg);
 }
 
 .completed .taskTitle {
-  color: #58685e;
+  color: var(--muted);
   text-decoration: line-through;
 }
 
@@ -856,7 +856,7 @@
   padding: 8px;
   border: 0;
   background: transparent;
-  color: #8b4436;
+  color: var(--delete);
   font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
@@ -951,7 +951,7 @@
     height: auto;
     padding: 20px;
     border-right: 0;
-    border-bottom: 1px solid #e6e7df;
+    border-bottom: 1px solid var(--border);
   }
   .brand {
     margin: 0 0 16px;

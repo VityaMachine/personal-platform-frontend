@@ -1,5 +1,7 @@
+"use client";
 import type { Task } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
+import { useSettings } from "../_hooks/use-settings";
 import { formatDate } from "@/lib/format-date";
 import { formatDuration } from "@/lib/format-duration";
 import { TaskTimeSummary } from "./task-time-summary";
@@ -7,7 +9,8 @@ import styles from "./task-details.module.css";
 import shared from "../page.module.css";
 
 function DateValue({ value, empty }: { value: string | null; empty?: string }) {
-  return value ? <time dateTime={value}>{formatDate(value)}</time> : <>{empty ?? "Не вказано"}</>;
+  const { settings: { timeZone } } = useSettings();
+  return value ? <time dateTime={value}>{formatDate(value, timeZone)}</time> : <>{empty ?? "Не вказано"}</>;
 }
 
 export function TaskDetailsContent({ task }: { task: Task }) {

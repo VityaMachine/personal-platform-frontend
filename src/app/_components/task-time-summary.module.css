@@ -2,7 +2,7 @@
   margin-top: 10px;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: #4b5e55;
+  color: var(--secondary);
   overflow-wrap: anywhere;
 }
 
@@ -30,7 +30,7 @@
 }
 
 .metrics dt {
-  color: #58685e;
+  color: var(--muted);
 }
 
 .metrics dd {
@@ -40,16 +40,16 @@
 .panel {
   min-width: 0;
   padding: 16px;
-  border: 1px solid #dfe4db;
+  border: 1px solid var(--card-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   overflow-wrap: anywhere;
 }
 
 .comparison {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #dfe4db;
+  border-top: 1px solid var(--card-border);
 }
 
 .panel .distributionHeading {
@@ -63,18 +63,18 @@
 
 .help summary {
   width: fit-content;
-  color: #305d40;
+  color: var(--notice);
   cursor: pointer;
 }
 
 .help summary:focus-visible {
-  outline: 3px solid #7ba88c;
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
 .help p, .note {
   margin: 6px 0 0;
-  color: #58685e;
+  color: var(--muted);
 }
 
 .panel .help, .panel .note {

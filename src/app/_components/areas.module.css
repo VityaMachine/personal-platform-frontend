@@ -22,9 +22,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  border: 1px solid #dfe4db;
+  border: 1px solid var(--card-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
 }
 .list li > span {
   min-width: 0;

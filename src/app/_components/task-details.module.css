@@ -31,7 +31,7 @@
 }
 
 .body:focus-visible {
-  outline: 2px solid #7ba88c;
+  outline: 2px solid var(--focus);
   outline-offset: -4px;
 }
 
@@ -50,9 +50,9 @@
 
 .metadata {
   padding: 18px;
-  border: 1px solid #dfe4db;
+  border: 1px solid var(--card-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   font-size: 0.875rem;
 }
 
@@ -63,7 +63,7 @@
 }
 
 .metadata dt {
-  color: #58685e;
+  color: var(--muted);
   font-size: 0.8125rem;
 }
 
@@ -73,7 +73,7 @@
 
 .progress {
   width: 100%;
-  accent-color: #305d40;
+  accent-color: var(--notice);
 }
 
 .subtasks {
@@ -86,9 +86,9 @@
 
 .subtasks li {
   padding: 16px;
-  border: 1px solid #dfe4db;
+  border: 1px solid var(--card-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .subtasks p {
@@ -98,14 +98,14 @@
 .history {
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid #dfe4db;
+  border-top: 1px solid var(--card-border);
 }
 
 .timeline {
   margin: 12px 0 0 8px;
   padding: 0 0 0 22px;
   list-style: none;
-  border-left: 2px solid #cbd9cf;
+  border-left: 2px solid var(--timeline);
 }
 
 .timeline > li {
@@ -122,8 +122,8 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #305d40;
-  border: 1px solid #fbfaf7;
+  background: var(--notice);
+  border: 1px solid var(--surface-muted);
 }
 
 .eventTitle {
@@ -140,7 +140,7 @@
 }
 
 .eventDate, .previousValue {
-  color: #58685e;
+  color: var(--muted);
 }
 
 .eventDate {
@@ -149,7 +149,7 @@
 
 .eventContext {
   margin: 2px 0 0;
-  color: #58685e;
+  color: var(--muted);
 }
 
 .changes {
@@ -165,7 +165,7 @@
 }
 
 .changes dt {
-  color: #58685e;
+  color: var(--muted);
 }
 
 .changes dd {
@@ -179,12 +179,12 @@
 
 .eventDetails summary {
   width: fit-content;
-  color: #305d40;
+  color: var(--notice);
   cursor: pointer;
 }
 
 .eventDetails summary:focus-visible {
-  outline: 3px solid #7ba88c;
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 

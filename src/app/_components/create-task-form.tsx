@@ -8,6 +8,8 @@ import { TASK_PRIORITIES } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS } from "@/lib/task-labels";
 import { EMPTY_TASK_FIELDS, MAX_DURATION_MINUTES, getSubtaskDuration, parseCreateTaskFields, type CreateTaskErrors, type CreateTaskFields, type SubtaskErrors, type SubtaskFields } from "@/lib/create-task-input";
 import { SubtasksEditor } from "./subtasks-editor";
+import { useFormDates } from "../_hooks/use-form-dates";
+import { ZonedDateTimeField } from "./zoned-date-time-field";
 import styles from "../page.module.css";
 
 type Props = {
@@ -19,6 +21,7 @@ type Props = {
 };
 
 export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange, onDirtyChange }: Props) {
+  const dates = useFormDates();
   const [fields, setFields] = useState<CreateTaskFields>(EMPTY_TASK_FIELDS);
   const [subtasks, setSubtasks] = useState<SubtaskFields[]>([]);
   const [subtaskErrors, setSubtaskErrors] = useState<SubtaskErrors>({});
@@ -39,7 +42,7 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
     if (disabled || inFlight.current) return;
     setSubtasks(next);
     updateDirty(fields, next);
-    const validation = parseCreateTaskFields(fields, next);
+    const validation = parseCreateTaskFields(fields, next, dates.options);
     setSubtaskErrors((previous) => Object.fromEntries(
       next.filter((row) => previous[row.localId]).map((row) => [row.localId, validation.subtaskErrors?.[row.localId] ?? {}]),
     ));
@@ -48,6 +51,7 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
 
   function change(field: keyof CreateTaskFields, value: string) {
     if (disabled || inFlight.current) return;
+    if (field === "dueAt" || field === "plannedAt") dates.clear(field);
     const nextFields = { ...fields, [field]: value };
     setFields(nextFields);
     updateDirty(nextFields, subtasks);
@@ -72,7 +76,7 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (disabled || inFlight.current) return;
-    const result = parseCreateTaskFields(fields, subtasks);
+    const result = parseCreateTaskFields(fields, subtasks, dates.options);
     setErrors(result.errors ?? {});
     setSubtaskErrors(result.subtaskErrors ?? {});
     setError(null);
@@ -124,17 +128,25 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
         <SubtasksEditor subtasks={subtasks} errors={subtaskErrors} disabled={locked} onChange={changeSubtasks} />
       </div>
       <div className={styles.formColumn}>
-        <label className={styles.field} htmlFor="create-dueAt">
-          Дедлайн: дата й час <span className={styles.required}>(обов’язково)</span>
-          <input {...fieldProps("dueAt")} type="datetime-local" required onChange={(event) => change("dueAt", event.target.value)} />
-          {fieldError("dueAt")}
-        </label>
+        <ZonedDateTimeField
+          id="create-dueAt" name="dueAt" label="Дедлайн: дата й час (обов’язково)"
+          value={fields.dueAt} timeZone={dates.timeZone} hint={dates.hint}
+          choice={dates.choices.dueAt}
+          disabled={locked} required
+          error={errors.dueAt}
+          onChange={(value) => change("dueAt", value)}
+          onChoice={(iso) => dates.choose("dueAt", iso)}
+        />
         <AreaSelect id="create-areaId" value={fields.areaId} onChange={(value) => change("areaId", value)} disabled={locked} error={errors.areaId} />
-        <label className={styles.field} htmlFor="create-plannedAt">
-          Планування: дата й час <span className={styles.required}>(необов’язково)</span>
-          <input {...fieldProps("plannedAt")} type="datetime-local" onChange={(event) => change("plannedAt", event.target.value)} />
-          {fieldError("plannedAt")}
-        </label>
+        <ZonedDateTimeField
+          id="create-plannedAt" name="plannedAt" label="Планування: дата й час (необов’язково)"
+          value={fields.plannedAt} timeZone={dates.timeZone} hint={dates.hint}
+          choice={dates.choices.plannedAt}
+          disabled={locked}
+          error={errors.plannedAt}
+          onChange={(value) => change("plannedAt", value)}
+          onChoice={(iso) => dates.choose("plannedAt", iso)}
+        />
         <label className={styles.field} htmlFor="create-priority">
           Пріоритет
           <select {...fieldProps("priority")} onChange={(event) => change("priority", event.target.value)}>

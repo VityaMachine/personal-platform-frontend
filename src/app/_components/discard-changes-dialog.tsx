@@ -6,9 +6,12 @@ import styles from "../page.module.css";
 type Props = {
   onContinue: () => void;
   onDiscard: () => void;
+  returnFocus?: HTMLElement | null;
+  continueLabel?: string;
+  discardLabel?: string;
 };
 
-export function DiscardChangesDialog({ onContinue, onDiscard }: Props) {
+export function DiscardChangesDialog({ onContinue, onDiscard, returnFocus, continueLabel = "Продовжити редагування", discardLabel = "Відкинути зміни" }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const continueRef = useRef<HTMLButtonElement>(null);
   const discardRef = useRef<HTMLButtonElement>(null);
@@ -16,11 +19,11 @@ export function DiscardChangesDialog({ onContinue, onDiscard }: Props) {
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    previousFocus.current = returnFocus ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
     dialog?.showModal();
     continueRef.current?.focus();
     return () => dialog?.close();
-  }, []);
+  }, [returnFocus]);
 
   function continueEditing() {
     dialogRef.current?.close();
@@ -57,8 +60,8 @@ export function DiscardChangesDialog({ onContinue, onDiscard }: Props) {
       <h2 id="discard-heading" className={styles.sectionTitle}>Відкинути зміни?</h2>
       <p id="discard-description" className={styles.discardDescription}>Введені дані буде втрачено.</p>
       <div className={styles.discardActions}>
-        <button ref={continueRef} type="button" className={styles.secondaryButton} onClick={continueEditing}>Продовжити редагування</button>
-        <button ref={discardRef} type="button" className={styles.dangerButton} onClick={onDiscard}>Відкинути зміни</button>
+        <button ref={continueRef} type="button" className={styles.secondaryButton} onClick={continueEditing}>{continueLabel}</button>
+        <button ref={discardRef} type="button" className={styles.dangerButton} onClick={onDiscard}>{discardLabel}</button>
       </div>
     </dialog>
   );

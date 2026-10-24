@@ -5,8 +5,11 @@ import { getEditTaskFields, parseEditTaskFields, type EditTaskErrors, type EditT
 import { MAX_DURATION_MINUTES } from "@/lib/task-field-input";
 import { TASK_PRIORITIES, type Task, type TaskDetailsChange } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS } from "@/lib/task-labels";
+import { sameInstant } from "@/lib/zoned-date";
 import { DiscardChangesDialog } from "./discard-changes-dialog";
 import { AreaSelect } from "./area-select";
+import { useFormDates } from "../_hooks/use-form-dates";
+import { ZonedDateTimeField } from "./zoned-date-time-field";
 import styles from "../page.module.css";
 
 type Props = {
@@ -25,7 +28,8 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
   const saveRef = useRef<HTMLButtonElement>(null);
   const inFlight = useRef(false);
   // Capture one baseline per modal session; parent rerenders never replace a draft.
-  const [initial] = useState(() => getEditTaskFields(task));
+  const dates = useFormDates();
+  const [initial] = useState(() => getEditTaskFields(task, dates.timeZone));
   const [fields, setFields] = useState<EditTaskFields>(initial);
   const [errors, setErrors] = useState<EditTaskErrors>({});
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +37,8 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
   const hasSubtasks = task.subtasks.some((subtask) => subtask.deletedAt === null);
   const locked = disabled || submitting;
-  const dirty = (Object.keys(fields) as (keyof EditTaskFields)[]).some((field) => fields[field] !== initial[field]);
+  const dirty = (Object.keys(fields) as (keyof EditTaskFields)[]).some((field) => fields[field] !== initial[field])
+    || (["dueAt", "plannedAt"] as const).some((field) => dates.choices[field] && !sameInstant(dates.choices[field], task[field]));
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -67,6 +72,7 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
 
   function change(field: keyof EditTaskFields, value: string) {
     if (locked || inFlight.current || confirmingDiscard || (field === "estimatedDurationMinutes" && hasSubtasks)) return;
+    if (field === "dueAt" || field === "plannedAt") dates.clear(field);
     setFields((previous) => ({ ...previous, [field]: value }));
     setErrors((previous) => ({ ...previous, [field]: undefined }));
     setError(null);
@@ -90,7 +96,7 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (disabled || inFlight.current || confirmingDiscard) return;
-    const result = parseEditTaskFields(fields, task, initial);
+    const result = parseEditTaskFields(fields, task, initial, dates.options);
     setErrors(result.errors ?? {});
     setError(null);
     if (result.errors) {
@@ -168,17 +174,25 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
               </label>
             </div>
             <div className={styles.formColumn}>
-              <label className={styles.field} htmlFor={`${id}-dueAt`}>
-                Дедлайн: дата й час <span className={styles.required}>(необов’язково)</span>
-                <input {...fieldProps("dueAt")} type="datetime-local" step="0.001" onChange={(event) => change("dueAt", event.target.value)} />
-                {fieldError("dueAt")}
-              </label>
+              <ZonedDateTimeField
+                id={`${id}-dueAt`} name="dueAt" label="Дедлайн: дата й час (необов’язково)"
+                value={fields.dueAt} timeZone={dates.timeZone} hint={dates.hint}
+                choice={dates.choices.dueAt} original={fields.dueAt === initial.dueAt ? task.dueAt : null}
+                disabled={locked}
+                error={errors.dueAt}
+                onChange={(value) => change("dueAt", value)}
+                onChoice={(iso) => dates.choose("dueAt", iso)}
+              />
               <AreaSelect id={`${id}-areaId`} value={fields.areaId} currentArea={task.area} onChange={(value) => change("areaId", value)} disabled={locked} error={errors.areaId} />
-              <label className={styles.field} htmlFor={`${id}-plannedAt`}>
-                Планування: дата й час <span className={styles.required}>(необов’язково)</span>
-                <input {...fieldProps("plannedAt")} type="datetime-local" step="0.001" onChange={(event) => change("plannedAt", event.target.value)} />
-                {fieldError("plannedAt")}
-              </label>
+              <ZonedDateTimeField
+                id={`${id}-plannedAt`} name="plannedAt" label="Планування: дата й час (необов’язково)"
+                value={fields.plannedAt} timeZone={dates.timeZone} hint={dates.hint}
+                choice={dates.choices.plannedAt} original={fields.plannedAt === initial.plannedAt ? task.plannedAt : null}
+                disabled={locked}
+                error={errors.plannedAt}
+                onChange={(value) => change("plannedAt", value)}
+                onChoice={(iso) => dates.choose("plannedAt", iso)}
+              />
               <label className={styles.field} htmlFor={`${id}-priority`}>
                 Пріоритет
                 <select {...fieldProps("priority")} onChange={(event) => change("priority", event.target.value)}>

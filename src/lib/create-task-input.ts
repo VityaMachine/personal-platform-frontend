@@ -1,6 +1,7 @@
 import { TASK_PRIORITIES, type CreateTaskInput } from "./task-types";
 import { isAreaId } from "./area-validation";
-import { DURATION_ERROR, MAX_DURATION_MINUTES, getTitleError, localDateToIso, parseDuration } from "./task-field-input";
+import { DURATION_ERROR, MAX_DURATION_MINUTES, getTitleError, parseDuration } from "./task-field-input";
+import { resolveLocalDate, type DateOptions } from "./zoned-date";
 
 export { MAX_DURATION_MINUTES } from "./task-field-input";
 
@@ -43,7 +44,7 @@ export const EMPTY_TASK_FIELDS: CreateTaskFields = {
   priority: "MEDIUM",
 };
 
-export function parseCreateTaskFields(fields: CreateTaskFields, subtasks: readonly SubtaskFields[] = []):
+export function parseCreateTaskFields(fields: CreateTaskFields, subtasks: readonly SubtaskFields[] = [], dates: DateOptions = { timeZone: "UTC" }):
   | { input: CreateTaskInput; errors?: never; subtaskErrors?: never }
   | { errors: CreateTaskErrors; subtaskErrors: SubtaskErrors; input?: never } {
   const errors: CreateTaskErrors = {};
@@ -53,10 +54,12 @@ export function parseCreateTaskFields(fields: CreateTaskFields, subtasks: readon
   const titleError = getTitleError(fields.title, "Введіть назву задачі.");
   if (titleError) errors.title = titleError;
 
-  const dueAt = localDateToIso(fields.dueAt);
-  if (!dueAt) errors.dueAt = "Вкажіть коректні дату й час дедлайну.";
-  const plannedAt = fields.plannedAt ? localDateToIso(fields.plannedAt) : undefined;
-  if (fields.plannedAt && !plannedAt) errors.plannedAt = "Вкажіть коректні дату й час планування або залиште поле порожнім.";
+  const due = resolveLocalDate(fields.dueAt, dates.timeZone, dates.choices?.dueAt);
+  const dueAt = due.iso;
+  if (!dueAt) errors.dueAt = due.error;
+  const planned = fields.plannedAt ? resolveLocalDate(fields.plannedAt, dates.timeZone, dates.choices?.plannedAt) : {};
+  const plannedAt = planned.iso;
+  if (planned.error) errors.plannedAt = planned.error;
 
   const duration = parseDuration(fields.estimatedDurationMinutes);
   if (!subtasks.length && duration === undefined) {

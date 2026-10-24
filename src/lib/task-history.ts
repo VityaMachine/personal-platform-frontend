@@ -28,7 +28,7 @@ function needsDetails(change: HistoryChange) {
     || [change.before, change.after].some((value) => value.length > 100 || value.includes("\n"));
 }
 
-function fieldValue(key: string, value: unknown): string {
+function fieldValue(key: string, value: unknown, timeZone: string): string {
   if (key === "area") {
     if (value === null) return "Без сфери";
     const name = record(value).name;
@@ -44,12 +44,12 @@ function fieldValue(key: string, value: unknown): string {
     const priority = TASK_PRIORITIES.find((priority) => priority === value);
     return priority ? TASK_PRIORITY_LABELS[priority] : "Невідомий пріоритет";
   }
-  if (key.endsWith("At")) return typeof value === "string" ? formatDate(value) : "Не вказано";
+  if (key.endsWith("At")) return typeof value === "string" ? formatDate(value, timeZone) : "Не вказано";
   if (key === "estimatedDurationMinutes") return typeof value === "number" && Number.isInteger(value) && value > 0 ? formatDuration(value) : "Не вказано";
   return typeof value === "string" ? value : "Не зафіксовано";
 }
 
-export function describeTaskHistory(events: TaskHistoryEvent[]) {
+export function describeTaskHistory(events: TaskHistoryEvent[], timeZone = "UTC") {
   const names = new Map<string, string>();
   return [...events].sort((a, b) => a.timestamp.localeCompare(b.timestamp) || a.id.localeCompare(b.id)).map((event) => {
     const metadata = record(event.metadata);
@@ -73,13 +73,13 @@ export function describeTaskHistory(events: TaskHistoryEvent[]) {
       if (key === "area" && event.type === "AREA_CHANGED") {
         if (!("area" in before) && !("area" in after) && !("areaId" in before) && !("areaId" in after)) return [];
         const snapshot = (value: Record<string, unknown>) => "area" in value ? value.area : value.areaId === null ? null : undefined;
-        return [{ key, label, before: fieldValue(key, snapshot(before)), after: fieldValue(key, snapshot(after)), initial: false }];
+        return [{ key, label, before: fieldValue(key, snapshot(before), timeZone), after: fieldValue(key, snapshot(after), timeZone), initial: false }];
       }
       if (!(key in before) && !(key in after)) return [];
       if (Object.is(before[key], after[key])) return [];
       if (initial && (after[key] == null || (typeof after[key] === "string" && !after[key].trim()))) return [];
       if (event.type === "SUBTASK_CREATED" && key === "title" && title) return [];
-      return [{ key, label, before: fieldValue(key, before[key]), after: fieldValue(key, after[key]), initial }];
+      return [{ key, label, before: fieldValue(key, before[key], timeZone), after: fieldValue(key, after[key], timeZone), initial }];
     }) : [];
     const shortChanges = changes.filter((change) => !needsDetails(change)).slice(0, 3);
     const details = changes.filter((change) => !shortChanges.includes(change));

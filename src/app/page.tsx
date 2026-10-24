@@ -3,7 +3,7 @@
 import { Suspense, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTaskList } from "./_hooks/use-task-list";
-import { AreasProvider, useAreas } from "./_hooks/use-areas";
+import { useAreas } from "./_hooks/use-areas";
 import { AreasModal } from "./_components/areas-modal";
 import { useOpenDialog } from "./_hooks/use-open-dialog";
 import { useTaskMutations } from "./_hooks/use-task-mutations";
@@ -16,7 +16,7 @@ import { TasksShell } from "./_components/tasks-shell";
 import styles from "./page.module.css";
 
 export default function Home() {
-  return <Suspense fallback={<p role="status" className={styles.loading}>Завантаження задач…</p>}><AreasProvider><TasksPage /></AreasProvider></Suspense>;
+  return <Suspense fallback={<p role="status" className={styles.loading}>Завантаження задач…</p>}><TasksPage /></Suspense>;
 }
 
 function TasksPage() {

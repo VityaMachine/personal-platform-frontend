@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SettingsProvider } from "./_hooks/use-settings";
+import { AreasProvider } from "./_hooks/use-areas";
+import { themeBootstrap } from "@/lib/theme";
+import { HistoryTraversalProvider } from "./_hooks/use-history-traversal-guard";
 
 export const metadata: Metadata = {
   title: "Мої задачі",
@@ -13,7 +17,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uk">
-      <body>{children}</body>
+      <head>
+        <style id="personal-theme-override" />
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+      </head>
+      <body><HistoryTraversalProvider><SettingsProvider><AreasProvider>{children}</AreasProvider></SettingsProvider></HistoryTraversalProvider></body>
     </html>
   );
 }

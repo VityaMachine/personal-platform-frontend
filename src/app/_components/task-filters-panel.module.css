@@ -1,9 +1,9 @@
 .panel {
   margin-bottom: 20px;
   padding: 16px;
-  border: 1px solid #dfe4db;
+  border: 1px solid var(--card-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   min-width: 0;
 }
 
@@ -24,7 +24,7 @@
 
 .count {
   margin: 12px 0 0;
-  color: #58685e;
+  color: var(--muted);
   font-size: 0.875rem;
 }
 
