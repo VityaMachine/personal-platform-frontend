@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { TASK_STATUSES, type InitialSubtaskInput, type Subtask, type SubtaskDetailsChange, type SubtaskStatusChange, type Task, type TaskDetailsChange, type TaskStatusChange } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { formatDuration } from "@/lib/format-duration";
+import { formatDate } from "@/lib/format-date";
+import { TaskDetailsModal } from "./task-details-modal";
 import { TaskSubtaskList } from "./task-subtask-list";
 import { DeleteSubtaskDialog } from "./delete-subtask-dialog";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
@@ -43,13 +45,14 @@ function TaskDate({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <dt>{label}</dt>
-      <dd><time dateTime={value}>{date.toLocaleString("uk-UA", { dateStyle: "medium", timeStyle: "short" })}</time></dd>
+      <dd><time dateTime={value}>{formatDate(value)}</time></dd>
     </div>
   );
 }
 
 export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, onBeginEdit, onEndEdit, onEdit, onBeginStatusDialog, onEndStatusDialog, onStatusChange, expanded, onToggleSubtasks, onToggle, onDelete, onArchive }: Props) {
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const [detailsOpener, setDetailsOpener] = useState<HTMLButtonElement | null>(null);
   const [deleting, setDeleting] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
   const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
   const [editing, setEditing] = useState<{ task: Task; opener: HTMLButtonElement } | null>(null);
@@ -147,6 +150,9 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
           {task.subtasks.length === 0 && addSubtaskButton}
         </div>
         <div className={styles.taskActions}>
+          <button className={styles.secondaryButton} type="button" disabled={disabled} onClick={(event) => {
+            if (!disabled && !document.querySelector("dialog[open]")) setDetailsOpener(event.currentTarget);
+          }}>Деталі</button>
           <button className={styles.secondaryButton} type="button" disabled={disabled} onClick={onArchive}>
             {mutation?.pending === "archive" ? "Збереження…" : archived ? "Повернути з архіву" : "Архівувати"}
           </button>
@@ -181,6 +187,7 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
         onConfirm={() => onDeleteSubtask(deleting.subtask.id)}
         onClose={() => setDeleting(null)}
       />}
+      {detailsOpener && <TaskDetailsModal taskId={task.id} opener={detailsOpener} onClose={() => setDetailsOpener(null)} />}
       {createOpener && <CreateSubtaskDialog
         taskTitle={task.title}
         opener={createOpener}

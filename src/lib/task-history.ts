@@ -1,0 +1,81 @@
+import { formatDate } from "./format-date";
+import { formatDuration } from "./format-duration";
+import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "./task-labels";
+import { TASK_PRIORITIES, TASK_STATUSES, type TaskHistoryEvent } from "./task-types";
+
+function record(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+const descriptions: Record<string, string> = {
+  CREATED: "Задачу створено", EDITED: "Задачу оновлено", STATUS_CHANGED: "Статус задачі змінено",
+  ARCHIVED: "Задачу архівовано", UNARCHIVED: "Задачу повернуто з архіву", DELETED: "Задачу видалено",
+  SUBTASK_CREATED: "Підзадачу створено", SUBTASK_EDITED: "Підзадачу оновлено",
+  SUBTASK_STATUS_CHANGED: "Статус підзадачі змінено", SUBTASK_DELETED: "Підзадачу видалено",
+};
+const fields: Record<string, string> = {
+  title: "Назва", description: "Опис", status: "Статус", priority: "Пріоритет",
+  plannedAt: "Планування", dueAt: "Дедлайн", estimatedDurationMinutes: "Тривалість",
+  cancellationNote: "Причина скасування", archivedAt: "Дата архівування", deletedAt: "Дата видалення",
+};
+
+export type HistoryChange = { key: string; label: string; before: string; after: string; initial: boolean };
+
+function needsDetails(change: HistoryChange) {
+  return change.initial || ["description", "cancellationNote", "archivedAt", "deletedAt"].includes(change.key)
+    || [change.before, change.after].some((value) => value.length > 100 || value.includes("\n"));
+}
+
+function fieldValue(key: string, value: unknown): string {
+  if (value === undefined) return "Не зафіксовано";
+  if (value === null || value === "") return "Не вказано";
+  if (key === "status") {
+    const status = TASK_STATUSES.find((status) => status === value);
+    return status ? TASK_STATUS_LABELS[status] : "Невідомий статус";
+  }
+  if (key === "priority") {
+    const priority = TASK_PRIORITIES.find((priority) => priority === value);
+    return priority ? TASK_PRIORITY_LABELS[priority] : "Невідомий пріоритет";
+  }
+  if (key.endsWith("At")) return typeof value === "string" ? formatDate(value) : "Не вказано";
+  if (key === "estimatedDurationMinutes") return typeof value === "number" && Number.isInteger(value) && value > 0 ? formatDuration(value) : "Не вказано";
+  return typeof value === "string" ? value : "Не зафіксовано";
+}
+
+export function describeTaskHistory(events: TaskHistoryEvent[]) {
+  const names = new Map<string, string>();
+  return [...events].sort((a, b) => a.timestamp.localeCompare(b.timestamp) || a.id.localeCompare(b.id)).map((event) => {
+    const metadata = record(event.metadata);
+    const before = record(metadata.before);
+    const after = record(metadata.after);
+    const subtaskId = typeof metadata.subtaskId === "string" ? metadata.subtaskId : undefined;
+    const childEvent = event.type.startsWith("SUBTASK_");
+    // Most child events contain only changed fields. Resolve their historical
+    // name from earlier snapshots, never from the current Task.subtasks array.
+    const snapshotTitle = typeof before.title === "string" ? before.title : typeof after.title === "string" ? after.title : undefined;
+    const title = childEvent ? snapshotTitle ?? (subtaskId ? names.get(subtaskId) : undefined) : undefined;
+    if (childEvent && subtaskId && typeof after.title === "string") names.set(subtaskId, after.title);
+    else if (childEvent && subtaskId && snapshotTitle) names.set(subtaskId, snapshotTitle);
+    const description = Object.hasOwn(descriptions, event.type) ? descriptions[event.type] : "Зафіксовано подію задачі";
+    const initial = event.type === "CREATED" || event.type === "SUBTASK_CREATED";
+    const changes: HistoryChange[] = Object.hasOwn(descriptions, event.type) ? Object.entries(fields).flatMap(([key, label]) => {
+      if (!(key in before) && !(key in after)) return [];
+      if (Object.is(before[key], after[key])) return [];
+      if (initial && (after[key] == null || (typeof after[key] === "string" && !after[key].trim()))) return [];
+      if (event.type === "SUBTASK_CREATED" && key === "title" && title) return [];
+      return [{ key, label, before: fieldValue(key, before[key]), after: fieldValue(key, after[key]), initial }];
+    }) : [];
+    const shortChanges = changes.filter((change) => !needsDetails(change)).slice(0, 3);
+    const details = changes.filter((change) => !shortChanges.includes(change));
+    const childDescriptions: Record<string, string> = {
+      SUBTASK_CREATED: `Підзадачу «${title}» створено`, SUBTASK_EDITED: `Підзадачу «${title}» оновлено`,
+      SUBTASK_STATUS_CHANGED: `Статус підзадачі «${title}» змінено`, SUBTASK_DELETED: `Підзадачу «${title}» видалено`,
+    };
+    const singleChange = !childEvent && shortChanges.length === 1 && details.length === 0 ? shortChanges[0] : null;
+    return { event,
+      description: singleChange ? `${singleChange.label}: ${singleChange.before} → ${singleChange.after}`
+        : title && Object.hasOwn(childDescriptions, event.type) ? childDescriptions[event.type] : description,
+      context: !childEvent && subtaskId ? "Після зміни підзадачі" : null,
+      shortChanges: singleChange ? [] : shortChanges, details };
+  });
+}

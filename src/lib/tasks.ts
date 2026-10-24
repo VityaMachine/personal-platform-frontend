@@ -1,8 +1,8 @@
 import { jsonRequest, requestDelete, requestDto } from "./api";
-import type { CreateSubtaskInput, CreateTaskInput, UpdateSubtaskInput, UpdateTaskInput } from "./task-types";
-import { isSubtask, isSubtaskList, isTask, isTaskList } from "./task-validation";
+import type { CreateSubtaskInput, CreateTaskInput, UpdateSubtaskInput, UpdateTaskInput, TaskHistoryEvent } from "./task-types";
+import { isSubtask, isSubtaskList, isTask, isTaskList, isTaskHistory } from "./task-validation";
 
-export type { Task, Subtask, TaskStatus, TaskPriority, CreateTaskInput, UpdateTaskInput, CreateSubtaskInput, UpdateSubtaskInput } from "./task-types";
+export type { Task, Subtask, TaskStatus, TaskPriority, CreateTaskInput, UpdateTaskInput, CreateSubtaskInput, UpdateSubtaskInput, TaskHistoryEvent } from "./task-types";
 
 const taskPath = (id: string) => `/tasks/${encodeURIComponent(id)}`;
 const subtasksPath = (taskId: string) => `${taskPath(taskId)}/subtasks`;
@@ -19,6 +19,12 @@ export function getArchivedTasks(signal?: AbortSignal) {
 
 export function getTask(id: string, signal?: AbortSignal) {
   return requestDto(taskPath(id), isTask, { signal });
+}
+
+export function getTaskHistory(id: string, signal?: AbortSignal) {
+  return requestDto(`${taskPath(id)}/history`,
+    (value): value is TaskHistoryEvent[] => isTaskHistory(value) && value.every((event) => event.taskId === id),
+    { signal });
 }
 
 export function createTask(input: CreateTaskInput, signal?: AbortSignal) {

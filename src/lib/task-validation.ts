@@ -1,4 +1,4 @@
-import { TASK_PRIORITIES, TASK_STATUSES, type Subtask, type Task } from "./task-types";
+import { TASK_PRIORITIES, TASK_STATUSES, type Subtask, type Task, type TaskHistoryEvent } from "./task-types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -48,3 +48,9 @@ export function isTask(value: unknown): value is Task {
 
 export const isTaskList = (value: unknown): value is Task[] => Array.isArray(value) && value.every(isTask);
 export const isSubtaskList = (value: unknown): value is Subtask[] => Array.isArray(value) && value.every(isSubtask);
+
+export function isTaskHistory(value: unknown): value is TaskHistoryEvent[] {
+  return Array.isArray(value) && value.every((event: unknown) => isRecord(event)
+    && typeof event.id === "string" && typeof event.taskId === "string"
+    && typeof event.type === "string" && isTimestamp(event.timestamp));
+}

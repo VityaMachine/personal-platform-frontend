@@ -43,6 +43,16 @@ export type Task = {
   subtasks: Subtask[];
 };
 
+/** History metadata is JSON with partial before/after snapshots. Older or
+ * future events may omit it or have an unknown shape; inspect before use. */
+export type TaskHistoryEvent = {
+  id: string;
+  taskId: string;
+  type: string;
+  timestamp: string;
+  metadata?: unknown;
+};
+
 /** Titles: trimmed, 1–160 chars. Durations: positive int32 minutes.
  * Input dates must include a timezone. Omission uses defaults on creation and
  * preserves existing values on update; null clears only explicitly nullable fields.
