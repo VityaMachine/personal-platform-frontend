@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { getCancellationNoteError } from "@/lib/task-field-input";
 import styles from "../page.module.css";
 
 type Props = {
@@ -46,8 +47,9 @@ export function CancelSubtaskDialog({ subtaskTitle, opener, disabled, onConfirm,
     if (disabled || inFlight.current) return;
     const trimmed = note.trim();
     setError(null);
-    if (!trimmed) {
-      setValidationError("Вкажіть причину скасування.");
+    const noteError = getCancellationNoteError(note);
+    if (noteError) {
+      setValidationError(noteError);
       noteRef.current?.focus();
       return;
     }

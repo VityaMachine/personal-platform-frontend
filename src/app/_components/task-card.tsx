@@ -1,13 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange, Task, TaskDetailsChange } from "@/lib/task-types";
+import { TASK_STATUSES, type InitialSubtaskInput, type Subtask, type SubtaskDetailsChange, type SubtaskStatusChange, type Task, type TaskDetailsChange, type TaskStatusChange } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { formatDuration } from "@/lib/format-duration";
 import { TaskSubtaskList } from "./task-subtask-list";
 import { DeleteSubtaskDialog } from "./delete-subtask-dialog";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
 import { EditTaskModal } from "./edit-task-modal";
+import { TaskStatusDialog } from "./task-status-dialog";
 import type { TaskMutationState } from "../_hooks/use-task-mutations";
 import styles from "../page.module.css";
 
@@ -24,6 +25,9 @@ type Props = {
   onBeginEdit: () => boolean;
   onEndEdit: () => void;
   onEdit: (input: TaskDetailsChange) => Promise<boolean>;
+  onBeginStatusDialog: () => boolean;
+  onEndStatusDialog: () => void;
+  onStatusChange: (change: TaskStatusChange) => Promise<boolean>;
   expanded: boolean;
   onToggleSubtasks: () => void;
   onToggle: () => void;
@@ -43,15 +47,26 @@ function TaskDate({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, onBeginEdit, onEndEdit, onEdit, expanded, onToggleSubtasks, onToggle, onDelete }: Props) {
+export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, onBeginEdit, onEndEdit, onEdit, onBeginStatusDialog, onEndStatusDialog, onStatusChange, expanded, onToggleSubtasks, onToggle, onDelete }: Props) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [deleting, setDeleting] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
   const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
   const [editing, setEditing] = useState<{ task: Task; opener: HTMLButtonElement } | null>(null);
+  const [statusDialog, setStatusDialog] = useState<{ task: Task; status: "CANCELED" | "POSTPONED"; opener: HTMLSelectElement } | null>(null);
   const completed = task.status === "DONE";
   const canceled = task.status === "CANCELED";
   const completedSubtasks = task.subtasks.filter((subtask) => subtask.status === "DONE").length;
   const subtasksId = `task-${task.id}-subtasks`;
+
+  function selectStatus(select: HTMLSelectElement) {
+    const status = TASK_STATUSES.find((value) => value === select.value);
+    // A selection opens a draft; the task keeps its saved status until PATCH succeeds.
+    select.value = task.status;
+    if (disabled || !status || status === task.status) return;
+    if (status === "CANCELED" || status === "POSTPONED") {
+      if (onBeginStatusDialog()) setStatusDialog({ task, status, opener: select });
+    } else void onStatusChange({ status });
+  }
   const addSubtaskButton = (
     <button
       type="button"
@@ -96,7 +111,16 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
           </div>
           {task.description && <p className={styles.taskDescription}>{task.description}</p>}
           <div className={styles.taskMetadata}>
-            <span className={styles.taskStatus} data-status={task.status}>Статус: {TASK_STATUS_LABELS[task.status]}</span>
+            <select
+              className={`${styles.taskStatus} ${styles.taskStatusSelect}`}
+              data-status={task.status}
+              value={task.status}
+              aria-label={`Статус задачі: ${task.title}`}
+              aria-disabled={disabled}
+              onChange={(event) => selectStatus(event.currentTarget)}
+            >
+              {TASK_STATUSES.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
+            </select>
             <span className={styles.taskPriority} data-priority={task.priority}>Пріоритет: {TASK_PRIORITY_LABELS[task.priority]}</span>
             <dl className={styles.taskDetails}>
               <TaskDate label="Дедлайн" value={task.dueAt} />
@@ -166,6 +190,14 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
         disabled={retryDisabled || Boolean(mutation?.pending || mutation?.refreshRequired)}
         onSave={onEdit}
         onClose={() => { onEndEdit(); setEditing(null); }}
+      />}
+      {statusDialog && <TaskStatusDialog
+        task={statusDialog.task}
+        status={statusDialog.status}
+        opener={statusDialog.opener}
+        disabled={retryDisabled || Boolean(mutation?.pending || mutation?.refreshRequired)}
+        onConfirm={onStatusChange}
+        onClose={() => { onEndStatusDialog(); setStatusDialog(null); }}
       />}
     </li>
   );

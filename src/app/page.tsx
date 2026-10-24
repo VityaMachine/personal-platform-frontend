@@ -107,7 +107,7 @@ export default function Home() {
               <TaskCard
                 key={task.id}
                 task={task}
-                disabled={busy || Boolean(mutations.states[task.id]?.pending || mutations.states[task.id]?.refreshRequired || mutations.states[task.id]?.editing)}
+                disabled={busy || Boolean(mutations.states[task.id]?.pending || mutations.states[task.id]?.refreshRequired || mutations.states[task.id]?.editing || mutations.states[task.id]?.statusDialog)}
                 mutation={mutations.states[task.id]}
                 retryDisabled={busy}
                 onRetryRefresh={() => void mutations.retryRefresh(task.id)}
@@ -118,6 +118,9 @@ export default function Home() {
                 onBeginEdit={() => mutations.beginTaskEdit(task.id)}
                 onEndEdit={() => mutations.endTaskEdit(task.id)}
                 onEdit={(input) => mutations.editTask(task.id, input)}
+                onBeginStatusDialog={() => mutations.beginTaskStatusDialog(task.id)}
+                onEndStatusDialog={() => mutations.endTaskStatusDialog(task.id)}
+                onStatusChange={(change) => mutations.changeTaskStatus(task, change)}
                 expanded={expandedTaskIds.has(task.id)}
                 onToggleSubtasks={() => setExpandedTaskIds((previous) => {
                   const next = new Set(previous);

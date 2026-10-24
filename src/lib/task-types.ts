@@ -1,5 +1,10 @@
 export const TASK_STATUSES = ["TODO", "IN_PROGRESS", "PAUSED", "POSTPONED", "DONE", "CANCELED"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
+export type PostponeTaskChange = { status: "POSTPONED"; plannedAt: string | null; dueAt?: string | null };
+export type TaskStatusChange =
+  | { status: Exclude<TaskStatus, "CANCELED" | "POSTPONED"> }
+  | { status: "CANCELED"; cancellationNote: string }
+  | PostponeTaskChange;
 export type SubtaskStatusChange =
   | { status: Exclude<TaskStatus, "CANCELED"> }
   | { status: "CANCELED"; cancellationNote: string };

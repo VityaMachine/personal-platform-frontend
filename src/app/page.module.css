@@ -598,6 +598,27 @@
   color: #22518a;
 }
 
+.taskStatusSelect {
+  min-height: 38px;
+  min-width: 0;
+  width: 11rem;
+  padding: 6px 28px 6px 10px;
+  border: 1px solid #d5e0d8;
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.taskStatusSelect[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.taskStatusSelect:focus-visible {
+  outline: 3px solid #7ba88c;
+  outline-offset: 2px;
+}
+
 .taskStatus[data-status="DONE"] {
   background: #e6f1e7;
   color: #254f3c;

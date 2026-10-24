@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { createSubtask, deleteSubtask, deleteTask, getTask, setTaskCompleted, updateSubtask, updateTask, type Task } from "@/lib/tasks";
-import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange, TaskDetailsChange } from "@/lib/task-types";
+import { createSubtask, deleteSubtask, deleteTask, getTask, updateSubtask, updateTask, type Task } from "@/lib/tasks";
+import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange, TaskDetailsChange, TaskStatusChange } from "@/lib/task-types";
 
 export type TaskMutationState = {
-  pending?: "toggle" | "delete" | "subtask" | "refresh" | "edit";
+  pending?: "toggle" | "delete" | "subtask" | "refresh" | "edit" | "status";
   editing?: boolean;
+  statusDialog?: boolean;
   refreshRequired?: boolean;
   error?: string;
   notice?: string;
@@ -23,7 +24,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
   const needsRefresh = useRef(new Map<string, string>());
   // Keep this intent through failed GETs; only fresh details reveal the new child.
   const expandAfterRefresh = useRef(new Set<string>());
-  const editing = useRef(new Set<string>());
+  const dialogs = useRef(new Map<string, "edit" | "status">());
   const saving = useRef(new Set<string>());
 
   function setState(id: string, state: TaskMutationState) {
@@ -75,40 +76,60 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     return true;
   }
 
+  function dialogState(kind: "edit" | "status"): TaskMutationState {
+    return kind === "edit" ? { editing: true } : { statusDialog: true };
+  }
+
+  function beginDialog(id: string, kind: "edit" | "status") {
+    if (disabled || locks.current.has(id)) return false;
+    locks.current.add(id);
+    dialogs.current.set(id, kind);
+    setState(id, dialogState(kind));
+    return true;
+  }
+
+  function endDialog(id: string, kind: "edit" | "status") {
+    if (saving.current.has(id) || dialogs.current.get(id) !== kind) return;
+    dialogs.current.delete(id);
+    locks.current.delete(id);
+    setState(id, {});
+  }
+
+  async function patchTask(id: string, input: TaskDetailsChange | TaskStatusChange, pending: "edit" | "status" | "toggle", owner?: "edit" | "status") {
+    if (disabled || saving.current.has(id) || (owner ? dialogs.current.get(id) !== owner : locks.current.has(id))) return false;
+    locks.current.add(id);
+    saving.current.add(id);
+    setState(id, { ...(owner ? dialogState(owner) : {}), pending });
+    try {
+      const task = await updateTask(id, input);
+      setTasks((previous) => previous.map((item) => item.id === id ? task : item));
+      dialogs.current.delete(id);
+      locks.current.delete(id);
+      setState(id, { notice: pending === "edit" ? "Задачу оновлено." : "Статус задачі змінено." });
+      return true;
+    } catch {
+      if (!owner) locks.current.delete(id);
+      setState(id, { ...(owner ? dialogState(owner) : {}), error: "Не вдалося зберегти задачу. Спробуйте ще раз." });
+      return false;
+    } finally {
+      saving.current.delete(id);
+    }
+  }
+
   return {
     states,
-    hasLockedTasks: Object.values(states).some((state) => state.pending || state.refreshRequired || state.editing),
-    beginTaskEdit: (id: string) => {
-      if (disabled || locks.current.has(id)) return false;
-      locks.current.add(id);
-      editing.current.add(id);
-      setState(id, { editing: true });
-      return true;
+    hasLockedTasks: Object.values(states).some((state) => state.pending || state.refreshRequired || state.editing || state.statusDialog),
+    beginTaskEdit: (id: string) => beginDialog(id, "edit"),
+    endTaskEdit: (id: string) => endDialog(id, "edit"),
+    editTask: (id: string, input: TaskDetailsChange) => patchTask(id, input, "edit", "edit"),
+    beginTaskStatusDialog: (id: string) => beginDialog(id, "status"),
+    endTaskStatusDialog: (id: string) => endDialog(id, "status"),
+    changeTaskStatus: (task: Task, change: TaskStatusChange) => {
+      if (task.status === change.status) return Promise.resolve(true);
+      // Omit cancellationNote when leaving CANCELED: the backend retains its history.
+      return patchTask(task.id, change, "status", change.status === "CANCELED" || change.status === "POSTPONED" ? "status" : undefined);
     },
-    endTaskEdit: (id: string) => {
-      if (saving.current.has(id) || !editing.current.delete(id)) return;
-      locks.current.delete(id);
-      setState(id, {});
-    },
-    editTask: async (id: string, input: TaskDetailsChange) => {
-      if (disabled || !editing.current.has(id) || saving.current.has(id)) return false;
-      saving.current.add(id);
-      setState(id, { editing: true, pending: "edit" });
-      try {
-        const task = await updateTask(id, input);
-        setTasks((previous) => previous.map((item) => item.id === id ? task : item));
-        editing.current.delete(id);
-        locks.current.delete(id);
-        setState(id, { notice: "Задачу оновлено." });
-        return true;
-      } catch {
-        setState(id, { editing: true, error: "Не вдалося зберегти задачу. Спробуйте ще раз." });
-        return false;
-      } finally {
-        saving.current.delete(id);
-      }
-    },
-    toggleTask: (task: Task) => mutate(task.id, "toggle", () => setTaskCompleted(task.id, task.status !== "DONE"), task.status === "DONE" ? "Задачу відкрито повторно." : "Задачу завершено."),
+    toggleTask: (task: Task) => patchTask(task.id, { status: task.status === "DONE" ? "TODO" : "DONE" }, "toggle"),
     deleteTask: (id: string) => mutate(id, "delete", () => deleteTask(id), "Задачу видалено."),
     changeSubtaskStatus: async (taskId: string, subtask: Subtask, change: SubtaskStatusChange) => {
       if (subtask.status === change.status) return true;

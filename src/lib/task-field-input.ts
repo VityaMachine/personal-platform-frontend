@@ -14,6 +14,10 @@ export function getTitleError(value: string, requiredMessage: string): string | 
 
 export const DURATION_ERROR = "Введіть цілу кількість хвилин від 1 до 2147483647.";
 
+export function getCancellationNoteError(value: string): string | undefined {
+  if (!value.trim()) return "Вкажіть причину скасування.";
+}
+
 export function toLocalDateTime(value: string | null): string {
   if (value === null) return "";
   const date = new Date(value);
