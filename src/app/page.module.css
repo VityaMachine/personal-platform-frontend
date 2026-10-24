@@ -481,31 +481,41 @@
 }
 
 .taskList {
+  display: grid;
+  gap: 12px;
   padding: 0;
   margin: 0;
-  border: 1px solid #dfe4db;
-  border-radius: 12px;
-  background: #fff;
   list-style: none;
-  overflow: hidden;
 }
 
 .task {
+  container: task-card / inline-size;
+  min-width: 0;
+  border: 1px solid #dfe4db;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.taskHeader {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 12px;
+  gap: 10px;
   padding: 16px 20px;
 }
 
-.task + .task {
-  border-top: 1px solid #e9ece5;
+.task[data-has-subtasks="true"] .taskHeader {
+  grid-template-columns: 44px 24px minmax(0, 1fr) auto;
 }
 
 .checkbox, .checkboxSpace {
-  width: 20px;
-  height: 20px;
-  margin: 2px 0 0;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.taskHeader > .checkbox, .taskHeader > .checkboxSpace {
+  margin-top: 10px;
 }
 
 .checkbox {
@@ -517,9 +527,19 @@
   min-width: 0;
 }
 
+.taskTitleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-height: 44px;
+}
+
 .taskTitle {
+  min-width: 0;
+  max-width: 100%;
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: 1.0625rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -527,24 +547,30 @@
 .taskDescription, .cancellationNote {
   margin: 4px 0 0;
   color: #4b5e55;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.taskDescription {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.subtaskProgress {
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: #e8eeea;
+  color: #40574b;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
 }
 
-.taskBadges {
+.taskMetadata {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 6px;
+  min-width: 0;
 }
 
 .taskStatus, .taskPriority {
@@ -553,11 +579,18 @@
   border-radius: 5px;
   background: #eff1ed;
   color: #4b5e55;
-  font-size: 0.6875rem;
+  max-width: 100%;
+  font-size: 0.8125rem;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
-.taskStatus[data-status="IN_PROGRESS"], .taskStatus[data-status="DONE"] {
+.taskStatus[data-status="IN_PROGRESS"] {
+  background: #e3effb;
+  color: #22518a;
+}
+
+.taskStatus[data-status="DONE"] {
   background: #e6f1e7;
   color: #254f3c;
 }
@@ -581,9 +614,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px 18px;
-  margin: 8px 0 0;
+  margin: 0;
   color: #58685e;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -605,72 +638,127 @@
 }
 
 .subtaskDisclosure {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  max-width: 100%;
-  margin-top: 8px;
-  padding: 6px 8px;
-  border-color: #dce4dc;
-  color: #4b5e55;
-  overflow-wrap: anywhere;
-  text-align: left;
+  color: #254f3c;
 }
 
-.subtaskDisclosure:hover {
-  background: #f2f6ef;
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #40574b;
+  cursor: pointer;
+}
+
+.iconButton:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: #e6eee8;
+}
+
+.iconButton:disabled, .iconButton[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.iconButton:focus-visible, .addSubtaskButton:focus-visible, .taskTitle:focus-visible {
+  outline: 3px solid #7ba88c;
+  outline-offset: 2px;
+}
+
+.addSubtaskButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #305d40;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.addSubtaskButton:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.addSubtaskButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .disclosureArrow {
   flex-shrink: 0;
+  transition: transform 150ms ease;
 }
 
 .subtaskDisclosure[aria-expanded="true"] .disclosureArrow {
   transform: rotate(90deg);
 }
 
-.nestedSubtaskContainer {
+.subtaskGroup {
   min-width: 0;
-  padding-inline-start: 8px;
+  padding: 12px 20px 8px;
+  border-top: 1px solid #dfe8e1;
+  border-radius: 0 0 12px 12px;
+  background: #f3f7f4;
+}
+
+.nestedSubtaskContainer {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 11rem 7rem 44px 44px;
+  column-gap: 10px;
+  min-width: 0;
+  padding-inline-start: 12px;
+  border-inline-start: 1px solid #cbd9cf;
+}
+
+.nestedSubtaskColumns, .nestedSubtaskList, .nestedSubtask {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  min-width: 0;
+}
+
+.nestedSubtaskColumns {
+  align-items: center;
+  padding-bottom: 8px;
+  color: #58685e;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.subtaskNameColumn {
+  grid-column: 1 / 3;
+}
+
+.subtaskActionsColumn {
+  grid-column: 5 / 7;
+  text-align: center;
 }
 
 .nestedSubtaskList {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content 80px max-content max-content;
-  gap: 4px 12px;
-  width: 100%;
-  max-width: 900px;
-  margin: 8px 0 0;
-  padding: 0 0 0 12px;
-  border-inline-start: 2px solid #dce4dc;
+  margin: 0;
+  padding: 0;
   list-style: none;
 }
 
 .nestedSubtask {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: subgrid;
-  align-items: start;
-  gap: 4px 12px;
-  min-width: 0;
-  padding: 6px 0;
-}
-
-.nestedSubtaskHeading {
-  display: flex;
-  align-items: start;
-  gap: 8px;
-  min-width: 0;
-}
-
-.nestedSubtaskHeading .checkbox {
-  flex-shrink: 0;
+  align-items: center;
+  padding: 5px 0;
+  border-top: 1px solid #dde7df;
 }
 
 .nestedSubtaskTitle {
   min-width: 0;
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -681,10 +769,14 @@
 }
 
 .nestedSubtaskStatus {
-  justify-self: start;
+  width: 100%;
+  min-height: 38px;
   min-width: 0;
   max-width: 100%;
+  padding: 6px 28px 6px 10px;
+  border: 1px solid #d5e0d8;
   font-family: inherit;
+  font-size: 0.875rem;
   cursor: pointer;
   overflow-wrap: anywhere;
 }
@@ -692,19 +784,14 @@
 .nestedSubtaskDuration {
   min-width: 0;
   color: #58685e;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   line-height: 1.5;
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
-.subtaskEditButton {
-  padding: 4px 8px;
-  font-size: 0.75rem;
-}
-
-.subtaskEditButton[aria-disabled="true"] {
-  cursor: not-allowed;
-  opacity: 0.55;
+.subtaskDeleteAction {
+  color: #8b4436;
 }
 
 .completed {
@@ -717,24 +804,84 @@
 }
 
 .deleteButton {
-  padding: 5px 0 5px 8px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 8px;
   border: 0;
   background: transparent;
   color: #8b4436;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
 }
 
 .deleteButton:hover:not(:disabled) {
   text-decoration: underline;
 }
 
-.subtaskDeleteButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  min-width: 28px;
-  min-height: 28px;
+@container task-card (max-width: 660px) {
+  .nestedSubtaskContainer {
+    grid-template-columns: 24px minmax(0, 1fr) 44px 44px;
+    column-gap: 8px;
+  }
+  .nestedSubtaskColumns {
+    display: none;
+  }
+  .nestedSubtask {
+    grid-template-rows: auto auto auto;
+    row-gap: 8px;
+    padding: 12px 0;
+  }
+  .nestedSubtask > .checkbox, .nestedSubtask > .checkboxSpace {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+  }
+  .nestedSubtaskTitle {
+    grid-column: 2 / -1;
+    grid-row: 1;
+  }
+  .nestedSubtaskStatus {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    min-height: 44px;
+  }
+  .nestedSubtaskDuration {
+    grid-column: 1 / 3;
+    grid-row: 3;
+  }
+  .nestedSubtask > .iconButton {
+    grid-column: 3;
+    grid-row: 2;
+  }
+  .nestedSubtask > .subtaskDeleteAction {
+    grid-column: 4;
+  }
+}
+
+@container task-card (max-width: 480px) {
+  .taskHeader {
+    padding: 12px;
+    gap: 6px;
+  }
+  .taskHeader, .task[data-has-subtasks="true"] .taskHeader {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+  .task[data-has-subtasks="true"] .taskHeader {
+    grid-template-columns: 36px 24px minmax(0, 1fr);
+  }
+  .subtaskDisclosure {
+    width: 36px;
+  }
+  .taskHeader > .deleteButton {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+  .task[data-has-subtasks="true"] .taskHeader > .deleteButton {
+    grid-column: 3 / -1;
+  }
+  .subtaskGroup {
+    padding: 8px 12px;
+  }
 }
 
 /* Keep native date/time controls roomy before the planning column gets too narrow. */
@@ -771,21 +918,6 @@
 }
 
 @media (max-width: 540px) {
-  .nestedSubtaskList {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .nestedSubtask {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 8px;
-  }
-  .nestedSubtaskHeading {
-    flex-basis: 100%;
-  }
-  .nestedSubtaskStatus, .nestedSubtaskDuration {
-    max-width: 100%;
-  }
   .subtaskColumns {
     display: none;
   }
@@ -836,16 +968,6 @@
   }
   .header {
     gap: 16px;
-  }
-  .task {
-    grid-template-columns: 20px minmax(0, 1fr);
-    padding: 14px;
-    gap: 10px;
-  }
-  .deleteButton {
-    grid-column: 2;
-    justify-self: start;
-    padding: 6px 0;
   }
   .modal {
     width: calc(100% - 24px);

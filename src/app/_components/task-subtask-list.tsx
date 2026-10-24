@@ -30,11 +30,16 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange,
 
   return (
     <div className={styles.nestedSubtaskContainer}>
+      <div className={styles.nestedSubtaskColumns} aria-hidden="true">
+        <span className={styles.subtaskNameColumn}>Підзадача</span>
+        <span>Статус</span>
+        <span>Час</span>
+        <span className={styles.subtaskActionsColumn}>Дії</span>
+      </div>
       <ul className={styles.nestedSubtaskList} aria-label={`Підзадачі задачі «${taskTitle}»`}>
-      {subtasks.map((subtask) => (
-        <li key={subtask.id} className={styles.nestedSubtask} data-status={subtask.status}>
-          <span className={styles.nestedSubtaskHeading}>
-            {subtask.status !== "CANCELED" && (
+        {subtasks.map((subtask) => (
+          <li key={subtask.id} className={styles.nestedSubtask} data-status={subtask.status}>
+            {subtask.status !== "CANCELED" ? (
               <input
                 type="checkbox"
                 className={styles.checkbox}
@@ -43,41 +48,44 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, onStatusChange,
                 aria-label={`${subtask.status === "DONE" ? "Відкрити повторно" : "Завершити"} підзадачу: ${subtask.title}`}
                 onChange={(event) => void onStatusChange(subtask, { status: event.target.checked ? "DONE" : "TODO" })}
               />
-            )}
+            ) : <span className={styles.checkboxSpace} aria-hidden="true" />}
             <span className={styles.nestedSubtaskTitle}>{subtask.title}</span>
-          </span>
-          <select
-            className={`${styles.taskStatus} ${styles.nestedSubtaskStatus}`}
-            data-status={subtask.status}
-            aria-label={`Статус підзадачі: ${subtask.title}`}
-            value={subtask.status}
-            disabled={disabled}
-            onChange={(event) => selectStatus(subtask, event.currentTarget)}
-          >
-            {TASK_STATUSES.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
-          </select>
-          <span className={styles.nestedSubtaskDuration}><span className={styles.visuallyHidden}>Орієнтовна тривалість: </span>{formatDuration(subtask.estimatedDurationMinutes)}</span>
-          <button
-            type="button"
-            className={`${styles.secondaryButton} ${styles.subtaskEditButton}`}
-            aria-label={`Редагувати підзадачу: ${subtask.title}`}
-            // Keep the opener focusable after a saved PATCH with a failed GET.
-            aria-disabled={disabled}
-            onClick={(event) => { if (!disabled) setEditing({ subtask, opener: event.currentTarget }); }}
-          >Редагувати</button>
-          <button
-            type="button"
-            className={`${styles.deleteButton} ${styles.subtaskDeleteButton}`}
-            disabled={disabled}
-            aria-label={`Видалити підзадачу: ${subtask.title}`}
-            onClick={(event) => { if (!disabled) onRequestDelete(subtask, event.currentTarget); }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-              <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" />
-            </svg>
-          </button>
-        </li>
-      ))}
+            <select
+              className={`${styles.taskStatus} ${styles.nestedSubtaskStatus}`}
+              data-status={subtask.status}
+              aria-label={`Статус підзадачі: ${subtask.title}`}
+              value={subtask.status}
+              disabled={disabled}
+              onChange={(event) => selectStatus(subtask, event.currentTarget)}
+            >
+              {TASK_STATUSES.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
+            </select>
+            <span className={styles.nestedSubtaskDuration}><span className={styles.visuallyHidden}>Орієнтовна тривалість: </span>{formatDuration(subtask.estimatedDurationMinutes)}</span>
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label={`Редагувати підзадачу: ${subtask.title}`}
+              // Keep the opener focusable after a saved PATCH with a failed GET.
+              aria-disabled={disabled}
+              onClick={(event) => { if (!disabled) setEditing({ subtask, opener: event.currentTarget }); }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                <path d="m16 3 5 5L8 21H3v-5L16 3Z M13 6l5 5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className={`${styles.iconButton} ${styles.subtaskDeleteAction}`}
+              disabled={disabled}
+              aria-label={`Видалити підзадачу: ${subtask.title}`}
+              onClick={(event) => { if (!disabled) onRequestDelete(subtask, event.currentTarget); }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" />
+              </svg>
+            </button>
+          </li>
+        ))}
       </ul>
       {canceling && (
         <CancelSubtaskDialog

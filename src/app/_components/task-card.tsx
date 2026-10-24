@@ -50,77 +50,81 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
   const addSubtaskButton = (
     <button
       type="button"
-      className={`${styles.secondaryButton} ${styles.subtaskDisclosure}`}
+      className={styles.addSubtaskButton}
       disabled={disabled}
       aria-label={`Додати підзадачу до задачі «${task.title}»`}
       onClick={(event) => { if (!disabled) setCreateOpener(event.currentTarget); }}
-    >Додати підзадачу</button>
+    >+ Додати підзадачу</button>
   );
 
   return (
-    <li className={`${styles.task} ${completed ? styles.completed : ""}`} data-task-id={task.id} aria-busy={Boolean(mutation?.pending)}>
-      {!canceled ? (
-        <input
-          className={styles.checkbox}
-          type="checkbox"
-          checked={completed}
-          disabled={disabled}
-          aria-label={`${completed ? "Відкрити повторно" : "Завершити"}: ${task.title}`}
-          onChange={onToggle}
-        />
-      ) : <span className={styles.checkboxSpace} aria-hidden="true" />}
-      <div className={styles.taskContent}>
-        <h3 ref={titleRef} tabIndex={-1} className={styles.taskTitle}>{task.title}</h3>
-        {task.description && <p className={styles.taskDescription}>{task.description}</p>}
-        <div className={styles.taskBadges}>
-          <span className={styles.taskStatus} data-status={task.status}>Статус: {TASK_STATUS_LABELS[task.status]}</span>
-          <span className={styles.taskPriority} data-priority={task.priority}>Пріоритет: {TASK_PRIORITY_LABELS[task.priority]}</span>
-        </div>
-        {mutation?.pending && <span className={styles.taskStatus} role="status">{mutation.pending === "refresh" ? "Оновлення даних…" : "Збереження…"}</span>}
-        {mutation?.notice && <p className={styles.notice} role="status">{mutation.notice}</p>}
-        {mutation?.error && (
-          <div role="alert" className={styles.error}>
-            <p>{mutation.error}</p>
-            {mutation.refreshRequired && <button type="button" className={styles.secondaryButton} disabled={retryDisabled || Boolean(mutation.pending)} onClick={onRetryRefresh}>Повторити завантаження</button>}
-          </div>
-        )}
-        <dl className={styles.taskDetails}>
-          <TaskDate label="Дедлайн" value={task.dueAt} />
-          <TaskDate label="Заплановано" value={task.plannedAt} />
-          <div>
-            <dt>Орієнтовна тривалість</dt>
-            <dd>{formatDuration(task.estimatedDurationMinutes)}</dd>
-          </div>
-        </dl>
-        {canceled && task.cancellationNote && (
-          <p className={styles.cancellationNote}>Причина скасування: {task.cancellationNote}</p>
-        )}
+    <li className={`${styles.task} ${completed ? styles.completed : ""}`} data-task-id={task.id} data-has-subtasks={task.subtasks.length > 0} aria-busy={Boolean(mutation?.pending)}>
+      <div className={styles.taskHeader}>
         {task.subtasks.length > 0 && (
-          <>
-            <button
-              type="button"
-              className={`${styles.secondaryButton} ${styles.subtaskDisclosure}`}
-              aria-expanded={expanded}
-              aria-controls={subtasksId}
-              aria-label={`${expanded ? "Згорнути" : "Розгорнути"} підзадачі задачі «${task.title}»: завершено ${completedSubtasks} із ${task.subtasks.length}`}
-              onClick={onToggleSubtasks}
-            >
-              <svg className={styles.disclosureArrow} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-                <path d="m9 5 7 7-7 7" />
-              </svg>
-              Підзадачі {completedSubtasks}/{task.subtasks.length}
-            </button>
-            <div id={subtasksId} hidden={!expanded}>
-              <TaskSubtaskList subtasks={task.subtasks} taskTitle={task.title} disabled={disabled} onStatusChange={onSubtaskStatusChange} onEdit={onEditSubtask} onRequestDelete={(subtask, opener) => setDeleting({ subtask, opener })} />
-              {addSubtaskButton}
-            </div>
-          </>
+          <button
+            type="button"
+            className={`${styles.iconButton} ${styles.subtaskDisclosure}`}
+            aria-expanded={expanded}
+            aria-controls={subtasksId}
+            aria-label={`${expanded ? "Згорнути" : "Розгорнути"} підзадачі задачі «${task.title}»: завершено ${completedSubtasks} із ${task.subtasks.length}`}
+            onClick={onToggleSubtasks}
+          >
+            <svg className={styles.disclosureArrow} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="m9 5 7 7-7 7" />
+            </svg>
+          </button>
         )}
-        {task.subtasks.length === 0 && addSubtaskButton}
+        {!canceled ? (
+          <input
+            className={styles.checkbox}
+            type="checkbox"
+            checked={completed}
+            disabled={disabled}
+            aria-label={`${completed ? "Відкрити повторно" : "Завершити"}: ${task.title}`}
+            onChange={onToggle}
+          />
+        ) : <span className={styles.checkboxSpace} aria-hidden="true" />}
+        <div className={styles.taskContent}>
+          <div className={styles.taskTitleRow}>
+            <h3 ref={titleRef} tabIndex={-1} className={styles.taskTitle}>{task.title}</h3>
+            {task.subtasks.length > 0 && <span className={styles.subtaskProgress} aria-label={`Завершено підзадач: ${completedSubtasks} із ${task.subtasks.length}`}>{completedSubtasks}/{task.subtasks.length}</span>}
+          </div>
+          {task.description && <p className={styles.taskDescription}>{task.description}</p>}
+          <div className={styles.taskMetadata}>
+            <span className={styles.taskStatus} data-status={task.status}>Статус: {TASK_STATUS_LABELS[task.status]}</span>
+            <span className={styles.taskPriority} data-priority={task.priority}>Пріоритет: {TASK_PRIORITY_LABELS[task.priority]}</span>
+            <dl className={styles.taskDetails}>
+              <TaskDate label="Дедлайн" value={task.dueAt} />
+              <TaskDate label="Заплановано" value={task.plannedAt} />
+              <div>
+                <dt>Орієнтовна тривалість</dt>
+                <dd>{formatDuration(task.estimatedDurationMinutes)}</dd>
+              </div>
+            </dl>
+          </div>
+          {mutation?.pending && <span className={styles.taskStatus} role="status">{mutation.pending === "refresh" ? "Оновлення даних…" : "Збереження…"}</span>}
+          {mutation?.notice && <p className={styles.notice} role="status">{mutation.notice}</p>}
+          {mutation?.error && (
+            <div role="alert" className={styles.error}>
+              <p>{mutation.error}</p>
+              {mutation.refreshRequired && <button type="button" className={styles.secondaryButton} disabled={retryDisabled || Boolean(mutation.pending)} onClick={onRetryRefresh}>Повторити завантаження</button>}
+            </div>
+          )}
+          {canceled && task.cancellationNote && (
+            <p className={styles.cancellationNote}>Причина скасування: {task.cancellationNote}</p>
+          )}
+          {task.subtasks.length === 0 && addSubtaskButton}
+        </div>
+        <button className={styles.deleteButton} type="button" disabled={disabled} aria-label={`Видалити: ${task.title}`} onClick={onDelete}>
+          {mutation?.pending === "delete" ? "Видалення…" : "Видалити"}
+        </button>
       </div>
-      <button className={styles.deleteButton} type="button" disabled={disabled} aria-label={`Видалити: ${task.title}`} onClick={onDelete}>
-        {mutation?.pending === "delete" ? "Видалення…" : "Видалити"}
-      </button>
+      {task.subtasks.length > 0 && (
+        <div id={subtasksId} className={styles.subtaskGroup} hidden={!expanded}>
+          <TaskSubtaskList subtasks={task.subtasks} taskTitle={task.title} disabled={disabled} onStatusChange={onSubtaskStatusChange} onEdit={onEditSubtask} onRequestDelete={(subtask, opener) => setDeleting({ subtask, opener })} />
+          {addSubtaskButton}
+        </div>
+      )}
       {deleting && <DeleteSubtaskDialog
         subtaskTitle={deleting.subtask.title}
         opener={deleting.opener}
