@@ -19,7 +19,9 @@ export default function Home() {
   const [creating, setCreating] = useState(false);
   const createButtonRef = useRef<HTMLButtonElement>(null);
   const busy = loading || pending !== null;
-  const mutations = useTaskMutations(setTasks, busy);
+  const mutations = useTaskMutations(setTasks, busy, (id) => {
+    setExpandedTaskIds((previous) => new Set(previous).add(id));
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -112,6 +114,7 @@ export default function Home() {
                 onSubtaskStatusChange={(subtask, change) => mutations.changeSubtaskStatus(task.id, subtask, change)}
                 onEditSubtask={(id, change) => mutations.editSubtask(task.id, id, change)}
                 onDeleteSubtask={(id) => mutations.deleteSubtask(task.id, id)}
+                onCreateSubtask={(input) => mutations.createSubtask(task.id, input)}
                 expanded={expandedTaskIds.has(task.id)}
                 onToggleSubtasks={() => setExpandedTaskIds((previous) => {
                   const next = new Set(previous);

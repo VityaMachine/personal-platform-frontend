@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Subtask, SubtaskDetailsChange, SubtaskStatusChange, Task } from "@/lib/task-types";
+import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange, Task } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { formatDuration } from "@/lib/format-duration";
 import { TaskSubtaskList } from "./task-subtask-list";
 import { DeleteSubtaskDialog } from "./delete-subtask-dialog";
+import { CreateSubtaskDialog } from "./create-subtask-dialog";
 import type { TaskMutationState } from "../_hooks/use-task-mutations";
 import styles from "../page.module.css";
 
@@ -18,6 +19,7 @@ type Props = {
   onSubtaskStatusChange: (subtask: Subtask, change: SubtaskStatusChange) => Promise<boolean>;
   onEditSubtask: (id: string, change: SubtaskDetailsChange) => Promise<boolean>;
   onDeleteSubtask: (id: string) => Promise<boolean>;
+  onCreateSubtask: (input: InitialSubtaskInput) => Promise<boolean>;
   expanded: boolean;
   onToggleSubtasks: () => void;
   onToggle: () => void;
@@ -37,13 +39,23 @@ function TaskDate({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, expanded, onToggleSubtasks, onToggle, onDelete }: Props) {
+export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, expanded, onToggleSubtasks, onToggle, onDelete }: Props) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [deleting, setDeleting] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
+  const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
   const completed = task.status === "DONE";
   const canceled = task.status === "CANCELED";
   const completedSubtasks = task.subtasks.filter((subtask) => subtask.status === "DONE").length;
   const subtasksId = `task-${task.id}-subtasks`;
+  const addSubtaskButton = (
+    <button
+      type="button"
+      className={`${styles.secondaryButton} ${styles.subtaskDisclosure}`}
+      disabled={disabled}
+      aria-label={`Додати підзадачу до задачі «${task.title}»`}
+      onClick={(event) => { if (!disabled) setCreateOpener(event.currentTarget); }}
+    >Додати підзадачу</button>
+  );
 
   return (
     <li className={`${styles.task} ${completed ? styles.completed : ""}`} data-task-id={task.id} aria-busy={Boolean(mutation?.pending)}>
@@ -100,9 +112,11 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
             </button>
             <div id={subtasksId} hidden={!expanded}>
               <TaskSubtaskList subtasks={task.subtasks} taskTitle={task.title} disabled={disabled} onStatusChange={onSubtaskStatusChange} onEdit={onEditSubtask} onRequestDelete={(subtask, opener) => setDeleting({ subtask, opener })} />
+              {addSubtaskButton}
             </div>
           </>
         )}
+        {task.subtasks.length === 0 && addSubtaskButton}
       </div>
       <button className={styles.deleteButton} type="button" disabled={disabled} aria-label={`Видалити: ${task.title}`} onClick={onDelete}>
         {mutation?.pending === "delete" ? "Видалення…" : "Видалити"}
@@ -114,6 +128,14 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
         disabled={disabled}
         onConfirm={() => onDeleteSubtask(deleting.subtask.id)}
         onClose={() => setDeleting(null)}
+      />}
+      {createOpener && <CreateSubtaskDialog
+        taskTitle={task.title}
+        opener={createOpener}
+        fallbackFocusRef={titleRef}
+        disabled={disabled}
+        onSave={onCreateSubtask}
+        onClose={() => setCreateOpener(null)}
       />}
     </li>
   );

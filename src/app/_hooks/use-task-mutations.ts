@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { deleteSubtask, deleteTask, getTask, setTaskCompleted, updateSubtask, type Task } from "@/lib/tasks";
-import type { Subtask, SubtaskDetailsChange, SubtaskStatusChange } from "@/lib/task-types";
+import { createSubtask, deleteSubtask, deleteTask, getTask, setTaskCompleted, updateSubtask, type Task } from "@/lib/tasks";
+import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange } from "@/lib/task-types";
 
 export type TaskMutationState = {
   pending?: "toggle" | "delete" | "subtask" | "refresh";
@@ -13,13 +13,15 @@ export type TaskMutationState = {
 
 const REFRESH_ERROR = "Зміну збережено, але дані не вдалося оновити. Повторіть завантаження даних.";
 
-export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, disabled: boolean) {
+export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, disabled: boolean, onSubtaskCreated: (id: string) => void) {
   const [states, setStates] = useState<Record<string, TaskMutationState>>({});
   // Synchronous, per-parent locks also protect against clicks before rerender.
   // A saved change awaiting refresh keeps its lock until GET succeeds.
   const locks = useRef(new Set<string>());
   const refreshing = useRef(new Set<string>());
   const needsRefresh = useRef(new Map<string, string>());
+  // Keep this intent through failed GETs; only fresh details reveal the new child.
+  const expandAfterRefresh = useRef(new Set<string>());
 
   function setState(id: string, state: TaskMutationState) {
     setStates((previous) => ({ ...previous, [id]: state }));
@@ -32,6 +34,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     try {
       const task = await getTask(id);
       setTasks((previous) => previous.map((item) => item.id === id ? task : item));
+      if (expandAfterRefresh.current.delete(id)) onSubtaskCreated(id);
       needsRefresh.current.delete(id);
       locks.current.delete(id);
       setState(id, { notice });
@@ -81,6 +84,11 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     },
     editSubtask: (taskId: string, subtaskId: string, change: SubtaskDetailsChange) =>
       mutate(taskId, "subtask", () => updateSubtask(taskId, subtaskId, change), "Підзадачу оновлено."),
+    createSubtask: (taskId: string, input: InitialSubtaskInput) =>
+      mutate(taskId, "subtask", async () => {
+        await createSubtask(taskId, input);
+        expandAfterRefresh.current.add(taskId);
+      }, "Підзадачу додано.", "Підзадачу додано, але дані не вдалося оновити. Повторіть завантаження даних."),
     deleteSubtask: (taskId: string, subtaskId: string) =>
       mutate(taskId, "subtask", () => deleteSubtask(taskId, subtaskId), "Підзадачу видалено.",
         "Підзадачу видалено, але дані не вдалося оновити. Повторіть завантаження даних."),
