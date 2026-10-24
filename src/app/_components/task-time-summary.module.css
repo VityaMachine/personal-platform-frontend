@@ -1,0 +1,88 @@
+.compact {
+  margin-top: 10px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #4b5e55;
+  overflow-wrap: anywhere;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 20px;
+  margin: 0;
+}
+
+.compact .metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+
+.compact .metrics > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 6px;
+}
+
+.metrics > div, .metrics dd {
+  min-width: 0;
+}
+
+.metrics dt {
+  color: #58685e;
+}
+
+.metrics dd {
+  margin: 0;
+}
+
+.panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #dfe4db;
+  border-radius: 10px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+
+.comparison {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #dfe4db;
+}
+
+.panel .distributionHeading {
+  margin: 16px 0 8px;
+  font-size: 1rem;
+}
+
+.help {
+  margin-top: 6px;
+}
+
+.help summary {
+  width: fit-content;
+  color: #305d40;
+  cursor: pointer;
+}
+
+.help summary:focus-visible {
+  outline: 3px solid #7ba88c;
+  outline-offset: 2px;
+}
+
+.help p, .note {
+  margin: 6px 0 0;
+  color: #58685e;
+}
+
+.panel .help, .panel .note {
+  font-size: 0.875rem;
+}
+
+@media (max-width: 540px) {
+  .metrics {
+    column-gap: 12px;
+  }
+}

@@ -11,6 +11,17 @@ export type SubtaskStatusChange =
 export const TASK_PRIORITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
+export const TASK_TIME_STATUSES = ["TODO", "IN_PROGRESS", "PAUSED", "POSTPONED"] as const;
+export type TaskSummary = {
+  asOf: string;
+  ageSeconds: number | null;
+  inProgressSeconds: number | null;
+  timeToCompletionSeconds: number | null;
+  statusDurationsSeconds: Record<(typeof TASK_TIME_STATUSES)[number], number | null>;
+  historyIncomplete: boolean;
+  historyIssues: string[];
+};
+
 /** JSON timestamps are ISO 8601 strings, never Date objects. */
 export type Subtask = {
   id: string;
@@ -41,6 +52,7 @@ export type Task = {
   /** Compatibility field supplied by the mapper: status === "DONE". */
   isCompleted: boolean;
   subtasks: Subtask[];
+  summary: TaskSummary;
 };
 
 /** History metadata is JSON with partial before/after snapshots. Older or

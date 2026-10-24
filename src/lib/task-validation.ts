@@ -1,4 +1,4 @@
-import { TASK_PRIORITIES, TASK_STATUSES, type Subtask, type Task, type TaskHistoryEvent } from "./task-types";
+import { TASK_PRIORITIES, TASK_STATUSES, TASK_TIME_STATUSES, type Subtask, type Task, type TaskHistoryEvent, type TaskSummary } from "./task-types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -14,6 +14,20 @@ function isTimestamp(value: unknown): value is string {
 
 const nullableText = (value: unknown) => value === null || typeof value === "string";
 const nullableTimestamp = (value: unknown) => value === null || isTimestamp(value);
+const nullableSeconds = (value: unknown) => value === null
+  || (typeof value === "number" && Number.isSafeInteger(value) && value >= 0);
+
+export function isTaskSummary(value: unknown): value is TaskSummary {
+  if (!isRecord(value) || !isRecord(value.statusDurationsSeconds)) return false;
+  const durations = value.statusDurationsSeconds;
+  return isTimestamp(value.asOf)
+    && nullableSeconds(value.ageSeconds)
+    && nullableSeconds(value.inProgressSeconds)
+    && nullableSeconds(value.timeToCompletionSeconds)
+    && TASK_TIME_STATUSES.every((status) => nullableSeconds(durations[status]))
+    && typeof value.historyIncomplete === "boolean"
+    && Array.isArray(value.historyIssues) && value.historyIssues.every((issue: unknown) => typeof issue === "string");
+}
 
 function hasCommonFields(value: Record<string, unknown>): boolean {
   return typeof value.id === "string"
@@ -42,6 +56,7 @@ export function isTask(value: unknown): value is Task {
     && nullableTimestamp(value.archivedAt)
     && typeof value.isCompleted === "boolean"
     && value.isCompleted === (value.status === "DONE")
+    && isTaskSummary(value.summary)
     && Array.isArray(value.subtasks)
     && value.subtasks.every((subtask: unknown) => isSubtask(subtask) && subtask.taskId === value.id);
 }

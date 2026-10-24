@@ -2,6 +2,7 @@ import type { Task } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { formatDate } from "@/lib/format-date";
 import { formatDuration } from "@/lib/format-duration";
+import { TaskTimeSummary } from "./task-time-summary";
 import styles from "./task-details.module.css";
 import shared from "../page.module.css";
 
@@ -19,6 +20,7 @@ export function TaskDetailsContent({ task }: { task: Task }) {
         <p className={styles.fullText}>{task.description || "Опис не додано."}</p>
         {task.cancellationNote && <p className={styles.fullText}><strong>Причина скасування: </strong>{task.cancellationNote}</p>}
       </section>
+      <TaskTimeSummary task={task} />
       <section aria-label="Підзадачі">
         <h3>Підзадачі</h3>
         <p>Завершено {completed} із {subtasks.length}</p>

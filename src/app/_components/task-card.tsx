@@ -6,6 +6,7 @@ import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { formatDuration } from "@/lib/format-duration";
 import { formatDate } from "@/lib/format-date";
 import { TaskDetailsModal } from "./task-details-modal";
+import { TaskTimeMetrics } from "./task-time-summary";
 import { TaskSubtaskList } from "./task-subtask-list";
 import { DeleteSubtaskDialog } from "./delete-subtask-dialog";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
@@ -144,6 +145,7 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
               {mutation.refreshRequired && <button type="button" className={styles.secondaryButton} disabled={retryDisabled || Boolean(mutation.pending)} onClick={onRetryRefresh}>Повторити завантаження</button>}
             </div>
           )}
+          <TaskTimeMetrics summary={task.summary} />
           {canceled && task.cancellationNote && (
             <p className={styles.cancellationNote}>Причина скасування: {task.cancellationNote}</p>
           )}
