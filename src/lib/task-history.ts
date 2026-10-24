@@ -10,6 +10,7 @@ function record(value: unknown): Record<string, unknown> {
 const descriptions: Record<string, string> = {
   CREATED: "Задачу створено", EDITED: "Задачу оновлено", STATUS_CHANGED: "Статус задачі змінено",
   ARCHIVED: "Задачу архівовано", UNARCHIVED: "Задачу повернуто з архіву", DELETED: "Задачу видалено",
+  AREA_CHANGED: "Сферу змінено",
   SUBTASK_CREATED: "Підзадачу створено", SUBTASK_EDITED: "Підзадачу оновлено",
   SUBTASK_STATUS_CHANGED: "Статус підзадачі змінено", SUBTASK_DELETED: "Підзадачу видалено",
 };
@@ -17,6 +18,7 @@ const fields: Record<string, string> = {
   title: "Назва", description: "Опис", status: "Статус", priority: "Пріоритет",
   plannedAt: "Планування", dueAt: "Дедлайн", estimatedDurationMinutes: "Тривалість",
   cancellationNote: "Причина скасування", archivedAt: "Дата архівування", deletedAt: "Дата видалення",
+  area: "Сфера",
 };
 
 export type HistoryChange = { key: string; label: string; before: string; after: string; initial: boolean };
@@ -27,6 +29,11 @@ function needsDetails(change: HistoryChange) {
 }
 
 function fieldValue(key: string, value: unknown): string {
+  if (key === "area") {
+    if (value === null) return "Без сфери";
+    const name = record(value).name;
+    return typeof name === "string" && name.trim() ? name : "Назву сфери не зафіксовано";
+  }
   if (value === undefined) return "Не зафіксовано";
   if (value === null || value === "") return "Не вказано";
   if (key === "status") {
@@ -56,9 +63,18 @@ export function describeTaskHistory(events: TaskHistoryEvent[]) {
     const title = childEvent ? snapshotTitle ?? (subtaskId ? names.get(subtaskId) : undefined) : undefined;
     if (childEvent && subtaskId && typeof after.title === "string") names.set(subtaskId, after.title);
     else if (childEvent && subtaskId && snapshotTitle) names.set(subtaskId, snapshotTitle);
-    const description = Object.hasOwn(descriptions, event.type) ? descriptions[event.type] : "Зафіксовано подію задачі";
+    let description = Object.hasOwn(descriptions, event.type) ? descriptions[event.type] : "Зафіксовано подію задачі";
+    if (event.type === "AREA_CHANGED") {
+      if (after.areaId === null || after.area === null) description = "Сферу прибрано";
+      else if (before.areaId === null || before.area === null) description = "Сферу призначено";
+    }
     const initial = event.type === "CREATED" || event.type === "SUBTASK_CREATED";
     const changes: HistoryChange[] = Object.hasOwn(descriptions, event.type) ? Object.entries(fields).flatMap(([key, label]) => {
+      if (key === "area" && event.type === "AREA_CHANGED") {
+        if (!("area" in before) && !("area" in after) && !("areaId" in before) && !("areaId" in after)) return [];
+        const snapshot = (value: Record<string, unknown>) => "area" in value ? value.area : value.areaId === null ? null : undefined;
+        return [{ key, label, before: fieldValue(key, snapshot(before)), after: fieldValue(key, snapshot(after)), initial: false }];
+      }
       if (!(key in before) && !(key in after)) return [];
       if (Object.is(before[key], after[key])) return [];
       if (initial && (after[key] == null || (typeof after[key] === "string" && !after[key].trim()))) return [];
@@ -71,7 +87,7 @@ export function describeTaskHistory(events: TaskHistoryEvent[]) {
       SUBTASK_CREATED: `Підзадачу «${title}» створено`, SUBTASK_EDITED: `Підзадачу «${title}» оновлено`,
       SUBTASK_STATUS_CHANGED: `Статус підзадачі «${title}» змінено`, SUBTASK_DELETED: `Підзадачу «${title}» видалено`,
     };
-    const singleChange = !childEvent && shortChanges.length === 1 && details.length === 0 ? shortChanges[0] : null;
+    const singleChange = !childEvent && event.type !== "AREA_CHANGED" && shortChanges.length === 1 && details.length === 0 ? shortChanges[0] : null;
     return { event,
       description: singleChange ? `${singleChange.label}: ${singleChange.before} → ${singleChange.after}`
         : title && Object.hasOwn(childDescriptions, event.type) ? childDescriptions[event.type] : description,

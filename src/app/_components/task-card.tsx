@@ -117,6 +117,7 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
           </div>
           {task.description && <p className={styles.taskDescription}>{task.description}</p>}
           <div className={styles.taskMetadata}>
+            {task.area && <span className={styles.taskPriority}>Сфера: {task.area.name}</span>}
             <select
               className={`${styles.taskStatus} ${styles.taskStatusSelect}`}
               data-status={task.status}

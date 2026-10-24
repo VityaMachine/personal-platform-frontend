@@ -2,6 +2,8 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { createTask, type Task } from "@/lib/tasks";
+import { ApiError } from "@/lib/api";
+import { AreaSelect } from "./area-select";
 import { TASK_PRIORITIES } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS } from "@/lib/task-labels";
 import { EMPTY_TASK_FIELDS, MAX_DURATION_MINUTES, getSubtaskDuration, parseCreateTaskFields, type CreateTaskErrors, type CreateTaskFields, type SubtaskErrors, type SubtaskFields } from "@/lib/create-task-input";
@@ -88,7 +90,9 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
       created = await createTask(result.input);
     } catch (error) {
       // ApiError.message is safe for UI; apiMessage/details are diagnostics only.
-      setError(error instanceof Error ? error.message : "Не вдалося створити задачу. Спробуйте ще раз.");
+      setError(error instanceof ApiError && error.status === 404 && fields.areaId
+        ? "Обрана сфера могла бути видалена. Оновіть список сфер і перевірте вибір перед повторним збереженням."
+        : error instanceof Error ? error.message : "Не вдалося створити задачу. Спробуйте ще раз.");
       return;
     } finally {
       inFlight.current = false;
@@ -125,6 +129,7 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
           <input {...fieldProps("dueAt")} type="datetime-local" required onChange={(event) => change("dueAt", event.target.value)} />
           {fieldError("dueAt")}
         </label>
+        <AreaSelect id="create-areaId" value={fields.areaId} onChange={(value) => change("areaId", value)} disabled={locked} error={errors.areaId} />
         <label className={styles.field} htmlFor="create-plannedAt">
           Планування: дата й час <span className={styles.required}>(необов’язково)</span>
           <input {...fieldProps("plannedAt")} type="datetime-local" onChange={(event) => change("plannedAt", event.target.value)} />

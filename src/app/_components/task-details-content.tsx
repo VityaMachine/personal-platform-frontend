@@ -39,6 +39,7 @@ export function TaskDetailsContent({ task }: { task: Task }) {
     <aside className={styles.metadata} aria-label="Метадані задачі">
       <h3>Про задачу</h3>
       <dl>
+        <div><dt>Сфера</dt><dd>{task.area?.name ?? "Без сфери"}</dd></div>
         <div><dt>Статус</dt><dd><span className={shared.taskStatus} data-status={task.status}>{TASK_STATUS_LABELS[task.status]}</span></dd></div>
         <div><dt>Пріоритет</dt><dd><span className={shared.taskPriority} data-priority={task.priority}>{TASK_PRIORITY_LABELS[task.priority]}</span></dd></div>
         <div><dt>Заплановано</dt><dd><DateValue value={task.plannedAt} empty="Не заплановано" /></dd></div>

@@ -1,4 +1,5 @@
 import type { CreateTaskFields } from "./create-task-input";
+import { isAreaId } from "./area-validation";
 import { DURATION_ERROR, getTitleError, localDateToIso, parseDuration, toLocalDateTime } from "./task-field-input";
 import { TASK_PRIORITIES, type Task, type TaskDetailsChange } from "./task-types";
 
@@ -7,6 +8,7 @@ export type EditTaskErrors = Partial<Record<keyof EditTaskFields, string>>;
 
 export function getEditTaskFields(task: Task): EditTaskFields {
   return {
+    areaId: task.areaId ?? "",
     title: task.title,
     description: task.description ?? "",
     priority: task.priority,
@@ -21,6 +23,8 @@ export function parseEditTaskFields(fields: EditTaskFields, original: Task, init
   | { input?: never; errors: EditTaskErrors } {
   const errors: EditTaskErrors = {};
   const input: Partial<TaskDetailsChange> = {};
+  if (fields.areaId && !isAreaId(fields.areaId)) errors.areaId = "Виберіть сферу зі списку.";
+  else if (fields.areaId !== initial.areaId) input.areaId = fields.areaId || null;
   const titleError = getTitleError(fields.title, "Введіть назву задачі.");
   if (titleError) errors.title = titleError;
   else if (fields.title.trim() !== original.title) input.title = fields.title.trim();

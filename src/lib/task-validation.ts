@@ -1,5 +1,7 @@
 import { TASK_PRIORITIES, TASK_STATUSES, TASK_TIME_STATUSES, type Subtask, type Task, type TaskHistoryEvent, type TaskSummary } from "./task-types";
 
+import { isAreaReference } from "./area-validation";
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -49,6 +51,8 @@ export function isSubtask(value: unknown): value is Subtask {
 
 export function isTask(value: unknown): value is Task {
   return isRecord(value) && hasCommonFields(value)
+    && ((value.areaId === null && value.area === null)
+      || (isAreaReference(value.area) && value.areaId === value.area.id))
     && nullableText(value.description)
     && TASK_PRIORITIES.some((priority) => priority === value.priority)
     && nullableTimestamp(value.plannedAt)

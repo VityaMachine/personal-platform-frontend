@@ -3,6 +3,8 @@
 import { Suspense, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTaskList } from "./_hooks/use-task-list";
+import { AreasProvider, useAreas } from "./_hooks/use-areas";
+import { AreasModal } from "./_components/areas-modal";
 import { useOpenDialog } from "./_hooks/use-open-dialog";
 import { useTaskMutations } from "./_hooks/use-task-mutations";
 import { CreateTaskModal } from "./_components/create-task-modal";
@@ -11,14 +13,16 @@ import { TasksShell } from "./_components/tasks-shell";
 import styles from "./page.module.css";
 
 export default function Home() {
-  return <Suspense fallback={<p role="status" className={styles.loading}>Завантаження задач…</p>}><TasksPage /></Suspense>;
+  return <Suspense fallback={<p role="status" className={styles.loading}>Завантаження задач…</p>}><AreasProvider><TasksPage /></AreasProvider></Suspense>;
 }
 
 function TasksPage() {
   const searchParams = useSearchParams();
   const requestedArchived = searchParams.get("archived") === "true";
   const [archived, setArchived] = useState(requestedArchived);
-  const { tasks, setTasks, loading, error: loadError, reload } = useTaskList(archived);
+  const areas = useAreas();
+  const { tasks, setTasks, loading, error: loadError, reload } = useTaskList(archived, areas.taskRevision);
+  const [areasOpener, setAreasOpener] = useState<HTMLButtonElement | null>(null);
   const dialogOpen = useOpenDialog();
   // Keep disclosure state separate from refreshed DTOs and keyed by task ID.
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(() => new Set());
@@ -42,7 +46,12 @@ function TasksPage() {
   const completedCount = tasks.filter((task) => task.status === "DONE").length;
 
   return (
-    <TasksShell archived={archived}>
+    <TasksShell archived={archived} areasDisabled={busy || dialogOpen || mutations.hasLockedTasks} onManageAreas={(opener) => {
+      if (!busy && !mutations.hasLockedTasks && !document.querySelector("dialog[open]")) {
+        areas.reload(); setAreasOpener(opener);
+      }
+    }}>
+      {areasOpener && <AreasModal opener={areasOpener} onClose={() => setAreasOpener(null)} tasksLoading={loading} tasksError={loadError} reloadTasks={reload} />}
       <header className={styles.header}>
         <div>
           <h1 id="tasks-heading" className={styles.title}>{archived ? "Архів" : "Поточні задачі"}</h1>

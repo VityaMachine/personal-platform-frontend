@@ -1,3 +1,5 @@
+import type { AreaReference } from "./area-types";
+
 export const TASK_STATUSES = ["TODO", "IN_PROGRESS", "PAUSED", "POSTPONED", "DONE", "CANCELED"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 export type PostponeTaskChange = { status: "POSTPONED"; plannedAt: string | null; dueAt?: string | null };
@@ -36,6 +38,8 @@ export type Subtask = {
 };
 
 export type Task = {
+  areaId: string | null;
+  area: AreaReference | null;
   id: string;
   title: string;
   description: string | null;
@@ -75,6 +79,7 @@ export type InitialSubtaskInput = {
 };
 
 export type CreateTaskInput = {
+  areaId?: string | null;
   title: string;
   description?: string | null;
   plannedAt?: string;
@@ -93,9 +98,10 @@ type AtLeastOne<T> = { [K in keyof T]-?: Required<Pick<T, K>> & Partial<Omit<T, 
 
 export type SubtaskDetailsChange = AtLeastOne<Pick<Subtask, "title" | "estimatedDurationMinutes">>;
 
-export type TaskDetailsChange = AtLeastOne<Pick<Task, "title" | "description" | "priority" | "plannedAt" | "dueAt" | "estimatedDurationMinutes">>;
+export type TaskDetailsChange = AtLeastOne<Pick<Task, "areaId" | "title" | "description" | "priority" | "plannedAt" | "dueAt" | "estimatedDurationMinutes">>;
 
 type TaskChanges = {
+  areaId: string | null;
   title: string;
   description: string | null;
   priority: TaskPriority;

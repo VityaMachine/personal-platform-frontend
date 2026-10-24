@@ -6,6 +6,7 @@ import { MAX_DURATION_MINUTES } from "@/lib/task-field-input";
 import { TASK_PRIORITIES, type Task, type TaskDetailsChange } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS } from "@/lib/task-labels";
 import { DiscardChangesDialog } from "./discard-changes-dialog";
+import { AreaSelect } from "./area-select";
 import styles from "../page.module.css";
 
 type Props = {
@@ -108,7 +109,7 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
     let saved = false;
     try {
       saved = await onSave(result.input);
-      if (!saved) setError("Не вдалося зберегти задачу. Спробуйте ще раз.");
+      if (!saved) setError(fields.areaId ? "Не вдалося зберегти задачу. Обрана сфера могла бути видалена. Оновіть список сфер і перевірте вибір перед повторним збереженням." : "Не вдалося зберегти задачу. Спробуйте ще раз.");
     } catch {
       setError("Не вдалося зберегти задачу. Спробуйте ще раз.");
     } finally {
@@ -172,6 +173,7 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
                 <input {...fieldProps("dueAt")} type="datetime-local" step="0.001" onChange={(event) => change("dueAt", event.target.value)} />
                 {fieldError("dueAt")}
               </label>
+              <AreaSelect id={`${id}-areaId`} value={fields.areaId} currentArea={task.area} onChange={(value) => change("areaId", value)} disabled={locked} error={errors.areaId} />
               <label className={styles.field} htmlFor={`${id}-plannedAt`}>
                 Планування: дата й час <span className={styles.required}>(необов’язково)</span>
                 <input {...fieldProps("plannedAt")} type="datetime-local" step="0.001" onChange={(event) => change("plannedAt", event.target.value)} />

@@ -1,9 +1,11 @@
 import { TASK_PRIORITIES, type CreateTaskInput } from "./task-types";
+import { isAreaId } from "./area-validation";
 import { DURATION_ERROR, MAX_DURATION_MINUTES, getTitleError, localDateToIso, parseDuration } from "./task-field-input";
 
 export { MAX_DURATION_MINUTES } from "./task-field-input";
 
 export type CreateTaskFields = {
+  areaId: string;
   title: string;
   description: string;
   dueAt: string;
@@ -32,6 +34,7 @@ export function getSubtaskDuration(subtasks: readonly SubtaskFields[]): number |
 }
 
 export const EMPTY_TASK_FIELDS: CreateTaskFields = {
+  areaId: "",
   title: "",
   description: "",
   dueAt: "",
@@ -44,6 +47,7 @@ export function parseCreateTaskFields(fields: CreateTaskFields, subtasks: readon
   | { input: CreateTaskInput; errors?: never; subtaskErrors?: never }
   | { errors: CreateTaskErrors; subtaskErrors: SubtaskErrors; input?: never } {
   const errors: CreateTaskErrors = {};
+  if (fields.areaId && !isAreaId(fields.areaId)) errors.areaId = "Виберіть сферу зі списку.";
   const subtaskErrors: SubtaskErrors = {};
   const title = fields.title.trim();
   const titleError = getTitleError(fields.title, "Введіть назву задачі.");
@@ -81,6 +85,7 @@ export function parseCreateTaskFields(fields: CreateTaskFields, subtasks: readon
   return {
     input: {
       title,
+      ...(fields.areaId ? { areaId: fields.areaId } : {}),
       ...(fields.description ? { description: fields.description } : {}),
       dueAt,
       ...(firstSubtask

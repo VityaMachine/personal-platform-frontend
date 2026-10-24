@@ -40,6 +40,20 @@
   background: #eaf1e8;
 }
 
+.navButton {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.navButton[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .main {
   min-width: 0;
   padding: 40px clamp(20px, 4vw, 64px);
