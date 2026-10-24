@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { deleteTask, getTasks, setTaskCompleted, type Task } from "@/lib/tasks";
+import { getTasks, type Task } from "@/lib/tasks";
+import { useTaskMutations } from "./_hooks/use-task-mutations";
 import { CreateTaskModal } from "./_components/create-task-modal";
 import { TaskCard } from "./_components/task-card";
 import { TasksShell } from "./_components/tasks-shell";
@@ -18,6 +19,7 @@ export default function Home() {
   const [creating, setCreating] = useState(false);
   const createButtonRef = useRef<HTMLButtonElement>(null);
   const busy = loading || pending !== null;
+  const mutations = useTaskMutations(setTasks, busy);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -45,22 +47,6 @@ export default function Home() {
       setError(error instanceof Error ? error.message : "Не вдалося завантажити задачі.");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function runAction(key: string, action: () => Promise<void>, message: string) {
-    if (busy) return;
-    setPending(key);
-    setError(null);
-    setNotice("");
-    try {
-      await action();
-      setNotice(message);
-      await loadTasks();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Не вдалося виконати дію. Спробуйте ще раз.");
-    } finally {
-      setPending(null);
     }
   }
 
@@ -99,7 +85,7 @@ export default function Home() {
         {error && (
           <div role="alert" className={styles.error}>
             <p>{error}</p>
-            <button type="button" className={styles.secondaryButton} disabled={busy} onClick={() => void loadTasks()}>Оновити список</button>
+            <button type="button" className={styles.secondaryButton} disabled={busy || mutations.hasLockedTasks} onClick={() => void loadTasks()}>Оновити список</button>
           </div>
         )}
       </div>
@@ -119,9 +105,11 @@ export default function Home() {
               <TaskCard
                 key={task.id}
                 task={task}
-                disabled={busy}
-                toggling={pending === `toggle:${task.id}`}
-                deleting={pending === `delete:${task.id}`}
+                disabled={busy || Boolean(mutations.states[task.id]?.pending || mutations.states[task.id]?.refreshRequired)}
+                mutation={mutations.states[task.id]}
+                retryDisabled={busy}
+                onRetryRefresh={() => void mutations.retryRefresh(task.id)}
+                onSubtaskStatusChange={(subtask, change) => mutations.changeSubtaskStatus(task.id, subtask, change)}
                 expanded={expandedTaskIds.has(task.id)}
                 onToggleSubtasks={() => setExpandedTaskIds((previous) => {
                   const next = new Set(previous);
@@ -129,8 +117,8 @@ export default function Home() {
                   else next.add(task.id);
                   return next;
                 })}
-                onToggle={() => void runAction(`toggle:${task.id}`, () => setTaskCompleted(task.id, task.status !== "DONE"), task.status === "DONE" ? "Задачу відкрито повторно." : "Задачу завершено.")}
-                onDelete={() => void runAction(`delete:${task.id}`, () => deleteTask(task.id), "Задачу видалено.")}
+                onToggle={() => void mutations.toggleTask(task)}
+                onDelete={() => void mutations.deleteTask(task.id)}
               />
             ))}
           </ul>
