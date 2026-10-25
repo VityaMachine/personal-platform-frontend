@@ -18,7 +18,7 @@ export function TasksShell({ children, archived = false, today = false, query, a
     else if (href === settingsHref && areasDisabled) event.preventDefault();
   }
   return (
-    <div className={styles.shell}>
+    <div className={`${styles.shell} ${settingsPage ? "" : styles.tasksShell}`}>
       <aside className={styles.sidebar}>
         <Link className={styles.brand} href={currentHref} scroll={false} onClick={(e) => navigate(e, currentHref)}>PersonalPlatform</Link>
         <nav aria-label="Основна навігація">
@@ -35,7 +35,7 @@ export function TasksShell({ children, archived = false, today = false, query, a
           <Link className={styles.navItem} href={settingsHref} scroll={false} aria-current={settingsPage ? "page" : undefined} aria-disabled={!settingsPage && areasDisabled} onClick={(e) => navigate(e, settingsHref)}>Налаштування</Link>
         </nav>
       </aside>
-      <main className={styles.main}>{children}</main>
+      <main className={`${styles.main} ${settingsPage ? "" : styles.tasksMain}`}>{children}</main>
     </div>
   );
 }

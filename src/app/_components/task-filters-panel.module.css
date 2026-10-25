@@ -1,11 +1,14 @@
 .panel {
-  margin-bottom: 20px;
+  margin-bottom: 0;
   padding: 16px;
   border: 1px solid var(--card-border);
   border-radius: 12px;
   background: var(--surface);
   min-width: 0;
 }
+
+.disclosure { display: none; }
+.filterBody { min-width: 0; }
 
 .controls {
   display: grid;
@@ -47,4 +50,11 @@
   .sort, .area {
     grid-column: 1 / -1;
   }
+}
+
+@media (max-width: 760px) {
+  .disclosure { display: block; width: 100%; text-align: left; }
+  .filterBody { display: none; }
+  .filterBody.expanded { display: block; margin-top: 12px; }
+  .count { margin-top: 8px; }
 }

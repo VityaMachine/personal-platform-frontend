@@ -10,6 +10,7 @@ import { useTaskMutations } from "./_hooks/use-task-mutations";
 import { useTaskFilters } from "./_hooks/use-task-filters";
 import { taskSection, taskInSection } from "@/lib/task-context";
 import { groupTaskList, selectTasks } from "@/lib/task-filters";
+import { TaskStatusSummary } from "./_components/task-status-summary";
 import { TaskFiltersPanel } from "./_components/task-filters-panel";
 import { CreateTaskModal } from "./_components/create-task-modal";
 import { TaskCard } from "./_components/task-card";
@@ -60,8 +61,6 @@ function TasksPage() {
     setNotice("");
   }
 
-  const completedCount = tasks.filter((task) => task.status === "DONE").length;
-
   return (
     <TasksShell archived={archived} today={today} query={searchParams.toString()} areasDisabled={busy || dialogOpen || mutations.hasLockedTasks} onManageAreas={(opener) => {
       if (!busy && !mutations.hasLockedTasks && !document.querySelector("dialog[open]")) {
@@ -69,51 +68,55 @@ function TasksPage() {
       }
     }}>
       {areasOpener && <AreasModal opener={areasOpener} onClose={() => setAreasOpener(null)} tasksLoading={loading} tasksError={loadError} reloadTasks={reload} />}
-      <header className={styles.header}>
-        <div>
-          <h1 id="tasks-heading" className={styles.title}>{archived ? "Архів" : today ? "Сьогодні" : "Поточні задачі"}</h1>
-          {!today && <p className={styles.counter}>{completedCount} / {tasks.length} завершено</p>}
+      <div className={styles.tasksToolbar}>
+        <header className={styles.header}>
+          <div>
+            <h1 id="tasks-heading" className={styles.title}>{archived ? "Архів" : today ? "Сьогодні" : "Поточні задачі"}</h1>
+          </div>
+          <div className={styles.taskHeaderActions}>
+            <button type="button" className={styles.secondaryButton} disabled={busy || filtersBlocked} onClick={reload}>Оновити список</button>
+            {!archived && <button ref={createButtonRef} className={styles.primaryButton} type="button" disabled={busy} onClick={() => setCreating(true)}>+ Нова задача</button>}
+          </div>
+        </header>
+
+        {creating && <CreateTaskModal
+          returnFocusRef={createButtonRef}
+          onClose={() => setCreating(false)}
+          onSubmittingChange={(submitting) => {
+            setPending(submitting ? "create" : null);
+            if (submitting) {
+              createScope.current = scopeKey;
+              setNotice("");
+            }
+          }}
+          onCreated={(created, createdContext) => {
+            const currentContext = createdContext === JSON.stringify(context);
+            const belongs = taskInSection(created, section);
+            if (currentContext && createScope.current === scopeKey && belongs) setTasks((previous) => [created, ...previous.filter((task) => task.id !== created.id)]);
+            if (!currentContext || createScope.current !== scopeKey) reload();
+            setNotice(today && (!currentContext || !belongs) ? "Задачу створено. Вона доступна в “Поточних задачах”" : selectTasks([created], view.filters).length ? "Задачу створено." : "Задачу створено. Поточні фільтри приховують її у списку.");
+            setCreating(false);
+          }}
+        />}
+
+        <div className={styles.feedback}>
+          <p role="status" className={styles.notice}>{notice}</p>
+          {retained.length > 0 && <p role="status" className={styles.notice}>Дані відкритої форми збережено. Її попередня картка тимчасово залишається до закриття форми або завершення оновлення; вона не є результатом актуального запиту.</p>}
+          {(navigationDeferred || view.deferred) && <p role="status" className={styles.notice}>Перехід та зміну умов списку буде застосовано після закриття форми та завершення поточних змін.</p>}
         </div>
-        {!archived && <button ref={createButtonRef} className={styles.primaryButton} type="button" disabled={busy} onClick={() => setCreating(true)}>+ Нова задача</button>}
-      </header>
 
-      {creating && <CreateTaskModal
-        returnFocusRef={createButtonRef}
-        onClose={() => setCreating(false)}
-        onSubmittingChange={(submitting) => {
-          setPending(submitting ? "create" : null);
-          if (submitting) {
-            createScope.current = scopeKey;
-            setNotice("");
-          }
-        }}
-        onCreated={(created, createdContext) => {
-          const currentContext = createdContext === JSON.stringify(context);
-          const belongs = taskInSection(created, section);
-          if (currentContext && createScope.current === scopeKey && belongs) setTasks((previous) => [created, ...previous.filter((task) => task.id !== created.id)]);
-          if (!currentContext || createScope.current !== scopeKey) reload();
-          setNotice(today && (!currentContext || !belongs) ? "Задачу створено. Вона доступна в “Поточних задачах”" : selectTasks([created], view.filters).length ? "Задачу створено." : "Задачу створено. Поточні фільтри приховують її у списку.");
-          setCreating(false);
-        }}
-      />}
+        <TaskStatusSummary tasks={tasks} loading={loading} error={Boolean(loadError)} />
 
-      <div className={styles.feedback}>
-        <p role="status" className={styles.notice}>{notice}</p>
-        {retained.length > 0 && <p role="status" className={styles.notice}>Дані відкритої форми збережено. Її попередня картка тимчасово залишається до закриття форми або завершення оновлення; вона не є результатом актуального запиту.</p>}
-        {(navigationDeferred || view.deferred) && <p role="status" className={styles.notice}>Перехід та зміну умов списку буде застосовано після закриття форми та завершення поточних змін.</p>}
+        <TaskFiltersPanel filters={view.filters} onChange={view.change} onReset={view.reset} disabled={filtersBlocked}
+          total={tasks.length} found={selectedTasks.length} loading={loading} error={Boolean(loadError)} />
+      </div>
+
+      <section className={styles.taskScroll} aria-labelledby="tasks-heading" aria-busy={loading} tabIndex={0}>
         {loadError && (
           <div role="alert" className={styles.error}>
             <p>{loadError}</p>
           </div>
         )}
-      </div>
-
-      <button type="button" className={styles.secondaryButton} disabled={busy || filtersBlocked} onClick={reload}>Оновити список</button>
-
-      <TaskFiltersPanel filters={view.filters} onChange={view.change} onReset={view.reset} disabled={filtersBlocked}
-        total={tasks.length} found={selectedTasks.length} loading={loading} error={Boolean(loadError)} />
-
-      <section aria-labelledby="tasks-heading" aria-busy={loading}>
         {loading && <p role="status" className={styles.loading}>Завантаження задач…</p>}
         {!loading && !loadError && tasks.length === 0 && retained.length === 0 && (
           <div className={styles.empty}>

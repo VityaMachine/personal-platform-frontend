@@ -12,6 +12,8 @@
   padding: 32px 16px;
   border-right: 1px solid var(--border);
   background: var(--surface);
+  overflow-y: auto;
+  min-width: 0;
 }
 
 .brand {
@@ -22,6 +24,7 @@
   font-weight: 700;
   letter-spacing: -0.04em;
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 
 .navItem {
@@ -34,6 +37,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 
 .navItem[aria-current="page"], .navItem:hover {
@@ -57,6 +61,47 @@
 .main {
   min-width: 0;
   padding: 40px clamp(20px, 4vw, 64px);
+}
+
+.tasksToolbar {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tasksToolbar .header { margin-bottom: 0; }
+.tasksToolbar .feedback { margin: 0; }
+.tasksToolbar .feedback:has(> :only-child:empty) { display: none; }
+.taskHeaderActions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.taskHeaderActions > button { max-width: 100%; overflow-wrap: anywhere; }
+.taskScroll { min-width: 0; min-height: 0; }
+.taskScroll:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Fixed viewport layout is confined to task routes with enough room. At low
+   heights, narrow widths, or zoomed viewports the document scrolls normally.
+   The minimum list row also lets the document grow if text alone gets larger. */
+@media (min-width: 761px) and (min-height: 48rem) {
+  .tasksShell { height: 100dvh; min-height: 0; }
+  .tasksShell .sidebar { height: 100dvh; }
+  .tasksMain {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(12rem, 1fr);
+    gap: 16px;
+    padding: 24px clamp(20px, 3vw, 48px);
+  }
+  .tasksToolbar { margin-bottom: 0; }
+  .taskScroll {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scroll-padding-block: 12px;
+    padding: 2px 4px 12px 2px;
+  }
+  .tasksShell:has(dialog[open]) .taskScroll,
+  .tasksShell:has(dialog[open]) .sidebar {
+    overflow-y: hidden;
+  }
 }
 
 .header {
