@@ -38,8 +38,13 @@
 .weekdays input:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 .ruleDescription { padding: 12px; border-radius: 8px; background: var(--nav); color: var(--text); line-height: 1.5; }
 .createError { margin-top: 16px; }
+.generateModal { width: min(760px, calc(100% - 48px)); }
+.generateModal header > button { flex-shrink: 0; }
+.generationResult { margin-block: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); }
+.generationResult:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (max-width: 900px) { .createColumns { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 @media (max-width: 540px) {
   .card { padding: 16px; }
   .modal { width: calc(100% - 24px); }
+  .generateModal { width: calc(100% - 24px); }
 }

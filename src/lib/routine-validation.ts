@@ -2,7 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { isAreaId, isAreaReference } from "./area-validation";
 import { isTimeZone } from "./settings";
 import { TASK_PRIORITIES } from "./task-types";
-import type { Routine, RoutineSchedule, RoutineEndCondition, RoutinePreview, RoutinePreviewOccurrence } from "./routine-types";
+import type { Routine, RoutineSchedule, RoutineEndCondition, RoutinePreview, RoutinePreviewOccurrence, GenerateRoutineInput, RoutineGenerationResult, RoutineGenerationLink } from "./routine-types";
 
 const record = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const integer = (value: unknown, min = 1, max = 2_147_483_647): value is number => typeof value === "number" && Number.isInteger(value) && value >= min && value <= max;
@@ -60,4 +60,24 @@ export function isPreviewOccurrence(value: unknown): value is RoutinePreviewOccu
 export function isRoutinePreview(value: unknown): value is RoutinePreview {
   return record(value) && isAreaId(value.routineId) && timezone(value.timezone) && isRoutineDate(value.from) && isRoutineDate(value.to) && value.from <= value.to
     && Array.isArray(value.occurrences) && value.occurrences.every(isPreviewOccurrence) && typeof value.truncated === "boolean" && strings(value.limitations);
+}
+
+function validGenerationRange(value: Record<string, unknown>): value is Record<string, unknown> & GenerateRoutineInput {
+  return isRoutineDate(value.from) && isRoutineDate(value.to) && value.from <= value.to
+    && Temporal.PlainDate.from(value.from).until(value.to).days < 366;
+}
+export function isGenerateRoutineInput(value: unknown): value is GenerateRoutineInput {
+  return record(value) && Object.keys(value).every((key) => key === "from" || key === "to") && validGenerationRange(value);
+}
+const isGenerationLink = (value: unknown): value is RoutineGenerationLink => record(value)
+  && text(value.occurrenceKey) && value.occurrenceKey.length > 0 && isAreaId(value.taskId);
+export function isRoutineGenerationResult(value: unknown): value is RoutineGenerationResult {
+  if (!record(value) || !validGenerationRange(value) || !isAreaId(value.routineId)
+    || !integer(value.createdCount, 0, 100) || !integer(value.existingCount, 0)
+    || !Array.isArray(value.created) || !value.created.every(isGenerationLink)
+    || !Array.isArray(value.existing) || !value.existing.every(isGenerationLink)
+    || value.created.length !== value.createdCount || value.existing.length !== value.existingCount) return false;
+  const links = [...value.created, ...value.existing];
+  return new Set(links.map((link) => link.occurrenceKey)).size === links.length
+    && new Set(links.map((link) => link.taskId)).size === links.length;
 }

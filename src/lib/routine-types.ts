@@ -32,6 +32,12 @@ export type RoutinePreview = {
   occurrences: RoutinePreviewOccurrence[]; truncated: boolean; limitations: string[];
 };
 export type RoutinePreviewRange = { from: string; to: string };
+export type GenerateRoutineInput = { from: string; to: string };
+export type RoutineGenerationLink = { occurrenceKey: string; taskId: string };
+export type RoutineGenerationResult = {
+  routineId: string; from: string; to: string; createdCount: number; existingCount: number;
+  created: RoutineGenerationLink[]; existing: RoutineGenerationLink[];
+};
 
 type RoutineSubtaskInput = { title: string; estimatedDurationMinutes: number };
 /** Editable template fields only. Pause/resume uses its dedicated wrapper. */

@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState, type SetStateAction } from "react";
+import { useEffect, useState, useSyncExternalStore, type SetStateAction } from "react";
 import { getArchivedTasks, getTasks, getTodayTasks, type Task } from "@/lib/tasks";
 import { taskContextQuery, type TaskSection } from "@/lib/task-context";
 import { useTaskContext } from "./use-task-context";
+import { subscribeTaskListInvalidation, taskListVersion, taskListServerVersion } from "@/lib/task-list-invalidation";
 
 export function calendarSignature(timezones: string[], now = new Date()) {
   return timezones.map((timeZone) => new Intl.DateTimeFormat("en-CA", {
@@ -12,7 +13,8 @@ export function calendarSignature(timezones: string[], now = new Date()) {
 export function useTaskList(section: TaskSection, areaRevision = 0) {
   const { context, ready } = useTaskContext();
   const [revision, setRevision] = useState(0);
-  const key = section + ":" + taskContextQuery(context) + ":" + areaRevision + ":" + revision;
+  const dataVersion = useSyncExternalStore(subscribeTaskListInvalidation, taskListVersion, taskListServerVersion);
+  const key = section + ":" + taskContextQuery(context) + ":" + areaRevision + ":" + revision + ":" + dataVersion;
   const [result, setResult] = useState<{ key: string; tasks: Task[]; timezones: string[]; error: string | null } | null>(null);
   const current = ready && result?.key === key;
   useEffect(() => {

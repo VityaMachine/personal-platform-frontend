@@ -1,9 +1,15 @@
 import { jsonRequest, requestDto, ApiError } from "./api";
-import { isRoutine, isRoutineList, isRoutinePreview } from "./routine-validation";
-import type { CreateRoutineInput, UpdateRoutineInput, RoutinePreviewRange } from "./routine-types";
+import { isRoutine, isRoutineList, isRoutinePreview, isRoutineGenerationResult } from "./routine-validation";
+import type { CreateRoutineInput, UpdateRoutineInput, RoutinePreviewRange, GenerateRoutineInput, RoutineGenerationResult } from "./routine-types";
 const routinePath = (id: string) => `/routines/${encodeURIComponent(id)}`;
 export const getRoutines = (signal?: AbortSignal) => requestDto("/routines", isRoutineList, { signal });
 export const createRoutine = (input: CreateRoutineInput, signal?: AbortSignal) => requestDto("/routines", isRoutine, jsonRequest("POST", input, signal));
+export function generateRoutine(id: string, input: GenerateRoutineInput, signal?: AbortSignal) {
+  const body = { from: input.from, to: input.to };
+  return requestDto(`${routinePath(id)}/generate`, (value): value is RoutineGenerationResult =>
+    isRoutineGenerationResult(value) && value.routineId === id && value.from === body.from && value.to === body.to,
+    jsonRequest("POST", body, signal));
+}
 export const getRoutine = (id: string, signal?: AbortSignal) => requestDto(routinePath(id), (value): value is import("./routine-types").Routine => isRoutine(value) && value.id === id, { signal });
 export const updateRoutine = (id: string, input: UpdateRoutineInput, signal?: AbortSignal) =>
   requestDto(routinePath(id), (value): value is import("./routine-types").Routine => isRoutine(value) && value.id === id, jsonRequest("PATCH", input, signal));
