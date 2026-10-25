@@ -1,31 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { getTask, getTaskHistory } from "@/lib/tasks";
+
+import { useTaskContext } from "./use-task-context";
 
 type Result<T> = { taskId: string; attempt: number } & (
   | { data: T; error: null }
   | { data: null; error: string }
 );
 
-function useDetailsResource<T>(taskId: string, load: (id: string, signal: AbortSignal) => Promise<T>) {
+function useDetailsResource<T>(taskId: string, load: (id: string, signal: AbortSignal) => Promise<T>, contextKey = "", ready = true) {
   const [attempt, setAttempt] = useState(0);
-  const [scope, setScope] = useState({ taskId, attempt });
+  const resourceId = `${taskId}:${contextKey}`;
+  const [scope, setScope] = useState({ taskId: resourceId, attempt });
   const [result, setResult] = useState<Result<T> | null>(null);
   // Hide previous content before committing a different ID or retry.
-  if (scope.taskId !== taskId || scope.attempt !== attempt) {
-    setScope({ taskId, attempt });
+  if (scope.taskId !== resourceId || scope.attempt !== attempt) {
+    setScope({ taskId: resourceId, attempt });
     setResult(null);
   }
   useEffect(() => {
+    if (!ready) return;
     const controller = new AbortController();
     void load(taskId, controller.signal).then(
       (data) => {
-        if (!controller.signal.aborted) setResult({ taskId, attempt, data, error: null });
+        if (!controller.signal.aborted) setResult({ taskId: resourceId, attempt, data, error: null });
       },
       (error: unknown) => {
-        if (!controller.signal.aborted) setResult({ taskId, attempt, data: null,
+        if (!controller.signal.aborted) setResult({ taskId: resourceId, attempt, data: null,
           error: error instanceof ApiError && error.status === 404
             ? "Задачу не знайдено. Можливо, її вже видалено."
             : error instanceof Error ? error.message : "Не вдалося завантажити дані. Спробуйте ще раз.",
@@ -33,9 +37,9 @@ function useDetailsResource<T>(taskId: string, load: (id: string, signal: AbortS
       },
     );
     return () => controller.abort();
-  }, [taskId, attempt, load]);
+  }, [taskId, resourceId, attempt, load, ready]);
 
-  const current = result?.taskId === taskId && result.attempt === attempt;
+  const current = result?.taskId === resourceId && result.attempt === attempt;
   return {
     data: current ? result.data : null,
     error: current ? result.error : null,
@@ -45,7 +49,9 @@ function useDetailsResource<T>(taskId: string, load: (id: string, signal: AbortS
 }
 
 export function useTaskDetails(taskId: string) {
-  const task = useDetailsResource(taskId, getTask);
+  const { context, ready } = useTaskContext();
+  const load = useCallback((id: string, signal: AbortSignal) => getTask(id, signal, context), [context]);
+  const task = useDetailsResource(taskId, load, JSON.stringify(context), ready);
   const history = useDetailsResource(taskId, getTaskHistory);
   return { task, history };
 }

@@ -37,7 +37,25 @@ export type Subtask = {
   deletedAt: string | null;
 };
 
+export type RoutineOccurrence = {
+  id: string;
+  routineId: string;
+  occurrenceKey: string;
+  startDate: string;
+  endDate: string;
+  timezone: string;
+  localTime: string | null;
+  instant: string | null;
+  occurrenceNumber: number | null;
+  previousOccurrenceId: string | null;
+  basisCompletedAt: string | null;
+};
+
 export type Task = {
+  isToday: boolean;
+  /** Verified current completion from the backend; never inferred locally. */
+  completedAt: string | null;
+  routineOccurrence: RoutineOccurrence | null;
   areaId: string | null;
   area: AreaReference | null;
   id: string;

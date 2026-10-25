@@ -1,3 +1,6 @@
+import { Temporal } from "@js-temporal/polyfill";
+import { isTimeZone } from "./settings";
+import type { RoutineOccurrence } from "./task-types";
 import { TASK_PRIORITIES, TASK_STATUSES, TASK_TIME_STATUSES, type Subtask, type Task, type TaskHistoryEvent, type TaskSummary } from "./task-types";
 
 import { isAreaReference } from "./area-validation";
@@ -49,8 +52,28 @@ export function isSubtask(value: unknown): value is Subtask {
   return isRecord(value) && hasCommonFields(value) && typeof value.taskId === "string";
 }
 
+function isLocalDate(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value) || value.startsWith("0000")) return false;
+  try { return Temporal.PlainDate.from(value).toString() === value; } catch { return false; }
+}
+
+export function isRoutineOccurrence(value: unknown): value is RoutineOccurrence {
+  return isRecord(value) && typeof value.id === "string" && typeof value.routineId === "string"
+    && typeof value.occurrenceKey === "string"
+    && isLocalDate(value.startDate) && isLocalDate(value.endDate) && value.startDate <= value.endDate
+    && isTimeZone(value.timezone)
+    && (value.localTime === null || (typeof value.localTime === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.localTime)))
+    && nullableTimestamp(value.instant)
+    && (value.occurrenceNumber === null || (typeof value.occurrenceNumber === "number" && Number.isSafeInteger(value.occurrenceNumber) && value.occurrenceNumber > 0))
+    && nullableText(value.previousOccurrenceId) && nullableTimestamp(value.basisCompletedAt);
+}
+
 export function isTask(value: unknown): value is Task {
   return isRecord(value) && hasCommonFields(value)
+    && typeof value.isToday === "boolean"
+    && nullableTimestamp(value.completedAt)
+    && (value.status === "DONE" || value.completedAt === null)
+    && (value.routineOccurrence === null || isRoutineOccurrence(value.routineOccurrence))
     && ((value.areaId === null && value.area === null)
       || (isAreaReference(value.area) && value.areaId === value.area.id))
     && nullableText(value.description)

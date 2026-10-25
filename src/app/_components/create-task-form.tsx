@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { createTask, type Task } from "@/lib/tasks";
 import { ApiError } from "@/lib/api";
 import { AreaSelect } from "./area-select";
@@ -8,6 +8,7 @@ import { TASK_PRIORITIES } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS } from "@/lib/task-labels";
 import { EMPTY_TASK_FIELDS, MAX_DURATION_MINUTES, getSubtaskDuration, parseCreateTaskFields, type CreateTaskErrors, type CreateTaskFields, type SubtaskErrors, type SubtaskFields } from "@/lib/create-task-input";
 import { SubtasksEditor } from "./subtasks-editor";
+import { useTaskContext } from "../_hooks/use-task-context";
 import { useFormDates } from "../_hooks/use-form-dates";
 import { ZonedDateTimeField } from "./zoned-date-time-field";
 import styles from "../page.module.css";
@@ -15,13 +16,16 @@ import styles from "../page.module.css";
 type Props = {
   formId: string;
   disabled: boolean;
-  onCreated: (task: Task) => void;
+  onCreated: (task: Task, contextKey: string) => void;
   onSubmittingChange: (submitting: boolean) => void;
   onDirtyChange: (dirty: boolean) => void;
 };
 
 export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange, onDirtyChange }: Props) {
+  const createdCallback = useRef(onCreated);
+  useLayoutEffect(() => { createdCallback.current = onCreated; });
   const dates = useFormDates();
+  const { context, ready } = useTaskContext();
   const [fields, setFields] = useState<CreateTaskFields>(EMPTY_TASK_FIELDS);
   const [subtasks, setSubtasks] = useState<SubtaskFields[]>([]);
   const [subtaskErrors, setSubtaskErrors] = useState<SubtaskErrors>({});
@@ -75,7 +79,7 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (disabled || inFlight.current) return;
+    if (!ready || disabled || inFlight.current) return;
     const result = parseCreateTaskFields(fields, subtasks, dates.options);
     setErrors(result.errors ?? {});
     setSubtaskErrors(result.subtaskErrors ?? {});
@@ -91,7 +95,7 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
     onSubmittingChange(true);
     let created: Task;
     try {
-      created = await createTask(result.input);
+      created = await createTask(result.input, undefined, context);
     } catch (error) {
       // ApiError.message is safe for UI; apiMessage/details are diagnostics only.
       setError(error instanceof ApiError && error.status === 404 && fields.areaId
@@ -110,7 +114,7 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
     setErrors({});
     onDirtyChange(false);
     // A validated POST response is enough to insert the task without a second GET.
-    onCreated(created);
+    createdCallback.current(created, JSON.stringify(context));
   }
 
   return (

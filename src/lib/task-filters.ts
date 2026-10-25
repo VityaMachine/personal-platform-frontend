@@ -1,3 +1,4 @@
+import type { TaskSection } from "./task-context";
 import { isAreaId } from "./area-validation";
 import { TASK_PRIORITIES, TASK_STATUSES, type Task, type TaskPriority, type TaskStatus } from "./task-types";
 
@@ -41,9 +42,11 @@ export function sameTaskFilters(left: TaskFilters, right: TaskFilters) {
   return keys.every((key) => left[key] === right[key]);
 }
 
-export function taskSectionHref(params: URLSearchParams, archived: boolean) {
+export function taskSectionHref(params: URLSearchParams, section: TaskSection | boolean) {
   const result = new URLSearchParams(params);
-  if (archived) result.set("archived", "true");
+  result.delete("view");
+  if (section === "today") result.set("view", "today");
+  if (section === true || section === "archive") result.set("archived", "true");
   else result.delete("archived");
   const query = result.toString();
   return query ? `/?${query}` : "/";
@@ -52,6 +55,15 @@ export function taskSectionHref(params: URLSearchParams, archived: boolean) {
 const priorityRank: Record<TaskPriority, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
 const idAsc = (left: Task, right: Task) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0;
 const newest = (left: Task, right: Task) => Date.parse(right.createdAt) - Date.parse(left.createdAt);
+
+/** Partition an already filtered and sorted list; relative order stays intact. */
+export function groupTaskList(tasks: Task[], section: TaskSection): { id: string; title: string | null; tasks: Task[] }[] {
+  if (section !== "today") return [{ id: "all", title: null, tasks }];
+  return [
+    { id: "todo", title: "До виконання", tasks: tasks.filter((task) => task.status !== "DONE") },
+    { id: "done", title: "Виконано сьогодні", tasks: tasks.filter((task) => task.status === "DONE") },
+  ].filter((group) => group.tasks.length > 0);
+}
 
 export function selectTasks(tasks: readonly Task[], filters: TaskFilters): Task[] {
   const query = filters.q.trim().toLocaleLowerCase("uk-UA");

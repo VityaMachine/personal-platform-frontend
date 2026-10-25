@@ -9,7 +9,7 @@ import styles from "../page.module.css";
 type Props = {
   returnFocusRef: RefObject<HTMLButtonElement | null>;
   onClose: () => void;
-  onCreated: (task: Task) => void;
+  onCreated: (task: Task, contextKey: string) => void;
   onSubmittingChange: (submitting: boolean) => void;
 };
 

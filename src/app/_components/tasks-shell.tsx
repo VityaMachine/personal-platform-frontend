@@ -3,12 +3,13 @@ import Link from "next/link";
 import { taskSectionHref } from "@/lib/task-filters";
 import styles from "../page.module.css";
 
-export function TasksShell({ children, archived = false, query, areasDisabled, onManageAreas, settingsPage = false, onNavigate }: {
-  children: ReactNode; archived?: boolean; query: string; areasDisabled: boolean; onManageAreas: (opener: HTMLButtonElement) => void;
+export function TasksShell({ children, archived = false, today = false, query, areasDisabled, onManageAreas, settingsPage = false, onNavigate }: {
+  children: ReactNode; archived?: boolean; today?: boolean; query: string; areasDisabled: boolean; onManageAreas: (opener: HTMLButtonElement) => void;
   settingsPage?: boolean; onNavigate?: (href: string) => void;
 }) {
   const currentHref = taskSectionHref(new URLSearchParams(query), false);
   const archiveHref = taskSectionHref(new URLSearchParams(query), true);
+  const todayHref = taskSectionHref(new URLSearchParams(query), "today");
   const settingsHref = `/settings${query ? `?${query}` : ""}`;
   function navigate(event: MouseEvent<HTMLAnchorElement>, href: string) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -21,8 +22,11 @@ export function TasksShell({ children, archived = false, query, areasDisabled, o
       <aside className={styles.sidebar}>
         <Link className={styles.brand} href={currentHref} scroll={false} onClick={(e) => navigate(e, currentHref)}>PersonalPlatform</Link>
         <nav aria-label="Основна навігація">
-          <Link className={styles.navItem} href={currentHref} scroll={false} onClick={(e) => navigate(e, currentHref)} aria-current={!settingsPage && !archived ? "page" : undefined}>
+          <Link className={styles.navItem} href={currentHref} scroll={false} onClick={(e) => navigate(e, currentHref)} aria-current={!settingsPage && !archived && !today ? "page" : undefined}>
             <span aria-hidden="true">✓</span> Поточні задачі
+          </Link>
+          <Link className={styles.navItem} href={todayHref} scroll={false} onClick={(e) => navigate(e, todayHref)} aria-current={!settingsPage && today ? "page" : undefined}>
+            <span aria-hidden="true">☀</span> Сьогодні
           </Link>
           <Link className={styles.navItem} href={archiveHref} scroll={false} onClick={(e) => navigate(e, archiveHref)} aria-current={!settingsPage && archived ? "page" : undefined}>
             <span aria-hidden="true">▣</span> Архів

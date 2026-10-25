@@ -1,5 +1,5 @@
 "use client";
-
+import { RoutineOccurrence } from "./routine-occurrence";
 
 import { useRef, useState } from "react";
 import { TASK_STATUSES, type InitialSubtaskInput, type Subtask, type SubtaskDetailsChange, type SubtaskStatusChange, type Task, type TaskDetailsChange, type TaskStatusChange } from "@/lib/task-types";
@@ -119,6 +119,7 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
             {task.subtasks.length > 0 && <span className={styles.subtaskProgress} aria-label={`Завершено підзадач: ${completedSubtasks} із ${task.subtasks.length}`}>{completedSubtasks}/{task.subtasks.length}</span>}
           </div>
           {task.description && <p className={styles.taskDescription}>{task.description}</p>}
+          <RoutineOccurrence task={task} />
           <div className={styles.taskMetadata}>
             {task.area && <span className={styles.taskPriority}>Сфера: {task.area.name}</span>}
             <select

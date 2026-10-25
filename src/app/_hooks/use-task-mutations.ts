@@ -1,8 +1,12 @@
 "use client";
 
-import { useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useLayoutEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { archiveTask, unarchiveTask, createSubtask, deleteSubtask, deleteTask, getTask, updateSubtask, updateTask, type Task } from "@/lib/tasks";
 import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange, TaskDetailsChange, TaskStatusChange } from "@/lib/task-types";
+
+import { taskInSection, type TaskContext, type TaskSection } from "@/lib/task-context";
+
+type Scope = { context: TaskContext; scopeKey: string; section: TaskSection; reload: () => void };
 
 export type TaskMutationState = {
   pending?: "toggle" | "delete" | "archive" | "subtask" | "refresh" | "edit" | "status";
@@ -15,7 +19,15 @@ export type TaskMutationState = {
 
 const REFRESH_ERROR = "Зміну збережено, але дані не вдалося оновити. Повторіть завантаження даних.";
 
-export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, disabled: boolean, onSubtaskCreated: (id: string) => void) {
+export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, disabled: boolean, onSubtaskCreated: (id: string) => void, scope: Scope) {
+  const latest = useRef({ ...scope, setTasks });
+  useLayoutEffect(() => { latest.current = { ...scope, setTasks }; });
+  function applyTask(task: Task, requested: Scope) {
+    if (latest.current.scopeKey !== requested.scopeKey) { latest.current.reload(); return; }
+    latest.current.setTasks((previous) => taskInSection(task, requested.section)
+      ? previous.some((item) => item.id === task.id) ? previous.map((item) => item.id === task.id ? task : item) : [task, ...previous]
+      : previous.filter((item) => item.id !== task.id));
+  }
   const [states, setStates] = useState<Record<string, TaskMutationState>>({});
   // Synchronous, per-parent locks also protect against clicks before rerender.
   // A saved change awaiting refresh keeps its lock until GET succeeds.
@@ -36,8 +48,9 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     needsRefresh.current.set(id, refreshError);
     setState(id, { pending: "refresh", refreshRequired: true });
     try {
-      const task = await getTask(id);
-      setTasks((previous) => previous.map((item) => item.id === id ? task : item));
+      const requested = latest.current;
+      const task = await getTask(id, undefined, requested.context);
+      applyTask(task, requested);
       if (expandAfterRefresh.current.delete(id)) onSubtaskCreated(id);
       needsRefresh.current.delete(id);
       locks.current.delete(id);
@@ -53,8 +66,10 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     if (disabled || locks.current.has(id)) return false;
     locks.current.add(id);
     setState(id, { pending });
+    let result: unknown;
+    const requested = scope;
     try {
-      await action();
+      result = await action();
     } catch {
       locks.current.delete(id);
       setState(id, { error: "Не вдалося зберегти зміну. Дані залишилися без змін. Спробуйте ще раз." });
@@ -62,7 +77,9 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     }
 
     if (pending === "delete" || pending === "archive") {
-      setTasks((previous) => previous.filter((task) => task.id !== id));
+      if (pending === "archive") applyTask(result as Task, requested);
+      else if (latest.current.scopeKey !== requested.scopeKey) latest.current.reload();
+      else setTasks((previous) => previous.filter((task) => task.id !== id));
       locks.current.delete(id);
       setStates((previous) => {
         const next = { ...previous };
@@ -101,8 +118,8 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     saving.current.add(id);
     setState(id, { ...(owner ? dialogState(owner) : {}), pending });
     try {
-      const task = await updateTask(id, input);
-      setTasks((previous) => previous.map((item) => item.id === id ? task : item));
+      const task = await updateTask(id, input, undefined, scope.context);
+      applyTask(task, scope);
       dialogs.current.delete(id);
       locks.current.delete(id);
       setState(id, { notice: pending === "edit" ? "Задачу оновлено." : "Статус задачі змінено." });
@@ -131,7 +148,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     },
     toggleTask: (task: Task) => patchTask(task.id, { status: task.status === "DONE" ? "TODO" : "DONE" }, "toggle"),
     deleteTask: (id: string) => mutate(id, "delete", () => deleteTask(id), "Задачу видалено."),
-    changeArchived: (task: Task) => mutate(task.id, "archive", () => task.archivedAt ? unarchiveTask(task.id) : archiveTask(task.id), ""),
+    changeArchived: (task: Task) => mutate(task.id, "archive", () => task.archivedAt ? unarchiveTask(task.id, undefined, scope.context) : archiveTask(task.id, undefined, scope.context), ""),
     changeSubtaskStatus: async (taskId: string, subtask: Subtask, change: SubtaskStatusChange) => {
       if (subtask.status === change.status) return true;
       // Omit cancellationNote when reopening; the backend retains its history.

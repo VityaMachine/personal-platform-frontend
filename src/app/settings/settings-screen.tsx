@@ -143,7 +143,7 @@ function SettingsForm() {
               <input id="settings-days" type="number" min={1} max={365} step={1} disabled={draft.todayOverdueMode !== "limited"} value={draft.todayOverdueDays} aria-invalid={Boolean(errors.todayOverdueDays)} aria-describedby="settings-days-hint settings-days-error" onChange={(e) => change("todayOverdueDays", e.target.value)} />
               <span id="settings-days-error" className={styles.fieldError}>{errors.todayOverdueDays}</span>
             </label>
-            <p id="settings-days-hint" className={styles.fieldHint}>Сьогодні входить завжди. Обмежений режим додає N попередніх календарних днів; «Не показувати» залишає лише сьогодні, «Показувати всі» додає всі попередні дні. Це налаштування для майбутнього перегляду «Сьогодні».</p>
+            <p id="settings-days-hint" className={styles.fieldHint}>Сьогодні входить завжди. Обмежений режим додає N попередніх календарних днів; «Не показувати» залишає лише сьогодні, «Показувати всі» додає всі попередні дні.</p>
           </fieldset>
           <div className={local.actions}><button type="submit" className={styles.primaryButton}>Зберегти</button>{dirty && <span className={styles.fieldHint}>Є незбережені зміни</span>}</div>
         </fieldset>

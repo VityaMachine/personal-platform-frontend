@@ -1,4 +1,6 @@
 "use client";
+import { RoutineOccurrence } from "./routine-occurrence";
+
 import type { Task } from "@/lib/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { useSettings } from "../_hooks/use-settings";
@@ -41,6 +43,7 @@ export function TaskDetailsContent({ task }: { task: Task }) {
     </div>
     <aside className={styles.metadata} aria-label="Метадані задачі">
       <h3>Про задачу</h3>
+      <RoutineOccurrence task={task} />
       <dl>
         <div><dt>Сфера</dt><dd>{task.area?.name ?? "Без сфери"}</dd></div>
         <div><dt>Статус</dt><dd><span className={shared.taskStatus} data-status={task.status}>{TASK_STATUS_LABELS[task.status]}</span></dd></div>
@@ -50,6 +53,7 @@ export function TaskDetailsContent({ task }: { task: Task }) {
         <div><dt>Орієнтовна тривалість</dt><dd>{formatDuration(task.estimatedDurationMinutes)}</dd></div>
         <div><dt>Створено</dt><dd><DateValue value={task.createdAt} /></dd></div>
         <div><dt>Оновлено</dt><dd><DateValue value={task.updatedAt} /></dd></div>
+        {task.completedAt && <div><dt>Завершено</dt><dd><DateValue value={task.completedAt} /></dd></div>}
         {task.archivedAt && <div><dt>Архівовано</dt><dd><DateValue value={task.archivedAt} /></dd></div>}
       </dl>
     </aside>

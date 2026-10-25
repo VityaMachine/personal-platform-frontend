@@ -506,6 +506,21 @@
   list-style: none;
 }
 
+.taskGroupHeading {
+  padding: 0.5rem 0;
+  color: var(--secondary);
+}
+
+.taskGroupHeading h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.taskGroupHeading span {
+  font-weight: 400;
+}
+
 .task {
   container: task-card / inline-size;
   min-width: 0;
