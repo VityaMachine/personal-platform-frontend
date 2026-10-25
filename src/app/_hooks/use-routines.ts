@@ -45,7 +45,13 @@ export function useRoutines(onUpdated: (routine: Routine) => void) {
       request.current?.abort();
       setResult((previous) => ({ attempt, error: null, data: [routine, ...(previous?.data ?? []).filter((item) => item.id !== routine.id)] }));
     },
-    states, toggle, pending: Object.values(states).some((state) => state.pending), reload: () => setAttempt((value) => value + 1) };
+    commitUpdated: (routine: Routine) => {
+      request.current?.abort();
+      setResult((previous) => ({ attempt, error: null, data: (previous?.data ?? []).map((item) => item.id === routine.id ? routine : item) }));
+      setStates((previous) => ({ ...previous, [routine.id]: {} }));
+      onUpdated(routine);
+    },
+    states, toggle, isLocked: (id: string) => locks.current.has(id), pending: Object.values(states).some((state) => state.pending), reload: () => setAttempt((value) => value + 1) };
 }
 
 export function useRoutineDetails(id: string, replacement?: Routine) {

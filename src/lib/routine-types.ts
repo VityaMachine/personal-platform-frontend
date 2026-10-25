@@ -34,6 +34,10 @@ export type RoutinePreview = {
 export type RoutinePreviewRange = { from: string; to: string };
 
 type RoutineSubtaskInput = { title: string; estimatedDurationMinutes: number };
+/** Editable template fields only. Pause/resume uses its dedicated wrapper. */
+export type UpdateRoutineInput = Partial<Pick<Routine, "title" | "description" | "priority" | "areaId" | "estimatedDurationMinutes" | "timezone" | "startDate" | "schedule" | "endCondition">> & {
+  subtasks?: RoutineSubtaskInput[];
+};
 export type CreateRoutineInput = {
   title: string; description?: string | null; priority?: TaskPriority; areaId?: string | null;
   timezone: string; startDate: string; schedule: RoutineSchedule; endCondition?: RoutineEndCondition;

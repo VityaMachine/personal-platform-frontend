@@ -1,10 +1,12 @@
 import { jsonRequest, requestDto, ApiError } from "./api";
 import { isRoutine, isRoutineList, isRoutinePreview } from "./routine-validation";
-import type { CreateRoutineInput, RoutinePreviewRange } from "./routine-types";
+import type { CreateRoutineInput, UpdateRoutineInput, RoutinePreviewRange } from "./routine-types";
 const routinePath = (id: string) => `/routines/${encodeURIComponent(id)}`;
 export const getRoutines = (signal?: AbortSignal) => requestDto("/routines", isRoutineList, { signal });
 export const createRoutine = (input: CreateRoutineInput, signal?: AbortSignal) => requestDto("/routines", isRoutine, jsonRequest("POST", input, signal));
 export const getRoutine = (id: string, signal?: AbortSignal) => requestDto(routinePath(id), (value): value is import("./routine-types").Routine => isRoutine(value) && value.id === id, { signal });
+export const updateRoutine = (id: string, input: UpdateRoutineInput, signal?: AbortSignal) =>
+  requestDto(routinePath(id), (value): value is import("./routine-types").Routine => isRoutine(value) && value.id === id, jsonRequest("PATCH", input, signal));
 export const setRoutinePaused = (id: string, paused: boolean, signal?: AbortSignal) =>
   requestDto(routinePath(id), (value): value is import("./routine-types").Routine => isRoutine(value) && value.id === id, jsonRequest("PATCH", { paused }, signal));
 export function getRoutinePreview(id: string, range: RoutinePreviewRange, signal?: AbortSignal) {
