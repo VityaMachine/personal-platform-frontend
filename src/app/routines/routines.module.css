@@ -1,0 +1,32 @@
+.list { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.card { min-width: 0; padding: 20px; border: 1px solid var(--card-border); border-radius: 12px; background: var(--surface); overflow-wrap: anywhere; }
+.card h2 { margin: 0; font-size: 1.125rem; white-space: pre-wrap; }
+.status { display: inline-block; margin: 8px 0; padding: 4px 8px; border-radius: 6px; background: var(--done-bg); color: var(--accent); font-size: 0.875rem; }
+.status[data-paused="true"] { background: var(--warning-bg); color: var(--warning); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px 24px; margin: 12px 0; }
+.facts > div { min-width: 0; }
+.facts dt { color: var(--secondary); font-size: 0.8125rem; }
+.facts dd { margin: 4px 0 0; line-height: 1.5; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.actions button { max-width: 100%; overflow-wrap: anywhere; }
+.hint { color: var(--secondary); font-size: 0.875rem; line-height: 1.5; }
+.text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.modal { width: min(1120px, calc(100% - 48px)); }
+.layout { grid-template-rows: auto minmax(0, 1fr); }
+.modalTitle { min-width: 0; overflow-wrap: anywhere; }
+.modal header > button { flex-shrink: 0; }
+.body { min-width: 0; overflow-wrap: anywhere; line-height: 1.5; }
+.templates { padding-left: 24px; }
+.templates li { margin-block: 8px; white-space: pre-wrap; }
+.preview { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+.range { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.range label { flex: 1 1 180px; }
+.range button { min-height: 46px; max-width: 100%; }
+.occurrences { padding-left: 24px; }
+.occurrences li { margin-block: 12px; }
+.messages { padding-left: 20px; color: var(--secondary); }
+.messages li { margin-block: 8px; }
+@media (max-width: 540px) {
+  .card { padding: 16px; }
+  .modal { width: calc(100% - 24px); }
+}
