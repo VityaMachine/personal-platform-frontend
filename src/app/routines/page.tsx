@@ -7,6 +7,8 @@ import { AreasModal } from "../_components/areas-modal";
 import { useAreas } from "../_hooks/use-areas";
 import { useOpenDialog } from "../_hooks/use-open-dialog";
 import { useRoutines } from "../_hooks/use-routines";
+import { useSettings } from "../_hooks/use-settings";
+import { CreateRoutineModal } from "./create-routine-modal";
 import { RoutineDetailsModal } from "./routine-details-modal";
 import { RoutineFacts } from "./routine-facts";
 import shared from "../page.module.css";
@@ -19,22 +21,32 @@ function RoutinesScreen() {
   const params = useSearchParams();
   const router = useRouter();
   const areas = useAreas();
+  const preferences = useSettings();
   const dialogOpen = useOpenDialog();
   const modalLock = useRef(false);
   const [selected, setSelected] = useState<{ id: string; opener: HTMLButtonElement; replacement?: Routine } | null>(null);
   const [areasOpener, setAreasOpener] = useState<HTMLButtonElement | null>(null);
+  const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [notice, setNotice] = useState("");
   const directory = useRoutines((routine) => setSelected((previous) => previous?.id === routine.id ? { ...previous, replacement: routine } : previous));
-  return <TasksShell routinesPage query={params.toString()} areasDisabled={directory.pending || dialogOpen} onNavigate={(href) => {
-    if (!directory.pending && !modalLock.current && !document.querySelector("dialog[open]")) router.push(href, { scroll: false });
+  return <TasksShell routinesPage query={params.toString()} areasDisabled={directory.pending || creating || dialogOpen} onNavigate={(href) => {
+    if (!directory.pending && !creating && !modalLock.current && !document.querySelector("dialog[open]")) router.push(href, { scroll: false });
   }} onManageAreas={(opener) => {
     if (!directory.pending && !modalLock.current && !document.querySelector("dialog[open]")) { modalLock.current = true; areas.reload(); setAreasOpener(opener); }
   }}>
     <div className={shared.tasksToolbar}>
       <header className={shared.header}>
         <h1 id="routines-heading" className={shared.title}>Повторювані задачі</h1>
-        <button type="button" className={shared.secondaryButton} disabled={directory.loading || directory.pending || dialogOpen} onClick={directory.reload}>Оновити список</button>
+        <div className={shared.taskHeaderActions}>
+          <button type="button" className={shared.secondaryButton} disabled={directory.loading || directory.pending || dialogOpen} onClick={directory.reload}>Оновити список</button>
+          <button type="button" className={shared.primaryButton} disabled={!preferences.ready || directory.loading || directory.pending || dialogOpen} onClick={(event) => {
+            if (!modalLock.current && !document.querySelector("dialog[open]")) { modalLock.current = true; setNotice(""); setCreateOpener(event.currentTarget); }
+          }}>Нове повторення</button>
+        </div>
       </header>
       <p className={styles.hint}>Шаблони повторень. «Активний» означає відсутність паузи, а не гарантію майбутніх виконань.</p>
+      {notice && <p role="status" className={shared.notice}>{notice}</p>}
     </div>
     <section className={shared.taskScroll} aria-labelledby="routines-heading" aria-busy={directory.loading} tabIndex={0}>
       {directory.loading && <p role="status">Завантаження повторюваних задач…</p>}
@@ -66,5 +78,8 @@ function RoutinesScreen() {
       pending={Boolean(directory.states[selected.id]?.pending)} error={directory.states[selected.id]?.error} notice={directory.states[selected.id]?.notice}
       onToggle={(routine) => void directory.toggle(routine)} onClose={() => { modalLock.current = false; setSelected(null); }} />}
     {areasOpener && <AreasModal opener={areasOpener} onClose={() => { modalLock.current = false; setAreasOpener(null); directory.reload(); }} tasksLoading={false} tasksError={null} reloadTasks={directory.reload} />}
+    {createOpener && <CreateRoutineModal opener={createOpener} timezone={preferences.settings.timeZone} onSubmittingChange={setCreating}
+      onClose={() => { modalLock.current = false; setCreateOpener(null); }}
+      onCreated={(routine) => { directory.addCreated(routine); setNotice("Шаблон повторення створено"); modalLock.current = false; setCreateOpener(null); }} />}
   </TasksShell>;
 }

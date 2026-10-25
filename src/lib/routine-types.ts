@@ -32,3 +32,12 @@ export type RoutinePreview = {
   occurrences: RoutinePreviewOccurrence[]; truncated: boolean; limitations: string[];
 };
 export type RoutinePreviewRange = { from: string; to: string };
+
+type RoutineSubtaskInput = { title: string; estimatedDurationMinutes: number };
+export type CreateRoutineInput = {
+  title: string; description?: string | null; priority?: TaskPriority; areaId?: string | null;
+  timezone: string; startDate: string; schedule: RoutineSchedule; endCondition?: RoutineEndCondition;
+} & (
+  | { estimatedDurationMinutes: number; subtasks?: RoutineSubtaskInput[] }
+  | { estimatedDurationMinutes?: never; subtasks: [RoutineSubtaskInput, ...RoutineSubtaskInput[]] }
+);

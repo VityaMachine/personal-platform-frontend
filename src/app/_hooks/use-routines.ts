@@ -41,6 +41,10 @@ export function useRoutines(onUpdated: (routine: Routine) => void) {
   }
   const current = result?.attempt === attempt;
   return { routines: current ? result.data : [], error: current ? result.error : null, loading: !current,
+    addCreated: (routine: Routine) => {
+      request.current?.abort();
+      setResult((previous) => ({ attempt, error: null, data: [routine, ...(previous?.data ?? []).filter((item) => item.id !== routine.id)] }));
+    },
     states, toggle, pending: Object.values(states).some((state) => state.pending), reload: () => setAttempt((value) => value + 1) };
 }
 

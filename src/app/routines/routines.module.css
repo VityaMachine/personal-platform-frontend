@@ -26,6 +26,19 @@
 .occurrences li { margin-block: 12px; }
 .messages { padding-left: 20px; color: var(--secondary); }
 .messages li { margin-block: 8px; }
+.createLayout { grid-template-rows: auto minmax(0, 1fr) auto; }
+.createColumns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 28px; }
+.mainFields, .scheduleEditor { min-width: 0; display: grid; gap: 16px; }
+.scheduleEditor { overflow-wrap: anywhere; }
+.scheduleEditor > p, .mainFields > p { margin: 0; }
+.weekdays { min-width: 0; display: grid; gap: 8px; margin: 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+.weekdays legend { color: var(--secondary); padding: 0 4px; }
+.weekdays label { display: flex; align-items: center; gap: 8px; min-height: 32px; }
+.weekdays input { accent-color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; }
+.weekdays input:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.ruleDescription { padding: 12px; border-radius: 8px; background: var(--nav); color: var(--text); line-height: 1.5; }
+.createError { margin-top: 16px; }
+@media (max-width: 900px) { .createColumns { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 @media (max-width: 540px) {
   .card { padding: 16px; }
   .modal { width: calc(100% - 24px); }
