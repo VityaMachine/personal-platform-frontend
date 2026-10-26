@@ -7,7 +7,7 @@ export function summarizeTaskStatuses(tasks: readonly Pick<Task, "status">[]) {
     total: tasks.length,
     todo: statuses.TODO,
     inProgress: statuses.IN_PROGRESS,
-    inactive: statuses.CANCELED + statuses.PAUSED + statuses.POSTPONED,
+    inactive: statuses.CANCELED + statuses.PAUSED + statuses.POSTPONED + statuses.SKIPPED,
     done: statuses.DONE,
     statuses,
   };

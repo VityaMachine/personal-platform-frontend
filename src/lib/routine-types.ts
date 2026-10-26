@@ -1,5 +1,5 @@
 import type { AreaReference } from "./area-types";
-import type { TaskPriority } from "./task-types";
+import type { OccurrenceBasis, TaskPriority } from "./task-types";
 
 export type WeeklySelection = { type: "DAYS"; weekdays: number[] }
   | { type: "WINDOW"; startWeekday: number; endWeekday: number };
@@ -34,7 +34,7 @@ export type RoutinePreview = {
 export type RoutinePreviewRange = { from: string; to: string };
 export type RoutinePlanningInput = { occurrenceKey: string; plannedAt: string };
 export type GenerateRoutineInput = { from: string; to: string; planning?: RoutinePlanningInput[] };
-export type RoutineGenerationOccurrence = RoutinePreviewOccurrence & { existing: boolean };
+export type RoutineGenerationOccurrence = RoutinePreviewOccurrence & OccurrenceBasis & { existing: boolean };
 export type RoutineGenerationPreview = {
   routineId: string; timezone: string; from: string; to: string; occurrences: RoutineGenerationOccurrence[];
 };

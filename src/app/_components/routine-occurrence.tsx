@@ -1,6 +1,7 @@
 "use client";
 
 import type { Task } from "@/lib/task-types";
+import { formatRoutineBasis } from "@/lib/routine-format";
 import { useSettings } from "../_hooks/use-settings";
 import styles from "../page.module.css";
 
@@ -19,5 +20,6 @@ export function RoutineOccurrence({ task }: { task: Task }) {
     {occurrence.endDate !== occurrence.startDate && <> — <time dateTime={occurrence.endDate}>{formatOccurrenceDate(occurrence.endDate)}</time></>}
     {occurrence.localTime && <> · {occurrence.localTime}</>}
     {occurrence.timezone !== settings.timeZone && <> · {occurrence.timezone}</>}
+    {occurrence.basisType && occurrence.basisAt && <> · {formatRoutineBasis(occurrence, occurrence.timezone)}</>}
   </p>;
 }

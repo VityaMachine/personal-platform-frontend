@@ -31,7 +31,7 @@ export function RoutinePreview({ routine, disabled }: { routine: Routine; disabl
   return <section className={styles.preview} aria-labelledby={`${id}-heading`}>
     <h3 id={`${id}-heading`}>Попередній перегляд виконань</h3>
     <p className={styles.hint}>Preview показує проєкцію розкладу, а не список уже створених задач. Перегляд нічого не створює.</p>
-    {routine.schedule.recurrence.type === "AFTER_COMPLETION" && <p className={styles.hint}>Фактичний наступник залежить від завершення попереднього виконання. Без контексту завершення тут доступне лише перше виконання, якщо воно потрапляє у діапазон.</p>}
+    {routine.schedule.recurrence.type === "AFTER_COMPLETION" && <p className={styles.hint}>Фактичний наступник залежить від завершення або пропуску попереднього виконання. Без контексту результату тут доступне лише перше виконання, якщо воно потрапляє у діапазон. Фактичного кандидата зі збереженого результату можна перевірити в діалозі «Створити задачі».</p>}
     {routine.pausedAt && <p className={styles.hint}>Відкритий період паузи може прибрати майбутні виконання з preview. Уже створені задачі залишаються доступними.</p>}
     <form onSubmit={submit} className={styles.range} noValidate>
       <label className={shared.field}>З дати

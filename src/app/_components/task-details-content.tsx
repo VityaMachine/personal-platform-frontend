@@ -24,6 +24,7 @@ export function TaskDetailsContent({ task }: { task: Task }) {
         <h3>Опис</h3>
         <p className={styles.fullText}>{task.description || "Опис не додано."}</p>
         {task.cancellationNote && <p className={styles.fullText}><strong>Причина скасування: </strong>{task.cancellationNote}</p>}
+        {task.skipNote?.trim() && <p className={styles.fullText}><strong>Причина пропуску: </strong>{task.skipNote}</p>}
       </section>
       <TaskTimeSummary task={task} />
       <section aria-label="Підзадачі">
@@ -54,6 +55,7 @@ export function TaskDetailsContent({ task }: { task: Task }) {
         <div><dt>Створено</dt><dd><DateValue value={task.createdAt} /></dd></div>
         <div><dt>Оновлено</dt><dd><DateValue value={task.updatedAt} /></dd></div>
         {task.completedAt && <div><dt>Завершено</dt><dd><DateValue value={task.completedAt} /></dd></div>}
+        {task.skippedAt && <div><dt>Пропущено</dt><dd><DateValue value={task.skippedAt} /></dd></div>}
         {task.archivedAt && <div><dt>Архівовано</dt><dd><DateValue value={task.archivedAt} /></dd></div>}
       </dl>
     </aside>

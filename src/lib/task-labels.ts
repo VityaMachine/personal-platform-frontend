@@ -7,6 +7,7 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   POSTPONED: "Відкладено",
   DONE: "Завершено",
   CANCELED: "Скасовано",
+  SKIPPED: "Пропущено",
 };
 
 export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {

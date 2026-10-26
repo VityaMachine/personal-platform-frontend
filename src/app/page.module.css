@@ -709,7 +709,7 @@
   color: var(--accent);
 }
 
-.taskStatus[data-status="PAUSED"], .taskStatus[data-status="POSTPONED"], .taskPriority[data-priority="HIGH"] {
+.taskStatus[data-status="PAUSED"], .taskStatus[data-status="POSTPONED"], .taskStatus[data-status="SKIPPED"], .taskPriority[data-priority="HIGH"] {
   background: var(--warning-bg);
   color: var(--warning);
 }

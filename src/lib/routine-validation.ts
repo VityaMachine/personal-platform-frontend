@@ -79,7 +79,10 @@ export function isGenerateRoutineInput(value: unknown): value is GenerateRoutine
 export function isRoutineGenerationPreview(value: unknown): value is RoutineGenerationPreview {
   if (!record(value) || !validGenerationRange(value) || !isAreaId(value.routineId) || !timezone(value.timezone)
     || !Array.isArray(value.occurrences) || !value.occurrences.every((entry: unknown) => isPreviewOccurrence(entry)
-      && entry.occurrenceKey.length > 0 && entry.occurrenceKey.length <= 512 && "existing" in entry && typeof entry.existing === "boolean")) return false;
+      && entry.occurrenceKey.length > 0 && entry.occurrenceKey.length <= 512 && "existing" in entry && typeof entry.existing === "boolean"
+      && "basisType" in entry && (entry.basisType === null || entry.basisType === "COMPLETED" || entry.basisType === "SKIPPED")
+      && "basisAt" in entry && nullableTimestamp(entry.basisAt)
+      && "basisCompletedAt" in entry && nullableTimestamp(entry.basisCompletedAt))) return false;
   return new Set(value.occurrences.map((entry) => entry.occurrenceKey)).size === value.occurrences.length
     && value.occurrences.filter((entry) => !entry.existing).length <= 100;
 }

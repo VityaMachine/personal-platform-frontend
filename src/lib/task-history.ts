@@ -19,12 +19,13 @@ const fields: Record<string, string> = {
   plannedAt: "Планування", dueAt: "Дедлайн", estimatedDurationMinutes: "Тривалість",
   cancellationNote: "Причина скасування", archivedAt: "Дата архівування", deletedAt: "Дата видалення",
   area: "Сфера",
+  skipNote: "Причина пропуску", skippedAt: "Пропущено",
 };
 
 export type HistoryChange = { key: string; label: string; before: string; after: string; initial: boolean };
 
 function needsDetails(change: HistoryChange) {
-  return change.initial || ["description", "cancellationNote", "archivedAt", "deletedAt"].includes(change.key)
+  return change.initial || ["description", "cancellationNote", "skipNote", "archivedAt", "deletedAt"].includes(change.key)
     || [change.before, change.after].some((value) => value.length > 100 || value.includes("\n"));
 }
 

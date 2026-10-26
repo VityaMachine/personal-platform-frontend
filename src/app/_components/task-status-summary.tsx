@@ -40,7 +40,7 @@ export function TaskStatusSummary({ tasks, loading, error }: {
     </div>
     <details className={styles.inactiveDetails}>
       <summary>Склад неактивних</summary>
-      <p>Скасовано: {counts.statuses.CANCELED} · На паузі: {counts.statuses.PAUSED} · Відкладено: {counts.statuses.POSTPONED}</p>
+      <p>Скасовано: {counts.statuses.CANCELED} · На паузі: {counts.statuses.PAUSED} · Відкладено: {counts.statuses.POSTPONED} · Пропущено: {counts.statuses.SKIPPED}</p>
     </details>
   </section>;
 }

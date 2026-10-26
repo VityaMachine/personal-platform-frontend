@@ -145,9 +145,9 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     changeTaskStatus: (task: Task, change: TaskStatusChange) => {
       if (task.status === change.status) return Promise.resolve(true);
       // Omit cancellationNote when leaving CANCELED: the backend retains its history.
-      return patchTask(task.id, change, "status", change.status === "CANCELED" || change.status === "POSTPONED" ? "status" : undefined);
+      return patchTask(task.id, change, "status", change.status === "CANCELED" || change.status === "POSTPONED" || change.status === "SKIPPED" ? "status" : undefined);
     },
-    toggleTask: (task: Task) => patchTask(task.id, { status: task.status === "DONE" ? "TODO" : "DONE" }, "toggle"),
+    toggleTask: (task: Task) => task.status === "SKIPPED" ? Promise.resolve(false) : patchTask(task.id, { status: task.status === "DONE" ? "TODO" : "DONE" }, "toggle"),
     deleteTask: (id: string) => mutate(id, "delete", () => deleteTask(id), "Задачу видалено."),
     changeArchived: (task: Task) => mutate(task.id, "archive", () => task.archivedAt ? unarchiveTask(task.id, undefined, scope.context) : archiveTask(task.id, undefined, scope.context), ""),
     changeSubtaskStatus: async (taskId: string, subtask: Subtask, change: SubtaskStatusChange) => {

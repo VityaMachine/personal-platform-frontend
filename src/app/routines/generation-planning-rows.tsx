@@ -1,7 +1,7 @@
 import type { RoutineGenerationPreview } from "@/lib/routine-types";
 import type { GenerationPlanningDrafts } from "@/lib/routine-generation-planning";
 import { planningOutsideOccurrence } from "@/lib/routine-generation-planning";
-import { formatRoutineDate, formatPreviewDiagnostic } from "@/lib/routine-format";
+import { formatRoutineDate, formatPreviewDiagnostic, formatRoutineBasis } from "@/lib/routine-format";
 import { localDateCandidates } from "@/lib/zoned-date";
 import shared from "../page.module.css";
 import styles from "./routines.module.css";
@@ -28,6 +28,7 @@ export function GenerationPlanningRows({ id, preview, drafts, errors, disabled, 
           {entry.endDate !== entry.startDate && <> — <time dateTime={entry.endDate}>{formatRoutineDate(entry.endDate)}</time></>}
         </strong>
       </p>
+      {entry.basisType && entry.basisAt && <p className={styles.hint}>{formatRoutineBasis(entry, entry.timezone)}</p>}
       {entry.existing ? <span className={`${styles.hint} ${styles.generationExisting}`}>Уже створено</span> : <>
         <div className={styles.generationFields}>
           {window && <label className={`${shared.field} ${styles.generationField}`} htmlFor={`${fieldId}-date`}>Дата

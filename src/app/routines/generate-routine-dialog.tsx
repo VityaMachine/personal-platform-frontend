@@ -89,7 +89,7 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
           <li>Повторний запуск не дублює вже створені виконання.</li>
           <li>Максимум 100 нових задач за запит. Якщо ліміт перевищено, звузьте діапазон.</li>
         </ul>
-        {routine.schedule.recurrence.type === "AFTER_COMPLETION" && <p className={styles.hint}>Один запуск створює максимум одне нове виконання. Наступне залежить від фактичного завершення попередньої задачі. Дати й наступника визначає сервер.</p>}
+        {routine.schedule.recurrence.type === "AFTER_COMPLETION" && <p className={styles.hint}>Один запуск створює максимум одне нове виконання. Наступне залежить від фактичного завершення або пропуску попередньої задачі. Дати й наступника визначає сервер.</p>}
         {routine.pausedAt && <p className={shared.fieldError}>Повторення на паузі. Перед запуском потрібно його відновити.</p>}
         <form id={`${id}-form`} onSubmit={(event) => { event.preventDefault(); if (!confirming) void model.loadPreview(); }} noValidate className={styles.range} aria-busy={pending}>
           <label className={shared.field} htmlFor={`${id}-from`}>З дати

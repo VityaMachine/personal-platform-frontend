@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TASK_STATUSES, type Subtask, type SubtaskDetailsChange, type SubtaskStatusChange, type TaskStatus } from "@/lib/task-types";
+import { SUBTASK_STATUSES, type Subtask, type SubtaskDetailsChange, type SubtaskStatusChange } from "@/lib/task-types";
 import { TASK_STATUS_LABELS } from "@/lib/task-labels";
 import { formatDuration } from "@/lib/format-duration";
 import { CancelSubtaskDialog } from "./cancel-subtask-dialog";
@@ -23,8 +23,8 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, readOnly = fals
   const [editing, setEditing] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
 
   function selectStatus(subtask: Subtask, select: HTMLSelectElement) {
-    const status = select.value as TaskStatus;
-    if (disabled || status === subtask.status) return;
+    const status = SUBTASK_STATUSES.find((value) => value === select.value);
+    if (disabled || !status || status === subtask.status) return;
     if (status === "CANCELED") setCanceling({ subtask, opener: select });
     else void onStatusChange(subtask, { status });
   }
@@ -59,7 +59,7 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, readOnly = fals
               disabled={disabled}
               onChange={(event) => selectStatus(subtask, event.currentTarget)}
             >
-              {TASK_STATUSES.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
+              {SUBTASK_STATUSES.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
             </select>}
             <span className={styles.nestedSubtaskDuration}><span className={styles.visuallyHidden}>Орієнтовна тривалість: </span>{formatDuration(subtask.estimatedDurationMinutes)}</span>
             {!readOnly && <button

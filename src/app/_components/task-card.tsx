@@ -14,6 +14,7 @@ import { DeleteSubtaskDialog } from "./delete-subtask-dialog";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
 import { EditTaskModal } from "./edit-task-modal";
 import { TaskStatusDialog } from "./task-status-dialog";
+import { SkipTaskDialog } from "./skip-task-dialog";
 import type { TaskMutationState } from "../_hooks/use-task-mutations";
 import styles from "../page.module.css";
 
@@ -61,9 +62,11 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
   const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
   const [editing, setEditing] = useState<{ task: Task; opener: HTMLButtonElement } | null>(null);
   const [statusDialog, setStatusDialog] = useState<{ task: Task; status: "CANCELED" | "POSTPONED"; opener: HTMLSelectElement } | null>(null);
+  const [skipDialog, setSkipDialog] = useState<{ task: Task; opener: HTMLButtonElement | HTMLSelectElement } | null>(null);
   const completed = task.status === "DONE";
   const archived = task.archivedAt !== null;
   const canceled = task.status === "CANCELED";
+  const skipped = task.status === "SKIPPED";
   const completedSubtasks = task.subtasks.filter((subtask) => subtask.status === "DONE").length;
   const subtasksId = `task-${task.id}-subtasks`;
 
@@ -72,7 +75,9 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
     // A selection opens a draft; the task keeps its saved status until PATCH succeeds.
     select.value = task.status;
     if (disabled || !status || status === task.status) return;
-    if (status === "CANCELED" || status === "POSTPONED") {
+    if (status === "SKIPPED") {
+      if (task.routineOccurrence && onBeginStatusDialog()) setSkipDialog({ task, opener: select });
+    } else if (status === "CANCELED" || status === "POSTPONED") {
       if (onBeginStatusDialog()) setStatusDialog({ task, status, opener: select });
     } else void onStatusChange({ status });
   }
@@ -103,7 +108,7 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
             </svg>
           </button>
         )}
-        {!canceled ? (
+        {!canceled && !skipped ? (
           <input
             className={styles.checkbox}
             type="checkbox"
@@ -130,7 +135,7 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
               aria-disabled={disabled}
               onChange={(event) => selectStatus(event.currentTarget)}
             >
-              {TASK_STATUSES.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
+              {TASK_STATUSES.filter((status) => status !== "SKIPPED" || task.routineOccurrence).map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
             </select>
             <span className={styles.taskPriority} data-priority={task.priority}>Пріоритет: {TASK_PRIORITY_LABELS[task.priority]}</span>
             <dl className={styles.taskDetails}>
@@ -157,6 +162,8 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
           {task.subtasks.length === 0 && addSubtaskButton}
         </div>
         <div className={styles.taskActions}>
+          {!archived && task.routineOccurrence && !skipped && <button className={styles.secondaryButton} type="button" aria-disabled={disabled}
+            onClick={(event) => { if (!disabled && onBeginStatusDialog()) setSkipDialog({ task, opener: event.currentTarget }); }}>Пропустити</button>}
           <button className={styles.secondaryButton} type="button" disabled={disabled} onClick={(event) => {
             if (!disabled && !document.querySelector("dialog[open]")) setDetailsOpener(event.currentTarget);
           }}>Деталі</button>
@@ -218,6 +225,9 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
         onConfirm={onStatusChange}
         onClose={() => { onEndStatusDialog(); setStatusDialog(null); }}
       />}
+      {skipDialog && <SkipTaskDialog taskTitle={skipDialog.task.title} opener={skipDialog.opener}
+        disabled={retryDisabled || Boolean(mutation?.pending || mutation?.refreshRequired)}
+        onConfirm={onStatusChange} onClose={() => { onEndStatusDialog(); setSkipDialog(null); }} />}
     </li>
   );
 }

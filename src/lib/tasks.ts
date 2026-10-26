@@ -3,7 +3,7 @@ import { jsonRequest, requestDelete, requestDto } from "./api";
 import type { CreateSubtaskInput, CreateTaskInput, UpdateSubtaskInput, UpdateTaskInput, TaskHistoryEvent } from "./task-types";
 import { isSubtask, isSubtaskList, isTask, isTaskList, isTaskHistory } from "./task-validation";
 
-export type { Task, Subtask, TaskStatus, TaskPriority, CreateTaskInput, UpdateTaskInput, CreateSubtaskInput, UpdateSubtaskInput, TaskHistoryEvent } from "./task-types";
+export type { Task, Subtask, TaskStatus, SubtaskStatus, TaskPriority, CreateTaskInput, UpdateTaskInput, CreateSubtaskInput, UpdateSubtaskInput, TaskHistoryEvent } from "./task-types";
 
 const withContext = (path: string, context?: TaskContext) => context ? `${path}${path.includes("?") ? "&" : "?"}${taskContextQuery(context)}` : path;
 

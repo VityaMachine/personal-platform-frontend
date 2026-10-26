@@ -1,14 +1,17 @@
 import type { AreaReference } from "./area-types";
 
-export const TASK_STATUSES = ["TODO", "IN_PROGRESS", "PAUSED", "POSTPONED", "DONE", "CANCELED"] as const;
+export const SUBTASK_STATUSES = ["TODO", "IN_PROGRESS", "PAUSED", "POSTPONED", "DONE", "CANCELED"] as const;
+export type SubtaskStatus = (typeof SUBTASK_STATUSES)[number];
+export const TASK_STATUSES = [...SUBTASK_STATUSES, "SKIPPED"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 export type PostponeTaskChange = { status: "POSTPONED"; plannedAt: string | null; dueAt?: string | null };
 export type TaskStatusChange =
-  | { status: Exclude<TaskStatus, "CANCELED" | "POSTPONED"> }
+  | { status: Exclude<TaskStatus, "CANCELED" | "POSTPONED" | "SKIPPED"> }
+  | { status: "SKIPPED"; skipNote?: string | null }
   | { status: "CANCELED"; cancellationNote: string }
   | PostponeTaskChange;
 export type SubtaskStatusChange =
-  | { status: Exclude<TaskStatus, "CANCELED"> }
+  | { status: Exclude<SubtaskStatus, "CANCELED"> }
   | { status: "CANCELED"; cancellationNote: string };
 export const TASK_PRIORITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
@@ -29,7 +32,7 @@ export type Subtask = {
   id: string;
   taskId: string;
   title: string;
-  status: TaskStatus;
+  status: SubtaskStatus;
   estimatedDurationMinutes: number;
   cancellationNote: string | null;
   createdAt: string;
@@ -49,6 +52,8 @@ export type RoutineOccurrence = {
   occurrenceNumber: number | null;
   previousOccurrenceId: string | null;
   basisCompletedAt: string | null;
+  basisType: "COMPLETED" | "SKIPPED" | null;
+  basisAt: string | null;
 };
 
 export type Task = {
@@ -56,6 +61,8 @@ export type Task = {
   isBacklog: boolean;
   /** Verified current completion from the backend; never inferred locally. */
   completedAt: string | null;
+  skippedAt: string | null;
+  skipNote: string | null;
   routineOccurrence: RoutineOccurrence | null;
   areaId: string | null;
   area: AreaReference | null;
@@ -77,6 +84,8 @@ export type Task = {
   subtasks: Subtask[];
   summary: TaskSummary;
 };
+
+export type OccurrenceBasis = Pick<RoutineOccurrence, "basisType" | "basisAt" | "basisCompletedAt">;
 
 /** History metadata is JSON with partial before/after snapshots. Older or
  * future events may omit it or have an unknown shape; inspect before use. */
@@ -109,9 +118,11 @@ export type CreateTaskInput = {
   | { estimatedDurationMinutes?: never; subtasks: [InitialSubtaskInput, ...InitialSubtaskInput[]] }
 );
 
-type StatusInput =
+type SubtaskStatusInput =
   | { status: "CANCELED"; cancellationNote: string }
-  | { status?: Exclude<TaskStatus, "CANCELED">; cancellationNote?: string };
+  | { status?: Exclude<SubtaskStatus, "CANCELED">; cancellationNote?: string };
+
+type TaskStatusInput = SubtaskStatusInput | { status: "SKIPPED"; skipNote?: string | null };
 
 type AtLeastOne<T> = { [K in keyof T]-?: Required<Pick<T, K>> & Partial<Omit<T, K>> }[keyof T];
 
@@ -128,6 +139,7 @@ type TaskChanges = {
   dueAt: string | null;
   estimatedDurationMinutes: number;
   cancellationNote: string;
+  skipNote: string | null;
   archived: boolean;
 };
 
@@ -137,7 +149,7 @@ type TaskChanges = {
  * Entering POSTPONED without plannedAt clears plannedAt on the backend.
  */
 export type UpdateTaskInput = Partial<TaskChanges> & (
-  | (StatusInput & { status: TaskStatus; isCompleted?: never })
+  | (TaskStatusInput & { status: TaskStatus; isCompleted?: never })
   | { isCompleted: boolean; status?: never }
   | (AtLeastOne<TaskChanges> & { status?: never; isCompleted?: never })
 );
@@ -146,7 +158,7 @@ export type UpdateTaskInput = Partial<TaskChanges> & (
 export type CreateSubtaskInput = {
   title: string;
   estimatedDurationMinutes: number;
-} & StatusInput;
+} & SubtaskStatusInput;
 
 type SubtaskChanges = {
   title: string;
@@ -156,6 +168,6 @@ type SubtaskChanges = {
 
 /** Subtask writes on archived tasks return 409 and may update parent status/duration. */
 export type UpdateSubtaskInput = Partial<SubtaskChanges> & (
-  | (StatusInput & { status: TaskStatus })
+  | (SubtaskStatusInput & { status: SubtaskStatus })
   | (AtLeastOne<SubtaskChanges> & { status?: never })
 );

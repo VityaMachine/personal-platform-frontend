@@ -1,7 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { isTimeZone } from "./settings";
 import type { RoutineOccurrence } from "./task-types";
-import { TASK_PRIORITIES, TASK_STATUSES, TASK_TIME_STATUSES, type Subtask, type Task, type TaskHistoryEvent, type TaskSummary } from "./task-types";
+import { TASK_PRIORITIES, TASK_STATUSES, SUBTASK_STATUSES, TASK_TIME_STATUSES, type Subtask, type Task, type TaskHistoryEvent, type TaskSummary } from "./task-types";
 
 import { isAreaReference } from "./area-validation";
 
@@ -49,7 +49,7 @@ function hasCommonFields(value: Record<string, unknown>): boolean {
 }
 
 export function isSubtask(value: unknown): value is Subtask {
-  return isRecord(value) && hasCommonFields(value) && typeof value.taskId === "string";
+  return isRecord(value) && hasCommonFields(value) && SUBTASK_STATUSES.some((status) => status === value.status) && typeof value.taskId === "string";
 }
 
 function isLocalDate(value: unknown): value is string {
@@ -65,7 +65,9 @@ export function isRoutineOccurrence(value: unknown): value is RoutineOccurrence 
     && (value.localTime === null || (typeof value.localTime === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.localTime)))
     && nullableTimestamp(value.instant)
     && (value.occurrenceNumber === null || (typeof value.occurrenceNumber === "number" && Number.isSafeInteger(value.occurrenceNumber) && value.occurrenceNumber > 0))
-    && nullableText(value.previousOccurrenceId) && nullableTimestamp(value.basisCompletedAt);
+    && nullableText(value.previousOccurrenceId) && nullableTimestamp(value.basisCompletedAt)
+    && nullableTimestamp(value.basisAt)
+    && (value.basisType === null || value.basisType === "COMPLETED" || value.basisType === "SKIPPED");
 }
 
 export function isTask(value: unknown): value is Task {
@@ -73,6 +75,10 @@ export function isTask(value: unknown): value is Task {
     && typeof value.isToday === "boolean"
     && typeof value.isBacklog === "boolean"
     && nullableTimestamp(value.completedAt)
+    && nullableTimestamp(value.skippedAt)
+    && nullableText(value.skipNote)
+    && (value.status === "SKIPPED" || (value.skippedAt === null && value.skipNote === null))
+    && (value.status !== "SKIPPED" || (value.routineOccurrence !== null && value.isToday === false && value.isBacklog === false))
     && (value.status === "DONE" || value.completedAt === null)
     && (value.routineOccurrence === null || isRoutineOccurrence(value.routineOccurrence))
     && ((value.areaId === null && value.area === null)

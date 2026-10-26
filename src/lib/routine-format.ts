@@ -1,6 +1,13 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { RoutineSchedule, RoutineEndCondition, RoutinePreviewRange } from "./routine-types";
 import { isRoutineDate } from "./routine-validation";
+import { formatDate } from "./format-date";
+import type { OccurrenceBasis } from "./task-types";
+
+export function formatRoutineBasis(basis: Pick<OccurrenceBasis, "basisType" | "basisAt">, timeZone: string) {
+  if (!basis.basisType || !basis.basisAt) return null;
+  return `Підстава: ${basis.basisType === "SKIPPED" ? "пропуск" : "завершення"} попереднього виконання — ${formatDate(basis.basisAt, timeZone)}`;
+}
 
 export function formatRoutineDate(value: string) { const [year, month, day] = value.split("-"); return `${day}.${month}.${year}`; }
 const weekdays = ["", "понеділок", "вівторок", "середа", "четвер", "п’ятниця", "субота", "неділя"];
@@ -8,7 +15,7 @@ const plural = (value: number, forms: [string, string, string]) => value % 100 >
 export function formatRoutineSchedule(schedule: RoutineSchedule): string {
   const rule = schedule.recurrence;
   if (rule.type === "DAILY") return rule.intervalDays === 1 ? "Щодня" : `Кожні ${rule.intervalDays} ${plural(rule.intervalDays, ["день", "дні", "днів"])}`;
-  if (rule.type === "AFTER_COMPLETION") return `Через ${rule.intervalDays} ${plural(rule.intervalDays, ["день", "дні", "днів"])} після завершення`;
+  if (rule.type === "AFTER_COMPLETION") return `Через ${rule.intervalDays} ${plural(rule.intervalDays, ["день", "дні", "днів"])} після завершення або пропуску`;
   if (rule.type === "WEEKLY") {
     const interval = rule.intervalWeeks === 1 ? "Щотижня" : `Кожні ${rule.intervalWeeks} ${plural(rule.intervalWeeks, ["тиждень", "тижні", "тижнів"])}`;
     const selection = rule.selection;
@@ -35,7 +42,7 @@ const limitations: Record<string, string> = {
   CONFIGURATION_CHANGED: "Налаштування розкладу змінювалися. Проєкція минулих дат може не відповідати історії.",
   PAUSE_HISTORY_UNCERTAIN: "Історія пауз неповна або неоднозначна. Результат враховує лише відомі періоди пауз.",
   COUNT_HISTORY_UNCERTAIN: "Неможливо достовірно визначити залишок виконань для обмеження кількістю за наявною історією.",
-  FUTURE_COMPLETIONS_REQUIRED: "Наступні дати залежать від фактичного завершення попереднього виконання. Без цього контексту preview може показати лише перше виконання.",
+  FUTURE_COMPLETIONS_REQUIRED: "Наступні дати залежать від фактичного завершення або пропуску попереднього виконання. Без цього контексту preview може показати лише перше виконання.",
   COMPUTATION_BUDGET_EXCEEDED: "Досягнуто обмеження обчислень. Результат може бути неповним; спробуйте коротший або раніший період.",
   HISTORY_BUDGET_EXCEEDED: "Історія перевищує ліміт обробки. Для цього запиту preview не може достовірно визначити виконання.",
   CALENDAR_RANGE_EXCEEDED: "Наступна дата виходить за підтримуваний календарний діапазон до 9999 року.",

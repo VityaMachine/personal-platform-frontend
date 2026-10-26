@@ -42,11 +42,11 @@ export function RoutineScheduleEditor(props: EditorProps) {
     <RoutineFormField {...props} name="localTime" label="Локальний час (необов’язково)" type="time" required={false} />
     <p className={styles.hint}>Дати й час належать часовому поясу шаблону. Зміна поясу не змінює введену дату початку.</p>
     <RoutineFormField {...props} name="recurrence" label="Повторення" options={[
-      ["DAILY", "Кожні N днів"], ["WEEKLY", "Кожні N тижнів"], ["MONTHLY", "Кожні N місяців"], ["AFTER_COMPLETION", "Через N днів після завершення"],
+      ["DAILY", "Кожні N днів"], ["WEEKLY", "Кожні N тижнів"], ["MONTHLY", "Кожні N місяців"], ["AFTER_COMPLETION", "Через N днів після завершення або пропуску"],
     ]} />
     {fields.recurrence === "DAILY" && <RoutineFormField {...props} name="dailyInterval" label="Інтервал у днях" type="number" />}
     {fields.recurrence === "AFTER_COMPLETION" && <>
-      <RoutineFormField {...props} name="afterInterval" label="Днів після завершення" type="number" />
+      <RoutineFormField {...props} name="afterInterval" label="Днів після завершення або пропуску" type="number" />
       <p className={styles.hint}>Наступна дата залежить від фактичного DONE попередньої задачі. Перше виконання прив’язане до дати початку. Багатоденного вікна тут немає.</p>
     </>}
     {fields.recurrence === "WEEKLY" && <>
