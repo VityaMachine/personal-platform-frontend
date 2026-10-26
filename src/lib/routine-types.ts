@@ -29,25 +29,34 @@ export type RoutinePreviewOccurrence = {
 };
 export type RoutinePreview = {
   routineId: string; timezone: string; from: string; to: string;
-  occurrences: RoutinePreviewOccurrence[]; truncated: boolean; limitations: string[];
+  occurrences: RoutinePreviewOccurrence[]; truncated: boolean; limitations: string[]; conflicts?: RoutineWindowConflict[];
 };
 export type RoutinePreviewRange = { from: string; to: string };
 export type RoutinePlanningInput = { occurrenceKey: string; plannedAt: string };
 export type GenerateRoutineInput = { from: string; to: string; planning?: RoutinePlanningInput[] };
 export type RoutineGenerationOccurrence = RoutinePreviewOccurrence & OccurrenceBasis & { existing: boolean };
 export type RoutineGenerationPreview = {
-  routineId: string; timezone: string; from: string; to: string; occurrences: RoutineGenerationOccurrence[];
+  routineId: string; timezone: string; from: string; to: string; occurrences: RoutineGenerationOccurrence[]; conflicts?: RoutineWindowConflict[];
 };
 export type RoutineGenerationLink = { occurrenceKey: string; taskId: string };
 export type RoutineGenerationResult = {
   routineId: string; from: string; to: string; createdCount: number; existingCount: number;
-  created: RoutineGenerationLink[]; existing: RoutineGenerationLink[];
+  created: RoutineGenerationLink[]; existing: RoutineGenerationLink[]; conflicts?: RoutineWindowConflict[];
 };
 
 type RoutineSubtaskInput = { title: string; estimatedDurationMinutes: number };
 /** Editable template fields only. Pause/resume uses its dedicated wrapper. */
-export type UpdateRoutineInput = Partial<Pick<Routine, "title" | "description" | "priority" | "areaId" | "estimatedDurationMinutes" | "timezone" | "startDate" | "schedule" | "endCondition">> & {
+export type UpdateRoutineInput = Partial<Pick<Routine, "title" | "description" | "priority" | "areaId" | "estimatedDurationMinutes">> & {
   subtasks?: RoutineSubtaskInput[];
+};
+export type RoutineCalendarConfiguration = Pick<Routine, "timezone" | "startDate" | "schedule" | "endCondition">;
+export type CreateRoutineScheduleVersionInput = RoutineCalendarConfiguration & { effectiveDate: string };
+export type RoutineScheduleVersion = CreateRoutineScheduleVersionInput & {
+  id: string; routineId: string; number: number; effectiveTimezone: string; effectiveAt: string; createdAt: string;
+};
+export type RoutineWindowConflict = {
+  code: "STORED_WINDOW_CONFLICT" | "VERSION_WINDOW_CONFLICT";
+  occurrenceKey: string; retainedOccurrenceKey: string; retainedTaskId: string | null;
 };
 export type CreateRoutineInput = {
   title: string; description?: string | null; priority?: TaskPriority; areaId?: string | null;

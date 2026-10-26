@@ -1,23 +1,24 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
-import type { Routine } from "@/lib/routine-types";
+import type { Routine, RoutineGenerationResult } from "@/lib/routine-types";
 import { formatRoutineDate } from "@/lib/routine-format";
 import { useRoutineGeneration } from "../_hooks/use-routine-generation";
 import { GenerationPlanningRows } from "./generation-planning-rows";
+import { RoutineConflicts } from "./routine-conflicts";
 import type { TraversalAttempt } from "@/lib/history-traversal-guard";
 import { useHistoryTraversalGuard } from "../_hooks/use-history-traversal-guard";
 import { DiscardChangesDialog } from "../_components/discard-changes-dialog";
 import shared from "../page.module.css";
 import styles from "./routines.module.css";
 
-export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks, onSubmittingChange, navigationDisabled = false }: {
+export function GenerateRoutineDialog({ routine, opener, onClose, onGenerated, onCurrentTasks, onSubmittingChange, navigationDisabled = false }: {
   routine: Routine; opener: HTMLButtonElement; onClose: () => void;
+  onGenerated: (result: RoutineGenerationResult) => void;
   onCurrentTasks: () => void; onSubmittingChange: (pending: boolean) => void; navigationDisabled?: boolean;
 }) {
   const id = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const fromRef = useRef<HTMLInputElement>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
   const errorRef = useRef<HTMLDivElement>(null);
   const model = useRoutineGeneration(routine, onSubmittingChange);
   const { range, result, error, rangeError: fieldError, pending, dirty } = model;
@@ -25,6 +26,9 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
   const traversal = useRef<TraversalAttempt | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [discardFocus, setDiscardFocus] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (result) onGenerated(result);
+  }, [result, onGenerated]);
 
   useHistoryTraversalGuard(dirty || pending, (attempt) => {
     if (model.isPosting() || confirming || action.current) { attempt.stay(); return true; }
@@ -54,8 +58,7 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
   }
   function focusOutcome(outcome: string | null) {
     requestAnimationFrame(() => {
-      if (outcome === "success") resultRef.current?.focus();
-      else if (outcome === "error") errorRef.current?.focus();
+      if (outcome === "error") errorRef.current?.focus();
       else if (outcome === "validation") {
         const invalid = dialogRef.current?.querySelector<HTMLElement>('input[aria-invalid="true"], select[aria-invalid="true"]');
         (invalid ?? fromRef.current)?.focus();
@@ -112,6 +115,7 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
           </div>}
           {model.notice && <p role="status" className={styles.hint}>{model.notice}</p>}
           {model.preview.data && <>
+            <RoutineConflicts conflicts={model.preview.data.conflicts} />
             <p className={styles.hint}>Перелік за {formatRoutineDate(model.preview.data.from)} — {formatRoutineDate(model.preview.data.to)}.
               {!model.current && " Перелік неактуальний. Оновіть виконання перед новою генерацією; введення збережено."}
             </p>
@@ -132,19 +136,12 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
             <p className={styles.hint}>Новий запит із поточного планування доступний після завершення точного повтору й оновлення виконань.</p>
           </>}
         </div>}
-        {result && <div ref={resultRef} role="status" tabIndex={-1} className={styles.generationResult}>
-          <p>Створено задач: <strong>{result.createdCount}</strong></p>
-          <p>Уже існувало: <strong>{result.existingCount}</strong></p>
-          <p className={styles.hint}>Діапазон: {formatRoutineDate(result.from)} — {formatRoutineDate(result.to)}</p>
-          {result.createdCount === 0 && result.existingCount === 0 && <p>У цьому діапазоні задач не створено й наявних виконань не знайдено.</p>}
-        </div>}
-        {result && <p className={styles.hint}>Оновіть виконання перед наступним запуском. Старі редаговані рядки повторно не надсилаються.</p>}
-        {(result || error?.uncertain) && <button type="button" className={shared.secondaryButton} disabled={pending || navigationDisabled} onClick={() => {
+        {error?.uncertain && <button type="button" className={shared.secondaryButton} disabled={pending || navigationDisabled} onClick={() => {
           if (!navigationDisabled) requestClose(onCurrentTasks);
         }}>Перейти до поточних задач</button>}
       </div>
       <footer className={shared.modalFooter}>
-        <button type="button" className={shared.secondaryButton} disabled={pending} onClick={() => requestClose()}>{result ? "Закрити" : "Скасувати"}</button>
+        <button type="button" className={shared.secondaryButton} disabled={pending} onClick={() => requestClose()}>Скасувати</button>
         <button type="button" onClick={submit} className={shared.primaryButton} disabled={pending || confirming || !model.canGenerate}>
           {pending ? "Створення…" : "Створити задачі"}
         </button>

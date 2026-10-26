@@ -58,7 +58,7 @@ export function isPreviewOccurrence(value: unknown): value is RoutinePreviewOccu
     && timezone(value.timezone) && localTime(value.localTime) && nullableTimestamp(value.instant) && strings(value.diagnostics);
 }
 export function isRoutinePreview(value: unknown): value is RoutinePreview {
-  return record(value) && isAreaId(value.routineId) && timezone(value.timezone) && isRoutineDate(value.from) && isRoutineDate(value.to) && value.from <= value.to
+  return record(value) && validConflicts(value.conflicts) && isAreaId(value.routineId) && timezone(value.timezone) && isRoutineDate(value.from) && isRoutineDate(value.to) && value.from <= value.to
     && Array.isArray(value.occurrences) && value.occurrences.every(isPreviewOccurrence) && typeof value.truncated === "boolean" && strings(value.limitations);
 }
 
@@ -77,7 +77,7 @@ export function isGenerateRoutineInput(value: unknown): value is GenerateRoutine
   }) && new Set(value.planning.map((entry) => entry.occurrenceKey)).size === value.planning.length;
 }
 export function isRoutineGenerationPreview(value: unknown): value is RoutineGenerationPreview {
-  if (!record(value) || !validGenerationRange(value) || !isAreaId(value.routineId) || !timezone(value.timezone)
+  if (!record(value) || !validConflicts(value.conflicts) || !validGenerationRange(value) || !isAreaId(value.routineId) || !timezone(value.timezone)
     || !Array.isArray(value.occurrences) || !value.occurrences.every((entry: unknown) => isPreviewOccurrence(entry)
       && entry.occurrenceKey.length > 0 && entry.occurrenceKey.length <= 512 && "existing" in entry && typeof entry.existing === "boolean"
       && "basisType" in entry && (entry.basisType === null || entry.basisType === "COMPLETED" || entry.basisType === "SKIPPED")
@@ -89,7 +89,7 @@ export function isRoutineGenerationPreview(value: unknown): value is RoutineGene
 const isGenerationLink = (value: unknown): value is RoutineGenerationLink => record(value)
   && text(value.occurrenceKey) && value.occurrenceKey.length > 0 && isAreaId(value.taskId);
 export function isRoutineGenerationResult(value: unknown): value is RoutineGenerationResult {
-  if (!record(value) || !validGenerationRange(value) || !isAreaId(value.routineId)
+  if (!record(value) || !validConflicts(value.conflicts) || !validGenerationRange(value) || !isAreaId(value.routineId)
     || !integer(value.createdCount, 0, 100) || !integer(value.existingCount, 0)
     || !Array.isArray(value.created) || !value.created.every(isGenerationLink)
     || !Array.isArray(value.existing) || !value.existing.every(isGenerationLink)
@@ -97,4 +97,25 @@ export function isRoutineGenerationResult(value: unknown): value is RoutineGener
   const links = [...value.created, ...value.existing];
   return new Set(links.map((link) => link.occurrenceKey)).size === links.length
     && new Set(links.map((link) => link.taskId)).size === links.length;
+}
+export function isRoutineScheduleVersion(value: unknown): value is import("./routine-types").RoutineScheduleVersion {
+  if (!record(value) || !isAreaId(value.id) || !isAreaId(value.routineId) || !integer(value.number, 1, 100)
+    || !isRoutineDate(value.effectiveDate) || !timezone(value.effectiveTimezone) || !timestamp(value.effectiveAt)
+    || !timestamp(value.createdAt) || !timezone(value.timezone) || !isRoutineDate(value.startDate)
+    || !isRoutineSchedule(value.schedule) || !isRoutineEndCondition(value.endCondition)
+    || (value.endCondition.type === "UNTIL_DATE" && value.endCondition.date < value.startDate)) return false;
+  try { return Temporal.PlainDate.from(value.effectiveDate).toZonedDateTime(value.effectiveTimezone as string).toInstant()
+    .equals(Temporal.Instant.from(value.effectiveAt as string)); } catch { return false; }
+}
+export function isRoutineScheduleVersionList(value: unknown): value is import("./routine-types").RoutineScheduleVersion[] {
+  return Array.isArray(value) && value.length > 0 && value.length <= 100 && value.every(isRoutineScheduleVersion)
+    && value.every((entry, index) => entry.number === index + 1 && entry.routineId === value[0].routineId
+      && entry.effectiveTimezone === value[0].effectiveTimezone && (!index || (entry.effectiveDate > value[index - 1].effectiveDate
+        && Temporal.Instant.compare(entry.effectiveAt, value[index - 1].effectiveAt) > 0)));
+}
+function validConflicts(value: unknown): boolean {
+  return value === undefined || (Array.isArray(value) && value.every((entry) => record(entry)
+    && (entry.code === "STORED_WINDOW_CONFLICT" || entry.code === "VERSION_WINDOW_CONFLICT")
+    && text(entry.occurrenceKey) && entry.occurrenceKey.length > 0 && text(entry.retainedOccurrenceKey) && entry.retainedOccurrenceKey.length > 0
+    && (entry.code === "STORED_WINDOW_CONFLICT" ? isAreaId(entry.retainedTaskId) : entry.retainedTaskId === null)));
 }

@@ -5,23 +5,31 @@ import { getRoutinePreview, routineError } from "@/lib/routines";
 import { defaultRoutinePreviewRange, routinePreviewRangeError, formatRoutineDate, formatPreviewDiagnostic, formatPreviewLimitation } from "@/lib/routine-format";
 import shared from "../page.module.css";
 import styles from "./routines.module.css";
+import { RoutineConflicts } from "./routine-conflicts";
+import { SCHEDULE_CHANGED_EVENT } from "@/lib/routine-schedule-versions";
 
 export function RoutinePreview({ routine, disabled }: { routine: Routine; disabled: boolean }) {
   const id = useId();
   const [draft, setDraft] = useState(() => defaultRoutinePreviewRange(routine.timezone));
   const [range, setRange] = useState<RoutinePreviewRange>(draft);
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ routine: Routine; range: RoutinePreviewRange; data: Preview | null; error: string | null } | null>(null);
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    const invalidate = (event: Event) => { if ((event as CustomEvent<string>).detail === routine.id) setRevision((value) => value + 1); };
+    window.addEventListener(SCHEDULE_CHANGED_EVENT, invalidate);
+    return () => window.removeEventListener(SCHEDULE_CHANGED_EVENT, invalidate);
+  }, [routine.id]);
+  const [result, setResult] = useState<{ routine: Routine; range: RoutinePreviewRange; revision: number; data: Preview | null; error: string | null } | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     void getRoutinePreview(routine.id, range, controller.signal).then((data) => {
-      if (!controller.signal.aborted) setResult({ routine, range, data, error: null });
+      if (!controller.signal.aborted) setResult({ routine, range, revision, data, error: null });
     }, (error: unknown) => {
-      if (!controller.signal.aborted) setResult({ routine, range, data: null, error: routineError(error) });
+      if (!controller.signal.aborted) setResult({ routine, range, revision, data: null, error: routineError(error) });
     });
     return () => controller.abort();
-  }, [routine, range]);
-  const current = result?.routine === routine && result.range === range;
+  }, [routine, range, revision]);
+  const current = result?.routine === routine && result.range === range && result.revision === revision;
   const data = current ? result.data : null;
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -52,6 +60,7 @@ export function RoutinePreview({ routine, disabled }: { routine: Routine; disabl
         <button type="button" className={shared.secondaryButton} disabled={disabled} onClick={() => setRange({ ...range })}>Повторити preview</button>
       </div>}
       {data && <>
+        <RoutineConflicts conflicts={data.conflicts} />
         <ul className={styles.messages}>{data.limitations.map((value, index) => <li key={index}>{formatPreviewLimitation(value)}</li>)}</ul>
         {data.truncated && <p role="status">Показано перші 100 виконань. Є додаткові результати — звузьте діапазон.</p>}
         {data.occurrences.length === 0 ? <p>У цьому діапазоні виконань не знайдено. Зверніть увагу на паузи й обмеження вище.</p> :

@@ -29,7 +29,7 @@ export function formatRoutineSchedule(schedule: RoutineSchedule): string {
       : `${interval}: ${selection.startDay}–${selection.endDay} числа — одне вікно`;
 }
 export function formatRoutineEnd(end: RoutineEndCondition) {
-  return end.type === "NEVER" ? "Без кінцевої дати" : end.type === "COUNT" ? `Після ${end.count} запланованих виконань` : `До ${formatRoutineDate(end.date)} включно`;
+  return end.type === "NEVER" ? "Без кінцевої дати" : end.type === "COUNT" ? `Ліміт ${end.count} виконань Routine (спільний для версій, без скидання)` : `До ${formatRoutineDate(end.date)} включно`;
 }
 export function formatShortMonth(schedule: RoutineSchedule) {
   const rule = schedule.recurrence;

@@ -21,7 +21,7 @@ export function buildGenerationPayload(range: RoutinePreviewRange, preview: Rout
     if (entry.existing) continue;
     const draft = drafts[entry.occurrenceKey];
     if (!draft?.value) continue;
-    const resolved = resolveLocalDate(toMinuteDateTime(draft.value), preview.timezone, draft.choice);
+    const resolved = resolveLocalDate(toMinuteDateTime(draft.value), entry.timezone, draft.choice);
     if (!resolved.iso) errors[entry.occurrenceKey] = resolved.error ?? "Перевірте запланований час.";
     else planning.push({ occurrenceKey: entry.occurrenceKey, plannedAt: resolved.iso });
   }

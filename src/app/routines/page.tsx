@@ -1,7 +1,8 @@
 "use client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Routine } from "@/lib/routine-types";
+import type { Routine, RoutineGenerationResult } from "@/lib/routine-types";
+import { formatRoutineDate } from "@/lib/routine-format";
 import { getRoutine, routineError } from "@/lib/routines";
 import { TasksShell } from "../_components/tasks-shell";
 import { AreasModal } from "../_components/areas-modal";
@@ -15,6 +16,8 @@ import { RoutineDetailsModal } from "./routine-details-modal";
 import { GenerateRoutineDialog } from "./generate-routine-dialog";
 import { DeleteRoutineDialog } from "./delete-routine-dialog";
 import { RoutineFacts } from "./routine-facts";
+import { RoutineConflicts } from "./routine-conflicts";
+import { RoutineResultModal } from "./routine-result-modal";
 import shared from "../page.module.css";
 import styles from "./routines.module.css";
 
@@ -39,6 +42,8 @@ function RoutinesScreen() {
   const [deleting, setDeleting] = useState<{ routine: Routine; opener: HTMLButtonElement } | null>(null);
   const [editLoad, setEditLoad] = useState<{ id: string; pending: boolean; error?: string } | null>(null);
   const [notice, setNotice] = useState("");
+  const [generationResult, setGenerationResult] = useState<{ title: string; data: RoutineGenerationResult } | null>(null);
+  const [generationOutcome, setGenerationOutcome] = useState<{ data: RoutineGenerationResult; opener: HTMLButtonElement } | null>(null);
   const directory = useRoutines((routine) => setSelected((previous) => previous?.id === routine.id ? { ...previous, replacement: routine } : previous));
   useEffect(() => () => editRequest.current?.abort(), []);
   async function beginEdit(routine: Routine, opener: HTMLButtonElement) {
@@ -75,6 +80,11 @@ function RoutinesScreen() {
       </header>
       <p className={styles.hint}>Шаблони повторень. «Активний» означає відсутність паузи, а не гарантію майбутніх виконань.</p>
       {notice && <p role="status" className={shared.notice}>{notice}</p>}
+      {!!generationResult?.data.conflicts?.length && <details className={styles.generationResult}>
+        <summary>Конфлікти останньої генерації ({generationResult.data.conflicts.length})</summary>
+        <p className={styles.text}>{generationResult.title} · {formatRoutineDate(generationResult.data.from)} — {formatRoutineDate(generationResult.data.to)}</p>
+        <RoutineConflicts conflicts={generationResult.data.conflicts} />
+      </details>}
     </div>
     <section className={shared.taskScroll} aria-labelledby="routines-heading" aria-busy={directory.loading} tabIndex={0}>
       {directory.loading && <p role="status">Завантаження повторюваних задач…</p>}
@@ -121,7 +131,7 @@ function RoutinesScreen() {
     </section>
     {selected && <RoutineDetailsModal key={selected.id} routineId={selected.id} replacement={selected.replacement} opener={selected.opener}
       pending={Boolean(directory.states[selected.id]?.pending)} error={directory.states[selected.id]?.error} notice={directory.states[selected.id]?.notice}
-      onToggle={(routine) => void directory.toggle(routine)} onClose={() => { modalLock.current = false; setSelected(null); }} />}
+      onRoutine={directory.commitUpdated} onToggle={(routine) => void directory.toggle(routine)} onClose={() => { modalLock.current = false; setSelected(null); }} />}
     {areasOpener && <AreasModal opener={areasOpener} onClose={() => { modalLock.current = false; setAreasOpener(null); directory.reload(); }} tasksLoading={false} tasksError={null} reloadTasks={directory.reload} />}
     {createOpener && <CreateRoutineModal opener={createOpener} timezone={preferences.settings.timeZone} onSubmittingChange={setCreating}
       onClose={() => { modalLock.current = false; setCreateOpener(null); }}
@@ -130,8 +140,15 @@ function RoutinesScreen() {
       onClose={() => { modalLock.current = false; setEditing(null); }}
       onSaved={(routine) => { editRequest.current?.abort(); directory.commitUpdated(routine); setNotice("Шаблон повторення оновлено"); modalLock.current = false; setEditing(null); }} />}
     {generation && <GenerateRoutineDialog key={generation.routine.id} routine={generation.routine} opener={generation.opener} onSubmittingChange={setCreating} navigationDisabled={directory.pending}
+      onGenerated={(data) => {
+        setGenerationResult({ title: generation.routine.title, data });
+        setNotice(`Створено задач: ${data.createdCount}. Уже існувало: ${data.existingCount}`);
+        setGenerationOutcome({ data, opener: generation.opener }); setGeneration(null);
+      }}
       onClose={() => { modalLock.current = false; setGeneration(null); }}
       onCurrentTasks={() => { modalLock.current = false; setGeneration(null); router.push("/", { scroll: false }); }} />}
+    {generationOutcome && <RoutineResultModal result={{ type: "generation", data: generationOutcome.data }} opener={generationOutcome.opener}
+      onClose={() => { modalLock.current = false; setGenerationOutcome(null); }} />}
     {deleting && <DeleteRoutineDialog key={deleting.routine.id} title={deleting.routine.title} opener={deleting.opener} fallbackFocusRef={headingRef}
       onConfirm={() => directory.remove(deleting.routine.id)} onCheck={() => directory.checkRemoval(deleting.routine.id)}
       onClose={() => { modalLock.current = false; setDeleting(null); }}

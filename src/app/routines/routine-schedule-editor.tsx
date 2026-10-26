@@ -30,7 +30,7 @@ export function RoutineFormField({ name, label, type = "text", options, max, req
 const week = ["Понеділок", "Вівторок", "Середа", "Четвер", "П’ятниця", "Субота", "Неділя"];
 const dayOptions = week.map((label, index) => [String(index + 1), label] as const);
 
-export function RoutineScheduleEditor(props: EditorProps) {
+export function RoutineScheduleEditor(props: EditorProps & { mode?: "calendar" | "completion" }) {
   const { fields, errors, disabled, onChange } = props;
   const [zones] = useState(() => timeZoneOptions(fields.timezone));
   const rule = parseRoutineRule(fields);
@@ -38,12 +38,12 @@ export function RoutineScheduleEditor(props: EditorProps) {
     <h3 id="routine-schedule-heading" className={shared.sectionTitle}>Розклад</h3>
     <RoutineFormField {...props} name="timezone" label="Часовий пояс (IANA)" />
     <datalist id="routine-timezones">{zones.map((zone) => <option key={zone} value={zone} />)}</datalist>
-    <RoutineFormField {...props} name="startDate" label="Дата початку" type="date" />
+    <RoutineFormField {...props} disabled={disabled || props.mode === "completion"} name="startDate" label="Дата початку" type="date" />
     <RoutineFormField {...props} name="localTime" label="Локальний час (необов’язково)" type="time" required={false} />
     <p className={styles.hint}>Дати й час належать часовому поясу шаблону. Зміна поясу не змінює введену дату початку.</p>
-    <RoutineFormField {...props} name="recurrence" label="Повторення" options={[
+    <RoutineFormField {...props} name="recurrence" label="Повторення" options={([
       ["DAILY", "Кожні N днів"], ["WEEKLY", "Кожні N тижнів"], ["MONTHLY", "Кожні N місяців"], ["AFTER_COMPLETION", "Через N днів після завершення або пропуску"],
-    ]} />
+    ] as const).filter(([value]) => !props.mode || (props.mode === "completion" ? value === "AFTER_COMPLETION" : value !== "AFTER_COMPLETION"))} />
     {fields.recurrence === "DAILY" && <RoutineFormField {...props} name="dailyInterval" label="Інтервал у днях" type="number" />}
     {fields.recurrence === "AFTER_COMPLETION" && <>
       <RoutineFormField {...props} name="afterInterval" label="Днів після завершення або пропуску" type="number" />

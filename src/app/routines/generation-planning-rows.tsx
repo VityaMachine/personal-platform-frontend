@@ -19,7 +19,7 @@ export function GenerationPlanningRows({ id, preview, drafts, errors, disabled, 
     const time = (draft?.value.split("T")[1] ?? "").slice(0, 5);
     const error = Object.hasOwn(errors, key) ? errors[key] : undefined;
     const fieldId = `${id}-planning-${index}`;
-    const { candidates } = time ? localDateCandidates(`${date}T${time}`, preview.timezone) : { candidates: [] };
+    const { candidates } = time ? localDateCandidates(`${date}T${time}`, entry.timezone) : { candidates: [] };
     const update = (nextDate: string, nextTime: string, choice?: string) => onChange(key,
       nextTime ? `${nextDate}T${nextTime.slice(0, 5)}` : "", choice, window && nextDate !== entry.startDate ? nextDate : undefined);
     return <li key={key} className={styles.generationCandidate}>
@@ -27,6 +27,7 @@ export function GenerationPlanningRows({ id, preview, drafts, errors, disabled, 
         <strong><time dateTime={entry.startDate}>{formatRoutineDate(entry.startDate)}</time>
           {entry.endDate !== entry.startDate && <> — <time dateTime={entry.endDate}>{formatRoutineDate(entry.endDate)}</time></>}
         </strong>
+        {" · "}{entry.timezone}
       </p>
       {entry.basisType && entry.basisAt && <p className={styles.hint}>{formatRoutineBasis(entry, entry.timezone)}</p>}
       {entry.existing ? <span className={`${styles.hint} ${styles.generationExisting}`}>Уже створено</span> : <>

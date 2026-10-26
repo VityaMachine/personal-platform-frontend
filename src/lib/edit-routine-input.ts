@@ -1,9 +1,6 @@
-import { ApiError } from "./api";
 import type { Routine, UpdateRoutineInput } from "./routine-types";
 import { initialRoutineFields, parseCreateRoutineFields, type CreateRoutineFields } from "./create-routine-input";
 import type { SubtaskFields } from "./create-task-input";
-
-export const ROUTINE_CALENDAR_FIELDS = ["timezone", "startDate", "localTime", "recurrence", "dailyInterval", "afterInterval", "intervalWeeks", "weeklyMode", "weekdays", "startWeekday", "endWeekday", "intervalMonths", "monthlyMode", "monthDay", "startDay", "endDay", "shortMonthPolicy", "endType", "endDate", "endCount"] as const;
 
 export function routineToFields(routine: Routine): CreateRoutineFields {
   const fields = { ...initialRoutineFields(routine.timezone), title: routine.title, description: routine.description ?? "", priority: routine.priority,
@@ -48,7 +45,7 @@ export function parseUpdateRoutineFields(routine: Routine, fields: CreateRoutine
   const baseline = parseCreateRoutineFields(routineToFields(routine), routineSubtasksToFields(routine)).input!;
   const next = parsed.input;
   const patch: UpdateRoutineInput = {};
-  for (const key of ["title", "description", "priority", "areaId", "timezone", "startDate", "schedule", "endCondition"] as const) {
+  for (const key of ["title", "description", "priority", "areaId"] as const) {
     if (!sameNormalized(next[key], baseline[key])) Object.assign(patch, { [key]: next[key] });
   }
   if (!sameNormalized(next.subtasks ?? [], baseline.subtasks ?? [])) patch.subtasks = next.subtasks ?? [];
@@ -56,13 +53,4 @@ export function parseUpdateRoutineFields(routine: Routine, fields: CreateRoutine
     patch.estimatedDurationMinutes = next.estimatedDurationMinutes;
   }
   return { errors: parsed.errors, subtaskErrors: parsed.subtaskErrors, input: Object.keys(patch).length ? patch : null };
-}
-export function restoreRoutineCalendar(fields: CreateRoutineFields, baseline: CreateRoutineFields): CreateRoutineFields {
-  const restored = { ...fields };
-  for (const key of ROUTINE_CALENDAR_FIELDS) Object.assign(restored, { [key]: key === "weekdays" ? [...baseline.weekdays] : baseline[key] });
-  return restored;
-}
-export const ROUTINE_CALENDAR_CONFLICT_MESSAGE = "Розклад уже використано для створення задач. Змінити його поки неможливо. Інші поля можна редагувати";
-export function isRoutineCalendarConflict(error: unknown) {
-  return error instanceof ApiError && error.status === 409 && error.apiMessage === "Calendar configuration cannot change after generation. Create a new Routine; existing occurrences and Tasks are immutable snapshots.";
 }

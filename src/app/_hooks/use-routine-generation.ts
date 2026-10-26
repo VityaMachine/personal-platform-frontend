@@ -6,6 +6,7 @@ import { defaultRoutinePreviewRange, routinePreviewRangeError } from "@/lib/rout
 import { routineGenerationFailure } from "@/lib/routine-generation-error";
 import { buildGenerationPayload, reconcileGenerationPlanning, type GenerationPlanningDrafts } from "@/lib/routine-generation-planning";
 import { invalidateTaskList } from "@/lib/task-list-invalidation";
+import { SCHEDULE_CHANGED_EVENT } from "@/lib/routine-schedule-versions";
 
 type PreviewState = { data: RoutineGenerationPreview | null; ready: boolean; loading: boolean; error: string | null };
 type Attempt = { body: string; drafts: GenerationPlanningDrafts };
@@ -32,6 +33,16 @@ export function useRoutineGeneration(routine: Routine, onSubmittingChange: (pend
   const [error, setError] = useState<PostError | null>(null);
   const [uncertainAttempt, setUncertainAttempt] = useState<Attempt | null>(null);
   useEffect(() => () => { previewRequest.current?.abort(); postRequest.current?.abort(); }, []);
+  useEffect(() => {
+    const invalidate = (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== routine.id) return;
+      previewRequest.current?.abort(); readyPreview.current = null;
+      setPreview((previous) => ({ ...previous, ready: false, loading: false }));
+      setNotice("Розклад змінився. Оновіть generation-preview: планування збережено за ключами виконань; зниклі ключі буде вилучено після GET.");
+    };
+    window.addEventListener(SCHEDULE_CHANGED_EVENT, invalidate);
+    return () => window.removeEventListener(SCHEDULE_CHANGED_EVENT, invalidate);
+  }, [routine.id]);
 
   function storeDrafts(next: GenerationPlanningDrafts) { draftsRef.current = next; setDrafts(next); }
   function changeRange(key: keyof RoutinePreviewRange, value: string) {
@@ -63,9 +74,13 @@ export function useRoutineGeneration(routine: Routine, onSubmittingChange: (pend
       if (controller.signal.aborted || previewRequest.current !== controller || !sameRange(requested, rangeRef.current)) return;
       const reconciled = reconcileGenerationPlanning(draftsRef.current, data.occurrences);
       let message = reconciled.removed.length ? `Планування для ${reconciled.removed.length} виконань вилучено: вони зникли з діапазону або вже існують. Перевірте перелік перед явним створенням задач.` : null;
-      if (preview.data && preview.data.timezone !== data.timezone && Object.values(reconciled.drafts).some((draft) => draft.value)) {
-        for (const draft of Object.values(reconciled.drafts)) delete draft.choice;
-        message = `${message ? `${message} ` : ""}Часовий пояс шаблону змінився. Перевірте локальний час планування та повторно виберіть UTC-зсув, якщо потрібно.`;
+      const changedZones = data.occurrences.filter((entry) => {
+        const previous = preview.data?.occurrences.find((old) => old.occurrenceKey === entry.occurrenceKey);
+        return previous && previous.timezone !== entry.timezone && reconciled.drafts[entry.occurrenceKey]?.value;
+      });
+      if (changedZones.length) {
+        for (const entry of changedZones) delete reconciled.drafts[entry.occurrenceKey].choice;
+        message = `${message ? `${message} ` : ""}Часовий пояс виконання змінився. Перевірте локальний час планування та повторно виберіть UTC-зсув, якщо потрібно.`;
       }
       storeDrafts(reconciled.drafts); setPlanningErrors({}); setNotice(message);
       readyPreview.current = data; setPreview({ data, loading: false, ready: true, error: null });

@@ -2,7 +2,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import type { Routine } from "@/lib/routine-types";
 import { createRoutine, updateRoutine, routineError } from "@/lib/routines";
-import { routineToFields, routineSubtasksToFields, parseUpdateRoutineFields, restoreRoutineCalendar, ROUTINE_CALENDAR_FIELDS, isRoutineCalendarConflict, ROUTINE_CALENDAR_CONFLICT_MESSAGE } from "@/lib/edit-routine-input";
+import { routineToFields, routineSubtasksToFields, parseUpdateRoutineFields } from "@/lib/edit-routine-input";
 import { ApiError } from "@/lib/api";
 import { initialRoutineFields, parseCreateRoutineFields, routineApiFieldErrors, type CreateRoutineFields, type RoutineFormErrors } from "@/lib/create-routine-input";
 import { MAX_DURATION_MINUTES, getSubtaskDuration, type SubtaskFields, type SubtaskErrors } from "@/lib/create-task-input";
@@ -24,7 +24,6 @@ export function RoutineFormModal({ opener, timezone, initialRoutine: loadedRouti
   const id = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const calendarErrorRef = useRef<HTMLParagraphElement>(null);
   const inFlight = useRef(false);
   const request = useRef<AbortController | null>(null);
   const traversal = useRef<TraversalAttempt | null>(null);
@@ -37,7 +36,6 @@ export function RoutineFormModal({ opener, timezone, initialRoutine: loadedRouti
   const [errors, setErrors] = useState<RoutineFormErrors>({});
   const [subtaskErrors, setSubtaskErrors] = useState<SubtaskErrors>({});
   const [error, setError] = useState<string | null>(null);
-  const [calendarConflict, setCalendarConflict] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [discardFocus, setDiscardFocus] = useState<HTMLElement | null>(null);
@@ -101,13 +99,10 @@ export function RoutineFormModal({ opener, timezone, initialRoutine: loadedRouti
     catch (failure) {
       if (!controller.signal.aborted) {
         const mapped = routineApiFieldErrors(failure instanceof ApiError ? failure.details : undefined, fields, subtasks);
-        if (isRoutineCalendarConflict(failure)) {
-          setCalendarConflict(true); setError(null);
-          requestAnimationFrame(() => calendarErrorRef.current?.focus());
-        } else if (failure instanceof ApiError && failure.status === 404 && (failure.apiMessage === "Area not found." || (!initialRoutine && fields.areaId))) {
+        if (failure instanceof ApiError && failure.status === 404 && (failure.apiMessage === "Area not found." || (!initialRoutine && fields.areaId))) {
           mapped.errors.areaId = "Обрана сфера могла бути видалена. Оновіть довідник і перевірте вибір.";
           setError("Шаблон не збережено. Оновіть список сфер або виберіть «Без сфери» перед повторним збереженням.");
-        } else { setCalendarConflict(false); setError(routineError(failure)); }
+        } else { setError(routineError(failure)); }
         setErrors(mapped.errors); setSubtaskErrors(mapped.subtaskErrors); focusError();
       }
       return;
@@ -152,18 +147,7 @@ export function RoutineFormModal({ opener, timezone, initialRoutine: loadedRouti
               <p className={styles.hint}>Нижче — шаблони підзадач, без статусів виконання. Вони не є створеними задачами.</p>
               <SubtasksEditor subtasks={subtasks} errors={subtaskErrors} disabled={submitting} onChange={changeSubtasks} />
             </section>
-            <div className={styles.scheduleEditor}>
-              {initialRoutine && <>
-                <p className={styles.hint}>Після першого створення задач із цього шаблону розклад, часовий пояс, дату початку та умову завершення змінити не можна. Інші поля можна редагувати.</p>
-                {calendarConflict && <p ref={calendarErrorRef} role="alert" tabIndex={-1} className={shared.fieldError}>{ROUTINE_CALENDAR_CONFLICT_MESSAGE}</p>}
-                <button type="button" className={shared.secondaryButton} disabled={submitting} onClick={() => {
-                  if (inFlight.current) return;
-                  setFields((previous) => restoreRoutineCalendar(previous, baseline)); setCalendarConflict(false); setError(null);
-                  setErrors((previous) => Object.fromEntries(Object.entries(previous).filter(([key]) => !ROUTINE_CALENDAR_FIELDS.some((field) => field === key))));
-                }}>Відновити початковий розклад</button>
-              </>}
-              <RoutineScheduleEditor {...editorProps} />
-            </div>
+            {initialRoutine ? <p className={styles.hint}>Календарні налаштування змінюються окремою дією «Змінити розклад» у деталях Routine.</p> : <RoutineScheduleEditor {...editorProps} />}
           </div>
           {error && <div role="alert" className={`${shared.error} ${styles.createError}`}><p>{error}</p></div>}
         </form>

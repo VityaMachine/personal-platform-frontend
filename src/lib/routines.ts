@@ -1,7 +1,17 @@
 import { jsonRequest, requestDto, requestDelete, ApiError } from "./api";
-import { isRoutine, isRoutineList, isRoutinePreview, isRoutineGenerationResult, isRoutineGenerationPreview } from "./routine-validation";
+import { isRoutineScheduleVersion, isRoutineScheduleVersionList, isRoutine, isRoutineList, isRoutinePreview, isRoutineGenerationResult, isRoutineGenerationPreview } from "./routine-validation";
 import type { CreateRoutineInput, UpdateRoutineInput, RoutinePreviewRange, GenerateRoutineInput, RoutineGenerationResult, RoutineGenerationPreview } from "./routine-types";
 const routinePath = (id: string) => `/routines/${encodeURIComponent(id)}`;
+export function getRoutineScheduleVersions(id: string, signal?: AbortSignal) {
+  return requestDto(`${routinePath(id)}/schedule-versions`, (value): value is import("./routine-types").RoutineScheduleVersion[] =>
+    isRoutineScheduleVersionList(value) && value.every((version) => version.routineId === id), { signal });
+}
+export function createRoutineScheduleVersion(id: string, input: import("./routine-types").CreateRoutineScheduleVersionInput, signal?: AbortSignal) {
+  const { effectiveDate, timezone, startDate, schedule, endCondition } = input;
+  return requestDto(`${routinePath(id)}/schedule-versions`, (value): value is import("./routine-types").RoutineScheduleVersion =>
+    isRoutineScheduleVersion(value) && value.routineId === id,
+    jsonRequest("POST", { effectiveDate, timezone, startDate, schedule, endCondition }, signal));
+}
 export const deleteRoutine = (id: string, signal?: AbortSignal) => requestDelete(routinePath(id), signal);
 export const getRoutines = (signal?: AbortSignal) => requestDto("/routines", isRoutineList, { signal });
 export const createRoutine = (input: CreateRoutineInput, signal?: AbortSignal) => requestDto("/routines", isRoutine, jsonRequest("POST", input, signal));

@@ -1,4 +1,9 @@
 .list { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.versions { display: grid; gap: 12px; list-style: none; padding: 0; }
+.versions li { border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.versions p { margin: 6px 0 0; }
+.confirmSchedule { display: flex; align-items: start; gap: 10px; margin-block: 24px; }
+.confirmSchedule input { flex-shrink: 0; margin-top: 4px; }
 .card { min-width: 0; padding: 20px; border: 1px solid var(--card-border); border-radius: 12px; background: var(--surface); overflow-wrap: anywhere; }
 .card h2 { margin: 0; font-size: 1.125rem; white-space: pre-wrap; }
 .status { display: inline-block; margin: 8px 0; padding: 4px 8px; border-radius: 6px; background: var(--done-bg); color: var(--accent); font-size: 0.875rem; }
@@ -39,6 +44,10 @@
 .ruleDescription { padding: 12px; border-radius: 8px; background: var(--nav); color: var(--text); line-height: 1.5; }
 .createError { margin-top: 16px; }
 .generateModal { width: min(760px, calc(100% - 48px)); }
+.resultModal.resultModal { width: min(560px, calc(100% - 24px)); height: fit-content; min-height: 0; max-height: calc(100dvh - 24px); }
+.resultModal > .resultLayout { display: flex; flex-direction: column; height: auto; min-height: 0; max-height: calc(100dvh - 26px); }
+.resultLayout > header, .resultLayout > footer { flex: 0 0 auto; }
+.resultLayout > .resultBody { flex: 0 1 auto; min-height: 0; }
 .generateModal header > button { flex-shrink: 0; }
 .generationResult { margin-block: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); }
 .generationResult:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
