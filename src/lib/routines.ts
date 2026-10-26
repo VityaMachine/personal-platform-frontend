@@ -1,7 +1,8 @@
-import { jsonRequest, requestDto, ApiError } from "./api";
+import { jsonRequest, requestDto, requestDelete, ApiError } from "./api";
 import { isRoutine, isRoutineList, isRoutinePreview, isRoutineGenerationResult, isRoutineGenerationPreview } from "./routine-validation";
 import type { CreateRoutineInput, UpdateRoutineInput, RoutinePreviewRange, GenerateRoutineInput, RoutineGenerationResult, RoutineGenerationPreview } from "./routine-types";
 const routinePath = (id: string) => `/routines/${encodeURIComponent(id)}`;
+export const deleteRoutine = (id: string, signal?: AbortSignal) => requestDelete(routinePath(id), signal);
 export const getRoutines = (signal?: AbortSignal) => requestDto("/routines", isRoutineList, { signal });
 export const createRoutine = (input: CreateRoutineInput, signal?: AbortSignal) => requestDto("/routines", isRoutine, jsonRequest("POST", input, signal));
 export function generateRoutine(id: string, input: GenerateRoutineInput, signal?: AbortSignal) {

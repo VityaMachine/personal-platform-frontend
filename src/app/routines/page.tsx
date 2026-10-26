@@ -13,6 +13,7 @@ import { CreateRoutineModal } from "./create-routine-modal";
 import { RoutineFormModal } from "./routine-form-modal";
 import { RoutineDetailsModal } from "./routine-details-modal";
 import { GenerateRoutineDialog } from "./generate-routine-dialog";
+import { DeleteRoutineDialog } from "./delete-routine-dialog";
 import { RoutineFacts } from "./routine-facts";
 import shared from "../page.module.css";
 import styles from "./routines.module.css";
@@ -28,12 +29,14 @@ function RoutinesScreen() {
   const dialogOpen = useOpenDialog();
   const modalLock = useRef(false);
   const editRequest = useRef<AbortController | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const [selected, setSelected] = useState<{ id: string; opener: HTMLButtonElement; replacement?: Routine } | null>(null);
   const [areasOpener, setAreasOpener] = useState<HTMLButtonElement | null>(null);
   const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<{ routine: Routine; opener: HTMLButtonElement } | null>(null);
   const [generation, setGeneration] = useState<{ routine: Routine; opener: HTMLButtonElement } | null>(null);
+  const [deleting, setDeleting] = useState<{ routine: Routine; opener: HTMLButtonElement } | null>(null);
   const [editLoad, setEditLoad] = useState<{ id: string; pending: boolean; error?: string } | null>(null);
   const [notice, setNotice] = useState("");
   const directory = useRoutines((routine) => setSelected((previous) => previous?.id === routine.id ? { ...previous, replacement: routine } : previous));
@@ -62,7 +65,7 @@ function RoutinesScreen() {
   }}>
     <div className={shared.tasksToolbar}>
       <header className={shared.header}>
-        <h1 id="routines-heading" className={shared.title}>Повторювані задачі</h1>
+        <h1 ref={headingRef} tabIndex={-1} id="routines-heading" className={shared.title}>Повторювані задачі</h1>
         <div className={shared.taskHeaderActions}>
           <button type="button" className={shared.secondaryButton} disabled={directory.loading || directory.pending || dialogOpen || Boolean(editLoad?.pending) || generation !== null} onClick={directory.reload}>Оновити список</button>
           <button type="button" className={shared.primaryButton} disabled={!preferences.ready || directory.loading || directory.pending || dialogOpen || Boolean(editLoad?.pending)} onClick={(event) => {
@@ -83,7 +86,7 @@ function RoutinesScreen() {
       </div>}
       <ul className={styles.list}>{directory.routines.map((routine) => {
         const state = directory.states[routine.id];
-        const editBusy = editing?.routine.id === routine.id || (editLoad?.id === routine.id && editLoad.pending) || generation?.routine.id === routine.id;
+        const editBusy = editing?.routine.id === routine.id || (editLoad?.id === routine.id && editLoad.pending) || generation?.routine.id === routine.id || deleting?.routine.id === routine.id;
         return <li key={routine.id} className={styles.card} aria-busy={Boolean(state?.pending || editBusy)}>
           <h2>{routine.title}</h2>
           <RoutineFacts routine={routine} />
@@ -103,6 +106,11 @@ function RoutinesScreen() {
             <button type="button" className={shared.secondaryButton} disabled={Boolean(state?.pending || editBusy)} aria-label={`${routine.pausedAt ? "Відновити" : "Призупинити"}: ${routine.title}`} onClick={() => { if (!modalLock.current) void directory.toggle(routine); }}>
               {state?.pending ? "Збереження…" : routine.pausedAt ? "Відновити" : "Призупинити"}
             </button>
+            <button type="button" className={shared.deleteButton} disabled={Boolean(state?.pending || editBusy)} aria-label={`Видалити повторення: ${routine.title}`} onClick={(event) => {
+              if (!directory.isLocked(routine.id) && !modalLock.current && !document.querySelector("dialog[open]")) {
+                modalLock.current = true; setNotice(""); setDeleting({ routine, opener: event.currentTarget });
+              }
+            }}>Видалити</button>
           </div>
           {routine.pausedAt && <p id={`generate-paused-${routine.id}`} className={styles.hint}>Щоб створити задачі, спочатку відновіть повторення з паузи.</p>}
           {state?.error && <p role="alert" className={shared.fieldError}>{state.error}</p>}
@@ -124,5 +132,9 @@ function RoutinesScreen() {
     {generation && <GenerateRoutineDialog key={generation.routine.id} routine={generation.routine} opener={generation.opener} onSubmittingChange={setCreating} navigationDisabled={directory.pending}
       onClose={() => { modalLock.current = false; setGeneration(null); }}
       onCurrentTasks={() => { modalLock.current = false; setGeneration(null); router.push("/", { scroll: false }); }} />}
+    {deleting && <DeleteRoutineDialog key={deleting.routine.id} title={deleting.routine.title} opener={deleting.opener} fallbackFocusRef={headingRef}
+      onConfirm={() => directory.remove(deleting.routine.id)} onCheck={() => directory.checkRemoval(deleting.routine.id)}
+      onClose={() => { modalLock.current = false; setDeleting(null); }}
+      onDeleted={() => { modalLock.current = false; setDeleting(null); setNotice("Шаблон повторення видалено"); }} />}
   </TasksShell>;
 }
