@@ -27,8 +27,9 @@ function TasksPage() {
   const [section, setSection] = useState(requestedSection);
   const archived = section === "archive";
   const today = section === "today";
+  const backlog = section === "backlog";
   const areas = useAreas();
-  const { tasks, setTasks, loading, error: loadError, reload, context, scopeKey } = useTaskList(section, areas.taskRevision);
+  const { tasks, setTasks, loading, error: loadError, reload, context, scopeKey, inventoryWarning, observeTask } = useTaskList(section, areas.taskRevision);
   const [areasOpener, setAreasOpener] = useState<HTMLButtonElement | null>(null);
   const dialogOpen = useOpenDialog();
   // Keep disclosure state separate from refreshed DTOs and keyed by task ID.
@@ -41,7 +42,7 @@ function TasksPage() {
   const busy = loading || pending !== null;
   const mutations = useTaskMutations(setTasks, busy, (id) => {
     setExpandedTaskIds((previous) => new Set(previous).add(id));
-  }, { context, scopeKey, section, reload });
+  }, { context, scopeKey, section, reload, observeTask });
   const filtersBlocked = creating || dialogOpen || pending !== null || mutations.hasLockedTasks;
   const view = useTaskFilters(filtersBlocked);
   const selectedTasks = selectTasks(tasks, view.filters);
@@ -62,7 +63,7 @@ function TasksPage() {
   }
 
   return (
-    <TasksShell archived={archived} today={today} query={searchParams.toString()} areasDisabled={busy || dialogOpen || mutations.hasLockedTasks} onManageAreas={(opener) => {
+    <TasksShell archived={archived} today={today} backlog={backlog} query={searchParams.toString()} areasDisabled={busy || dialogOpen || mutations.hasLockedTasks} onManageAreas={(opener) => {
       if (!busy && !mutations.hasLockedTasks && !document.querySelector("dialog[open]")) {
         areas.reload(); setAreasOpener(opener);
       }
@@ -71,7 +72,8 @@ function TasksPage() {
       <div className={styles.tasksToolbar}>
         <header className={styles.header}>
           <div>
-            <h1 id="tasks-heading" className={styles.title}>{archived ? "Архів" : today ? "Сьогодні" : "Поточні задачі"}</h1>
+            <h1 id="tasks-heading" className={styles.title}>{archived ? "Архів" : today ? "Сьогодні" : backlog ? "Беклог" : "Поточні задачі"}</h1>
+            {backlog && <p className={styles.counter}>Задачі, які потребують нового плану: без актуального планування чи майбутнього дедлайну</p>}
           </div>
           <div className={styles.taskHeaderActions}>
             <button type="button" className={styles.secondaryButton} disabled={busy || filtersBlocked} onClick={reload}>Оновити список</button>
@@ -92,15 +94,17 @@ function TasksPage() {
           onCreated={(created, createdContext) => {
             const currentContext = createdContext === JSON.stringify(context);
             const belongs = taskInSection(created, section);
+            if (currentContext && createScope.current === scopeKey) observeTask(created);
             if (currentContext && createScope.current === scopeKey && belongs) setTasks((previous) => [created, ...previous.filter((task) => task.id !== created.id)]);
             if (!currentContext || createScope.current !== scopeKey) reload();
-            setNotice(today && (!currentContext || !belongs) ? "Задачу створено. Вона доступна в “Поточних задачах”" : selectTasks([created], view.filters).length ? "Задачу створено." : "Задачу створено. Поточні фільтри приховують її у списку.");
+            setNotice((today || backlog) && (!currentContext || !belongs) ? "Задачу створено. Вона доступна в “Поточних задачах”" : selectTasks([created], view.filters).length ? "Задачу створено." : "Задачу створено. Поточні фільтри приховують її у списку.");
             setCreating(false);
           }}
         />}
 
         <div className={styles.feedback}>
           <p role="status" className={styles.notice}>{notice}</p>
+          {inventoryWarning && <p role="status" className={styles.notice}>{inventoryWarning}</p>}
           {retained.length > 0 && <p role="status" className={styles.notice}>Дані відкритої форми збережено. Її попередня картка тимчасово залишається до закриття форми або завершення оновлення; вона не є результатом актуального запиту.</p>}
           {(navigationDeferred || view.deferred) && <p role="status" className={styles.notice}>Перехід та зміну умов списку буде застосовано після закриття форми та завершення поточних змін.</p>}
         </div>
@@ -115,14 +119,15 @@ function TasksPage() {
         {loadError && (
           <div role="alert" className={styles.error}>
             <p>{loadError}</p>
+            <button type="button" className={styles.secondaryButton} disabled={busy || filtersBlocked} onClick={reload}>Повторити завантаження</button>
           </div>
         )}
         {loading && <p role="status" className={styles.loading}>Завантаження задач…</p>}
         {!loading && !loadError && tasks.length === 0 && retained.length === 0 && (
           <div className={styles.empty}>
             <span className={styles.emptyIcon} aria-hidden="true">✓</span>
-            <h3>{archived ? "Архів порожній" : today ? "На сьогодні задач немає" : "Тут починається ваш план"}</h3>
-            {!today && <p>{archived ? "Архівовані задачі з’являться тут. Їх можна повернути до поточних задач." : "Натисніть «+ Нова задача», щоб додати першу справу."}</p>}
+            <h3>{archived ? "Архів порожній" : today ? "На сьогодні задач немає" : backlog ? "Беклог порожній" : "Тут починається ваш план"}</h3>
+            {!today && !backlog && <p>{archived ? "Архівовані задачі з’являться тут. Їх можна повернути до поточних задач." : "Натисніть «+ Нова задача», щоб додати першу справу."}</p>}
           </div>
         )}
         {!loading && !loadError && tasks.length > 0 && selectedTasks.length === 0 && retained.length === 0 && <div className={styles.empty}>

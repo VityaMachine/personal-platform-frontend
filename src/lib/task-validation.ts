@@ -71,6 +71,7 @@ export function isRoutineOccurrence(value: unknown): value is RoutineOccurrence 
 export function isTask(value: unknown): value is Task {
   return isRecord(value) && hasCommonFields(value)
     && typeof value.isToday === "boolean"
+    && typeof value.isBacklog === "boolean"
     && nullableTimestamp(value.completedAt)
     && (value.status === "DONE" || value.completedAt === null)
     && (value.routineOccurrence === null || isRoutineOccurrence(value.routineOccurrence))

@@ -74,3 +74,7 @@ export function deleteSubtask(taskId: string, id: string, signal?: AbortSignal):
 export function getTodayTasks(signal: AbortSignal | undefined, context: TaskContext) {
   return requestDto(withContext("/tasks?view=today", context), isTaskList, { signal });
 }
+
+export function getBacklogTasks(signal: AbortSignal | undefined, context: TaskContext) {
+  return requestDto(withContext("/tasks?view=backlog", context), isTaskList, { signal });
+}

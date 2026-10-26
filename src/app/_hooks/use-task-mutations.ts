@@ -6,7 +6,7 @@ import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusC
 
 import { taskInSection, type TaskContext, type TaskSection } from "@/lib/task-context";
 
-type Scope = { context: TaskContext; scopeKey: string; section: TaskSection; reload: () => void };
+type Scope = { context: TaskContext; scopeKey: string; section: TaskSection; reload: () => void; observeTask: (task: Task | string) => void };
 
 export type TaskMutationState = {
   pending?: "toggle" | "delete" | "archive" | "subtask" | "refresh" | "edit" | "status";
@@ -24,6 +24,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
   useLayoutEffect(() => { latest.current = { ...scope, setTasks }; });
   function applyTask(task: Task, requested: Scope) {
     if (latest.current.scopeKey !== requested.scopeKey) { latest.current.reload(); return; }
+    latest.current.observeTask(task);
     latest.current.setTasks((previous) => taskInSection(task, requested.section)
       ? previous.some((item) => item.id === task.id) ? previous.map((item) => item.id === task.id ? task : item) : [task, ...previous]
       : previous.filter((item) => item.id !== task.id));
@@ -79,7 +80,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     if (pending === "delete" || pending === "archive") {
       if (pending === "archive") applyTask(result as Task, requested);
       else if (latest.current.scopeKey !== requested.scopeKey) latest.current.reload();
-      else setTasks((previous) => previous.filter((task) => task.id !== id));
+      else { latest.current.observeTask(id); setTasks((previous) => previous.filter((task) => task.id !== id)); }
       locks.current.delete(id);
       setStates((previous) => {
         const next = { ...previous };

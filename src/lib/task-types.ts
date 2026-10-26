@@ -53,6 +53,7 @@ export type RoutineOccurrence = {
 
 export type Task = {
   isToday: boolean;
+  isBacklog: boolean;
   /** Verified current completion from the backend; never inferred locally. */
   completedAt: string | null;
   routineOccurrence: RoutineOccurrence | null;

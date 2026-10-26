@@ -1,70 +1,90 @@
 "use client";
 import { useEffect, useState, useSyncExternalStore, type SetStateAction } from "react";
-import { getArchivedTasks, getTasks, getTodayTasks, type Task } from "@/lib/tasks";
+import { getArchivedTasks, getBacklogTasks, getTasks, getTodayTasks, type Task } from "@/lib/tasks";
 import { taskContextQuery, type TaskSection } from "@/lib/task-context";
+import { MAX_REFRESH_DELAY, nextTaskRefresh } from "@/lib/task-refresh";
 import { useTaskContext } from "./use-task-context";
 import { subscribeTaskListInvalidation, taskListVersion, taskListServerVersion } from "@/lib/task-list-invalidation";
 
-export function calendarSignature(timezones: string[], now = new Date()) {
-  return timezones.map((timeZone) => new Intl.DateTimeFormat("en-CA", {
-    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
-  }).format(now)).join("|");
-}
+type Result = { key: string; observedAt: number; tasks: Task[]; inventory: Task[]; inventoryWarning: string | null; error: string | null };
+
 export function useTaskList(section: TaskSection, areaRevision = 0) {
   const { context, ready } = useTaskContext();
   const [revision, setRevision] = useState(0);
   const dataVersion = useSyncExternalStore(subscribeTaskListInvalidation, taskListVersion, taskListServerVersion);
   const key = section + ":" + taskContextQuery(context) + ":" + areaRevision + ":" + revision + ":" + dataVersion;
-  const [result, setResult] = useState<{ key: string; tasks: Task[]; timezones: string[]; error: string | null } | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
   const current = ready && result?.key === key;
   useEffect(() => {
     if (!ready) return;
     const controller = new AbortController();
-    const load = section === "archive" ? getArchivedTasks : section === "today" ? getTodayTasks : getTasks;
-    // Today omits future occurrences. Read the current inventory as well so
-    // calendar checks include their zones, without watching unrelated IANA zones
-    // or reimplementing the backend's selection rules.
-    const inventory = section === "today" ? getTasks(controller.signal, context) : null;
-    void Promise.all([load(controller.signal, context), inventory]).then(
-      ([tasks, allTasks]) => {
-        const timezones = [...new Set([context.timezone, ...(allTasks ?? tasks).flatMap((task) => task.routineOccurrence ? [task.routineOccurrence.timezone] : [])])];
-        if (!controller.signal.aborted) setResult({ key, tasks, timezones, error: null });
-      },
-      (error: unknown) => {
-        if (!controller.signal.aborted) setResult({ key, tasks: [], timezones: [context.timezone],
-          error: error instanceof Error ? error.message : "Не вдалося завантажити задачі.",
-        });
-      },
-    );
+    const observedAt = Date.now();
+    const load = section === "archive" ? getArchivedTasks : section === "today" ? getTodayTasks : section === "backlog" ? getBacklogTasks : getTasks;
+    // One inventory request for omitted future tasks and occurrence timezones.
+    // Its failure must not prevent the selected list from being available.
+    const inventory = section === "today" || section === "backlog" ? getTasks(controller.signal, context) : null;
+    void Promise.allSettled([load(controller.signal, context), inventory]).then(([selected, base]) => {
+      if (controller.signal.aborted) return;
+      const tasks = selected.status === "fulfilled" ? selected.value : [];
+      setResult({ key, observedAt, tasks,
+        inventory: base.status === "fulfilled" ? base.value ?? tasks : tasks,
+        inventoryWarning: base.status === "rejected" ? "Не вдалося завантажити поточні задачі для автоматичного оновлення. Часові межі й часові пояси прихованих задач невідомі. Скористайтеся «Оновити список»; повернення до вкладки також оновлює дані." : null,
+        error: selected.status === "rejected" ? selected.reason instanceof Error ? selected.reason.message : "Не вдалося завантажити задачі." : null,
+      });
+    });
     return () => controller.abort();
   }, [key, ready, section, context]);
+
   useEffect(() => {
-    if (!ready) return;
-    const watched = result?.key === key ? result.timezones : [context.timezone];
-    let signature = calendarSignature(watched);
-    const check = () => {
+    if (!current) return;
+    let timer: number | undefined;
+    let refreshRequested = false;
+    const refresh = () => {
+      if (refreshRequested) return;
+      refreshRequested = true;
+      window.clearTimeout(timer);
+      setRevision((value) => value + 1);
+    };
+    // Include boundaries crossed while the response was in flight.
+    const boundary = nextTaskRefresh(result.inventory, context.timezone, result.observedAt);
+    const schedule = () => {
       if (document.visibilityState === "hidden") return;
-      const next = calendarSignature(watched);
-      if (next !== signature) { signature = next; setRevision((value) => value + 1); }
+      const remaining = boundary - Date.now();
+      if (remaining <= 0) { refresh(); return; }
+      timer = window.setTimeout(schedule, Math.min(remaining, MAX_REFRESH_DELAY));
     };
-    const timer = window.setInterval(check, 300_000);
-    window.addEventListener("focus", check);
-    document.addEventListener("visibilitychange", check);
+    const onVisibility = () => {
+      window.clearTimeout(timer);
+      if (document.visibilityState !== "hidden") refresh();
+    };
+    const onFocus = () => { if (document.visibilityState !== "hidden") refresh(); };
+    if (!result.error) schedule();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      window.clearInterval(timer);
-      window.removeEventListener("focus", check);
-      document.removeEventListener("visibilitychange", check);
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [key, context, ready, result]);
+  }, [current, key, context, result]);
+
+  function observeTask(task: Task | string) {
+    setResult((previous) => {
+      if (!previous || previous.key !== key) return previous;
+      const id = typeof task === "string" ? task : task.id;
+      const inventory = previous.inventory.filter((item) => item.id !== id);
+      if (typeof task !== "string" && task.archivedAt === null && task.deletedAt === null) inventory.push(task);
+      return { ...previous, inventory };
+    });
+  }
   function setTasks(update: SetStateAction<Task[]>) {
     setResult((previous) => {
       if (!previous || previous.key !== key) return previous;
       const tasks = typeof update === "function" ? update(previous.tasks) : update;
-      const timezones = [...new Set([...previous.timezones, ...tasks.flatMap((task) => task.routineOccurrence ? [task.routineOccurrence.timezone] : [])])];
-      return { ...previous, error: null, tasks, timezones };
+      return { ...previous, error: null, tasks };
     });
   }
   return { tasks: current ? result.tasks : [], loading: !current,
-    error: current ? result.error : null, setTasks,
-    reload: () => setRevision((previous) => previous + 1), context, scopeKey: key };
+    error: current ? result.error : null, inventoryWarning: current ? result.inventoryWarning : null,
+    setTasks, observeTask, reload: () => setRevision((previous) => previous + 1), context, scopeKey: key };
 }

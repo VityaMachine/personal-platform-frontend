@@ -45,7 +45,7 @@ export function sameTaskFilters(left: TaskFilters, right: TaskFilters) {
 export function taskSectionHref(params: URLSearchParams, section: TaskSection | boolean) {
   const result = new URLSearchParams(params);
   result.delete("view");
-  if (section === "today") result.set("view", "today");
+  if (section === "today" || section === "backlog") result.set("view", section);
   if (section === true || section === "archive") result.set("archived", "true");
   else result.delete("archived");
   const query = result.toString();
