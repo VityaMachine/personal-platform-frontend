@@ -1,10 +1,9 @@
 "use client";
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import type { Routine, GenerateRoutineInput, RoutineGenerationResult } from "@/lib/routine-types";
-import { generateRoutine } from "@/lib/routines";
-import { defaultRoutinePreviewRange, routinePreviewRangeError, formatRoutineDate } from "@/lib/routine-format";
-import { routineGenerationFailure } from "@/lib/routine-generation-error";
-import { invalidateTaskList } from "@/lib/task-list-invalidation";
+import { useEffect, useId, useRef, useState } from "react";
+import type { Routine } from "@/lib/routine-types";
+import { formatRoutineDate } from "@/lib/routine-format";
+import { useRoutineGeneration } from "../_hooks/use-routine-generation";
+import { GenerationPlanningRows } from "./generation-planning-rows";
 import type { TraversalAttempt } from "@/lib/history-traversal-guard";
 import { useHistoryTraversalGuard } from "../_hooks/use-history-traversal-guard";
 import { DiscardChangesDialog } from "../_components/discard-changes-dialog";
@@ -20,22 +19,15 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
   const fromRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const errorRef = useRef<HTMLDivElement>(null);
-  const request = useRef<AbortController | null>(null);
-  const inFlight = useRef(false);
+  const model = useRoutineGeneration(routine, onSubmittingChange);
+  const { range, result, error, rangeError: fieldError, pending, dirty } = model;
   const action = useRef<(() => void) | null>(null);
   const traversal = useRef<TraversalAttempt | null>(null);
-  const [baseline, setBaseline] = useState<GenerateRoutineInput>(() => defaultRoutinePreviewRange(routine.timezone));
-  const [range, setRange] = useState<GenerateRoutineInput>(baseline);
-  const [result, setResult] = useState<RoutineGenerationResult | null>(null);
-  const [error, setError] = useState<{ message: string; uncertain: boolean; range: GenerateRoutineInput } | null>(null);
-  const [fieldError, setFieldError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [discardFocus, setDiscardFocus] = useState<HTMLElement | null>(null);
-  const dirty = range.from !== baseline.from || range.to !== baseline.to;
 
   useHistoryTraversalGuard(dirty || pending, (attempt) => {
-    if (inFlight.current || confirming || action.current) { attempt.stay(); return true; }
+    if (model.isPosting() || confirming || action.current) { attempt.stay(); return true; }
     traversal.current = attempt; action.current = () => { onClose(); attempt.leave(); };
     setDiscardFocus(attempt.returnFocus); setConfirming(true); return true;
   });
@@ -43,7 +35,7 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
     const dialog = dialogRef.current, overflow = document.body.style.overflow;
     dialog?.showModal(); fromRef.current?.focus(); document.body.style.overflow = "hidden";
     return () => {
-      request.current?.abort(); dialog?.close(); document.body.style.overflow = overflow;
+      dialog?.close(); document.body.style.overflow = overflow;
       requestAnimationFrame(() => { if (opener.isConnected && !document.querySelector("dialog[open]")) opener.focus(); });
     };
   }, [opener]);
@@ -55,45 +47,31 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
   }, [dirty, pending]);
 
   function requestClose(next = onClose) {
-    if (inFlight.current || confirming) return;
+    if (model.isPosting() || confirming) return;
     if (!dirty) { next(); return; }
     action.current = next;
     setDiscardFocus(document.activeElement instanceof HTMLElement ? document.activeElement : null); setConfirming(true);
   }
-  function change(key: keyof GenerateRoutineInput, value: string) {
-    if (inFlight.current) return;
-    setRange((previous) => ({ ...previous, [key]: value }));
-    setResult(null); setError((previous) => previous?.uncertain ? previous : null); setFieldError(null);
-  }
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (inFlight.current || confirming || routine.pausedAt !== null) return;
-    const validation = routinePreviewRangeError(range); setFieldError(validation);
-    if (validation) { requestAnimationFrame(() => fromRef.current?.focus()); return; }
-    const requested = { from: range.from, to: range.to };
-    const controller = new AbortController(); request.current = controller;
-    inFlight.current = true; setPending(true); onSubmittingChange(true); setResult(null); setError(null);
-    try {
-      const data = await generateRoutine(routine.id, requested, controller.signal);
-      if (controller.signal.aborted) return;
-      setResult(data); setBaseline(requested); invalidateTaskList();
-      requestAnimationFrame(() => resultRef.current?.focus());
-    } catch (failure) {
-      if (!controller.signal.aborted) {
-        const outcome = routineGenerationFailure(failure);
-        setError({ ...outcome, range: requested });
-        if (outcome.uncertain) invalidateTaskList();
-        requestAnimationFrame(() => errorRef.current?.focus());
+  function focusOutcome(outcome: string | null) {
+    requestAnimationFrame(() => {
+      if (outcome === "success") resultRef.current?.focus();
+      else if (outcome === "error") errorRef.current?.focus();
+      else if (outcome === "validation") {
+        const invalid = dialogRef.current?.querySelector<HTMLElement>('input[aria-invalid="true"], select[aria-invalid="true"]');
+        (invalid ?? fromRef.current)?.focus();
       }
-    } finally {
-      if (!controller.signal.aborted) { inFlight.current = false; setPending(false); onSubmittingChange(false); }
-    }
+    });
+  }
+  async function submit(event: { preventDefault: () => void }) {
+    event.preventDefault();
+    if (model.isPosting() || confirming) return;
+    focusOutcome(await model.generate());
   }
   return <dialog ref={dialogRef} className={`${shared.modal} ${styles.generateModal}`} aria-modal="true" aria-labelledby={`${id}-heading`} aria-describedby={`${id}-warning`}
     onCancel={(event) => { event.preventDefault(); event.stopPropagation(); requestClose(); }}
     onKeyDown={(event) => {
       if (event.key !== "Tab" || confirming || (event.target as HTMLElement).closest("dialog") !== event.currentTarget) return;
-      const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), [tabindex="0"]')].filter((element) => element.getClientRects().length > 0 && element.closest("dialog") === event.currentTarget);
+      const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex="0"]')].filter((element) => element.getClientRects().length > 0 && element.closest("dialog") === event.currentTarget);
       if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1)?.focus(); }
       else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0]?.focus(); }
     }}>
@@ -104,7 +82,7 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
       </header>
       <div className={`${shared.modalBody} ${styles.body}`} tabIndex={0} role="region" aria-label="Підтвердження створення задач і результат">
         <h3 className={styles.text}>{routine.title}</h3>
-        <p>Часовий пояс: <strong>{routine.timezone}</strong></p>
+        <p>Часовий пояс: <strong>{model.preview.data?.timezone ?? routine.timezone}</strong></p>
         <p id={`${id}-warning`}>Після підтвердження будуть створені реальні задачі з цього шаблону.</p>
         <ul className={styles.messages}>
           <li>Вікно виконання, яке перетинає діапазон, створюється цілком.</li>
@@ -113,27 +91,45 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
         </ul>
         {routine.schedule.recurrence.type === "AFTER_COMPLETION" && <p className={styles.hint}>Один запуск створює максимум одне нове виконання. Наступне залежить від фактичного завершення попередньої задачі. Дати й наступника визначає сервер.</p>}
         {routine.pausedAt && <p className={shared.fieldError}>Повторення на паузі. Перед запуском потрібно його відновити.</p>}
-        <form id={`${id}-form`} onSubmit={submit} noValidate className={styles.range} aria-busy={pending}>
+        <form id={`${id}-form`} onSubmit={(event) => { event.preventDefault(); if (!confirming) void model.loadPreview(); }} noValidate className={styles.range} aria-busy={pending}>
           <label className={shared.field} htmlFor={`${id}-from`}>З дати
             <input ref={fromRef} id={`${id}-from`} type="date" min="0001-01-01" max="9999-12-31" required disabled={pending} value={range.from}
-              aria-invalid={Boolean(fieldError)} aria-describedby={fieldError ? `${id}-range-error` : `${id}-range-hint`} onChange={(event) => change("from", event.target.value)} />
+              aria-invalid={Boolean(fieldError)} aria-describedby={fieldError ? `${id}-range-error` : `${id}-range-hint`} onChange={(event) => model.changeRange("from", event.target.value)} />
           </label>
           <label className={shared.field} htmlFor={`${id}-to`}>До дати
             <input id={`${id}-to`} type="date" min="0001-01-01" max="9999-12-31" required disabled={pending} value={range.to}
-              aria-invalid={Boolean(fieldError)} aria-describedby={fieldError ? `${id}-range-error` : `${id}-range-hint`} onChange={(event) => change("to", event.target.value)} />
+              aria-invalid={Boolean(fieldError)} aria-describedby={fieldError ? `${id}-range-error` : `${id}-range-hint`} onChange={(event) => model.changeRange("to", event.target.value)} />
           </label>
+          <button type="submit" className={shared.secondaryButton} disabled={pending || confirming || model.preview.loading || routine.pausedAt !== null}>Показати виконання</button>
+          {model.preview.loading && <button type="button" className={shared.secondaryButton} disabled={pending} onClick={model.cancelPreview}>Скасувати завантаження</button>}
         </form>
         <p id={`${id}-range-hint`} className={styles.hint}>Локальні календарні дати включно, не більше 366 днів.</p>
         {fieldError && <p id={`${id}-range-error`} role="alert" className={shared.fieldError}>{fieldError}</p>}
+        <section aria-busy={model.preview.loading} aria-label="Фактичні кандидати генерації">
+          {model.preview.loading && <p role="status">Завантаження виконань…</p>}
+          {model.preview.error && <div role="alert" className={shared.error}><p>{model.preview.error}</p>
+            <button type="button" className={shared.secondaryButton} disabled={pending || confirming} onClick={() => void model.loadPreview()}>Повторити завантаження виконань</button>
+          </div>}
+          {model.notice && <p role="status" className={styles.hint}>{model.notice}</p>}
+          {model.preview.data && <>
+            <p className={styles.hint}>Перелік за {formatRoutineDate(model.preview.data.from)} — {formatRoutineDate(model.preview.data.to)}.
+              {!model.current && " Перелік неактуальний. Оновіть виконання перед новою генерацією; введення збережено."}
+            </p>
+            <p className={styles.hint}>Час необов’язковий. Порожні поля залишать задачі без особистого планування.</p>
+            <GenerationPlanningRows id={id} preview={model.preview.data} drafts={model.drafts} errors={model.planningErrors}
+              disabled={pending || !model.current || confirming} onChange={model.changePlanning} />
+          </>}
+          {!model.preview.data && !model.preview.loading && <p className={styles.hint}>Натисніть «Показати виконання», щоб отримати фактичних кандидатів перед створенням задач.</p>}
+        </section>
         {pending && <p role="status">Створення задач…</p>}
         {error && <div ref={errorRef} role="alert" tabIndex={-1} className={styles.generationResult}>
           <p className={shared.fieldError}>{error.message}</p>
-          <p className={styles.hint}>Запитаний діапазон: {formatRoutineDate(error.range.from)} — {formatRoutineDate(error.range.to)}</p>
-          {error.uncertain && (error.range.from !== range.from || error.range.to !== range.to) && <>
-            <p className={styles.hint}>Попередній запит має невідомий результат. Введений вище діапазон уже змінено.</p>
-            <button type="button" className={shared.secondaryButton} disabled={pending} onClick={() => {
-              if (!inFlight.current) { setRange({ ...error.range }); setFieldError(null); }
-            }}>Відновити діапазон запиту</button>
+          <p className={styles.hint}>Запитаний діапазон: {formatRoutineDate(error.payload.from)} — {formatRoutineDate(error.payload.to)}</p>
+          {model.uncertainPayload && <>
+            <p className={styles.hint}>Збережено точний надісланий запит із {model.uncertainPayload.planning?.length ?? 0} записами планування. Зміни поточної чернетки не впливають на його повтор. Повтор не переплановує вже створені задачі.</p>
+            <button type="button" className={shared.secondaryButton} disabled={pending || model.preview.loading || confirming}
+              onClick={async () => focusOutcome(await model.retryExact())}>Повторити точний запит</button>
+            <p className={styles.hint}>Новий запит із поточного планування доступний після завершення точного повтору й оновлення виконань.</p>
           </>}
         </div>}
         {result && <div ref={resultRef} role="status" tabIndex={-1} className={styles.generationResult}>
@@ -142,21 +138,22 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onCurrentTasks
           <p className={styles.hint}>Діапазон: {formatRoutineDate(result.from)} — {formatRoutineDate(result.to)}</p>
           {result.createdCount === 0 && result.existingCount === 0 && <p>У цьому діапазоні задач не створено й наявних виконань не знайдено.</p>}
         </div>}
+        {result && <p className={styles.hint}>Оновіть виконання перед наступним запуском. Старі редаговані рядки повторно не надсилаються.</p>}
         {(result || error?.uncertain) && <button type="button" className={shared.secondaryButton} disabled={pending || navigationDisabled} onClick={() => {
           if (!navigationDisabled) requestClose(onCurrentTasks);
         }}>Перейти до поточних задач</button>}
       </div>
       <footer className={shared.modalFooter}>
         <button type="button" className={shared.secondaryButton} disabled={pending} onClick={() => requestClose()}>{result ? "Закрити" : "Скасувати"}</button>
-        <button type="submit" form={`${id}-form`} className={shared.primaryButton} disabled={pending || confirming || routine.pausedAt !== null}>
-          {pending ? "Створення…" : result ? "Створити задачі ще раз" : error ? "Повторити запуск" : "Створити задачі"}
+        <button type="button" onClick={submit} className={shared.primaryButton} disabled={pending || confirming || !model.canGenerate}>
+          {pending ? "Створення…" : "Створити задачі"}
         </button>
       </footer>
     </div>
     {confirming && <DiscardChangesDialog returnFocus={discardFocus} onContinue={() => {
       traversal.current?.stay(); traversal.current = null; action.current = null; setConfirming(false);
     }} onDiscard={() => {
-      if (inFlight.current) return;
+      if (model.isPosting()) return;
       const next = action.current ?? onClose; traversal.current = null; action.current = null; next();
     }} />}
   </dialog>;

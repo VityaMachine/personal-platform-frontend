@@ -3,6 +3,8 @@ import { ApiError } from "./api";
 export const GENERATION_UNCERTAIN_MESSAGE = "Не вдалося отримати результат. Запит міг виконатися. Повторний запуск за тим самим діапазоном не створить дублікатів";
 const known: Record<string, string> = {
   "Invalid task data.": "Перевірте локальні дати й діапазон: максимум 366 днів включно.",
+  "Planning contains an occurrence not available for this Routine and range. Refresh generation-preview and retry.": "Планування застаріло: виконання більше не доступне для цього шаблону й діапазону. Оновіть виконання, перевірте планування та повторіть створення явно.",
+  "AFTER_COMPLETION planning accepts at most one occurrence.": "Для повторення після завершення можна запланувати максимум одне нове виконання. Оновіть виконання та перевірте планування.",
   "Routine not found.": "Повторювану задачу не знайдено. Можливо, шаблон уже видалено.",
   "Area not found.": "Сферу шаблону не знайдено. Оновіть дані повторення перед новим запуском.",
   "Routine is paused. Resume it before generation.": "Повторення на паузі. Спочатку відновіть його, потім запустіть створення задач.",

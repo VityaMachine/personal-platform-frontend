@@ -2,7 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { isAreaId, isAreaReference } from "./area-validation";
 import { isTimeZone } from "./settings";
 import { TASK_PRIORITIES } from "./task-types";
-import type { Routine, RoutineSchedule, RoutineEndCondition, RoutinePreview, RoutinePreviewOccurrence, GenerateRoutineInput, RoutineGenerationResult, RoutineGenerationLink } from "./routine-types";
+import type { Routine, RoutineSchedule, RoutineEndCondition, RoutinePreview, RoutinePreviewOccurrence, GenerateRoutineInput, RoutineGenerationResult, RoutineGenerationLink, RoutineGenerationPreview } from "./routine-types";
 
 const record = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const integer = (value: unknown, min = 1, max = 2_147_483_647): value is number => typeof value === "number" && Number.isInteger(value) && value >= min && value <= max;
@@ -67,7 +67,21 @@ function validGenerationRange(value: Record<string, unknown>): value is Record<s
     && Temporal.PlainDate.from(value.from).until(value.to).days < 366;
 }
 export function isGenerateRoutineInput(value: unknown): value is GenerateRoutineInput {
-  return record(value) && Object.keys(value).every((key) => key === "from" || key === "to") && validGenerationRange(value);
+  if (!record(value) || !Object.keys(value).every((key) => key === "from" || key === "to" || key === "planning") || !validGenerationRange(value)) return false;
+  if (value.planning === undefined) return true;
+  if (!Array.isArray(value.planning) || value.planning.length > 100) return false;
+  return value.planning.every((entry: unknown) => {
+    if (!record(entry) || Object.keys(entry).length !== 2 || !text(entry.occurrenceKey) || !entry.occurrenceKey.length || entry.occurrenceKey.length > 512
+      || !text(entry.plannedAt) || !/^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,9})?)?(Z|[+-]([01]\d|2[0-3]):[0-5]\d)$/.test(entry.plannedAt)) return false;
+    try { Temporal.Instant.from(entry.plannedAt); return true; } catch { return false; }
+  }) && new Set(value.planning.map((entry) => entry.occurrenceKey)).size === value.planning.length;
+}
+export function isRoutineGenerationPreview(value: unknown): value is RoutineGenerationPreview {
+  if (!record(value) || !validGenerationRange(value) || !isAreaId(value.routineId) || !timezone(value.timezone)
+    || !Array.isArray(value.occurrences) || !value.occurrences.every((entry: unknown) => isPreviewOccurrence(entry)
+      && entry.occurrenceKey.length > 0 && entry.occurrenceKey.length <= 512 && "existing" in entry && typeof entry.existing === "boolean")) return false;
+  return new Set(value.occurrences.map((entry) => entry.occurrenceKey)).size === value.occurrences.length
+    && value.occurrences.filter((entry) => !entry.existing).length <= 100;
 }
 const isGenerationLink = (value: unknown): value is RoutineGenerationLink => record(value)
   && text(value.occurrenceKey) && value.occurrenceKey.length > 0 && isAreaId(value.taskId);

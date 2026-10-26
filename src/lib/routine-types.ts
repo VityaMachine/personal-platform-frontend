@@ -32,7 +32,12 @@ export type RoutinePreview = {
   occurrences: RoutinePreviewOccurrence[]; truncated: boolean; limitations: string[];
 };
 export type RoutinePreviewRange = { from: string; to: string };
-export type GenerateRoutineInput = { from: string; to: string };
+export type RoutinePlanningInput = { occurrenceKey: string; plannedAt: string };
+export type GenerateRoutineInput = { from: string; to: string; planning?: RoutinePlanningInput[] };
+export type RoutineGenerationOccurrence = RoutinePreviewOccurrence & { existing: boolean };
+export type RoutineGenerationPreview = {
+  routineId: string; timezone: string; from: string; to: string; occurrences: RoutineGenerationOccurrence[];
+};
 export type RoutineGenerationLink = { occurrenceKey: string; taskId: string };
 export type RoutineGenerationResult = {
   routineId: string; from: string; to: string; createdCount: number; existingCount: number;

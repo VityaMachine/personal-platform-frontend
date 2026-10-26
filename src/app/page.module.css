@@ -275,6 +275,13 @@
   line-height: 1.5;
 }
 
+.planningFields { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.planningFields legend { padding: 0; font-size: 0.875rem; font-weight: 600; }
+.planningInputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.planningInputs input { max-width: 100%; }
+.planningFields > button { justify-self: start; max-width: 100%; }
+@media (max-width: 540px) { .planningInputs { grid-template-columns: minmax(0, 1fr); } }
+
 .required {
   color: var(--muted);
   font-weight: 400;

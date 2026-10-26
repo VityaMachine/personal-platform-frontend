@@ -10,6 +10,7 @@ import { DiscardChangesDialog } from "./discard-changes-dialog";
 import { AreaSelect } from "./area-select";
 import { useFormDates } from "../_hooks/use-form-dates";
 import { ZonedDateTimeField } from "./zoned-date-time-field";
+import { TaskPlanningFields } from "./task-planning-fields";
 import styles from "../page.module.css";
 
 type Props = {
@@ -72,9 +73,20 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
 
   function change(field: keyof EditTaskFields, value: string) {
     if (locked || inFlight.current || confirmingDiscard || (field === "estimatedDurationMinutes" && hasSubtasks)) return;
-    if (field === "dueAt" || field === "plannedAt") dates.clear(field);
+    if (field === "dueAt") dates.clear(field);
+    if (field === "plannedDate" || field === "plannedTime") dates.clear("plannedAt");
     setFields((previous) => ({ ...previous, [field]: value }));
-    setErrors((previous) => ({ ...previous, [field]: undefined }));
+    setErrors((previous) => field === "plannedDate" || field === "plannedTime"
+      ? { ...previous, plannedDate: undefined, plannedTime: undefined }
+      : { ...previous, [field]: undefined });
+    setError(null);
+  }
+
+  function removePlanning() {
+    if (locked || inFlight.current || confirmingDiscard) return;
+    dates.clear("plannedAt");
+    setFields((previous) => ({ ...previous, plannedDate: "", plannedTime: "" }));
+    setErrors((previous) => ({ ...previous, plannedDate: undefined, plannedTime: undefined }));
     setError(null);
   }
 
@@ -184,14 +196,16 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
                 onChoice={(iso) => dates.choose("dueAt", iso)}
               />
               <AreaSelect id={`${id}-areaId`} value={fields.areaId} currentArea={task.area} onChange={(value) => change("areaId", value)} disabled={locked} error={errors.areaId} />
-              <ZonedDateTimeField
-                id={`${id}-plannedAt`} name="plannedAt" label="Планування: дата й час (необов’язково)"
-                value={fields.plannedAt} timeZone={dates.timeZone} hint={dates.hint}
-                choice={dates.choices.plannedAt} original={fields.plannedAt === initial.plannedAt ? task.plannedAt : null}
+              <TaskPlanningFields
+                id={`${id}-plannedAt`} date={fields.plannedDate} time={fields.plannedTime} timeZone={dates.timeZone} hint={dates.hint}
+                occurrenceHint={task.plannedAt === null && Boolean(task.routineOccurrence) && fields.plannedDate === task.routineOccurrence?.startDate && !fields.plannedTime}
+                choice={dates.choices.plannedAt} original={fields.plannedDate === initial.plannedDate && fields.plannedTime === initial.plannedTime ? task.plannedAt : null}
                 disabled={locked}
-                error={errors.plannedAt}
-                onChange={(value) => change("plannedAt", value)}
+                dateError={errors.plannedDate} timeError={errors.plannedTime}
+                canRemove={task.plannedAt !== null}
+                onDate={(value) => change("plannedDate", value)} onTime={(value) => change("plannedTime", value)}
                 onChoice={(iso) => dates.choose("plannedAt", iso)}
+                onRemove={removePlanning}
               />
               <label className={styles.field} htmlFor={`${id}-priority`}>
                 Пріоритет

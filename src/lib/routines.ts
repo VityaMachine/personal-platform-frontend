@@ -1,14 +1,20 @@
 import { jsonRequest, requestDto, ApiError } from "./api";
-import { isRoutine, isRoutineList, isRoutinePreview, isRoutineGenerationResult } from "./routine-validation";
-import type { CreateRoutineInput, UpdateRoutineInput, RoutinePreviewRange, GenerateRoutineInput, RoutineGenerationResult } from "./routine-types";
+import { isRoutine, isRoutineList, isRoutinePreview, isRoutineGenerationResult, isRoutineGenerationPreview } from "./routine-validation";
+import type { CreateRoutineInput, UpdateRoutineInput, RoutinePreviewRange, GenerateRoutineInput, RoutineGenerationResult, RoutineGenerationPreview } from "./routine-types";
 const routinePath = (id: string) => `/routines/${encodeURIComponent(id)}`;
 export const getRoutines = (signal?: AbortSignal) => requestDto("/routines", isRoutineList, { signal });
 export const createRoutine = (input: CreateRoutineInput, signal?: AbortSignal) => requestDto("/routines", isRoutine, jsonRequest("POST", input, signal));
 export function generateRoutine(id: string, input: GenerateRoutineInput, signal?: AbortSignal) {
-  const body = { from: input.from, to: input.to };
+  const body: GenerateRoutineInput = { from: input.from, to: input.to,
+    ...(input.planning === undefined ? {} : { planning: input.planning.map(({ occurrenceKey, plannedAt }) => ({ occurrenceKey, plannedAt })) }) };
   return requestDto(`${routinePath(id)}/generate`, (value): value is RoutineGenerationResult =>
     isRoutineGenerationResult(value) && value.routineId === id && value.from === body.from && value.to === body.to,
     jsonRequest("POST", body, signal));
+}
+export function getRoutineGenerationPreview(id: string, range: RoutinePreviewRange, signal?: AbortSignal) {
+  const query = new URLSearchParams({ from: range.from, to: range.to });
+  return requestDto(`${routinePath(id)}/generation-preview?${query}`, (value): value is RoutineGenerationPreview =>
+    isRoutineGenerationPreview(value) && value.routineId === id && value.from === range.from && value.to === range.to, { signal });
 }
 export const getRoutine = (id: string, signal?: AbortSignal) => requestDto(routinePath(id), (value): value is import("./routine-types").Routine => isRoutine(value) && value.id === id, { signal });
 export const updateRoutine = (id: string, input: UpdateRoutineInput, signal?: AbortSignal) =>

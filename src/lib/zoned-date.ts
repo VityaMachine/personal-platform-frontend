@@ -5,6 +5,11 @@ export type DateOptions = { timeZone: string; choices?: Partial<Record<DateField
 export type DateCandidate = { iso: string; offset: string };
 export type LocalDateResult = { candidates: DateCandidate[]; error?: string };
 
+/** Minute-only planning drafts; leave malformed values for normal validation. */
+export function toMinuteDateTime(value: string): string {
+  return value.replace(/(T\d{2}:\d{2})(?::[0-5]\d(?:\.\d{1,3})?)?$/, "$1");
+}
+
 export function toZonedDateTime(value: string | null, timeZone: string): string {
   if (value === null) return "";
   try { return Temporal.Instant.from(value).toZonedDateTimeISO(timeZone).toPlainDateTime().toString({ fractionalSecondDigits: 3 }); }

@@ -42,9 +42,22 @@
 .generateModal header > button { flex-shrink: 0; }
 .generationResult { margin-block: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-muted); }
 .generationResult:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.generationOccurrences { list-style: none; padding: 0; margin: 12px 0; min-width: 0; }
+.generationCandidate { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; min-width: 0; padding-block: 8px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.generationDate { margin: 0; font-size: 0.875rem; }
+.generationFields { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; min-width: 0; }
+.generationField { flex: 0 1 10.5rem; width: 10.5rem; min-width: 0; gap: 3px; font-size: 0.75rem; }
+.generationFields .generationField input { min-width: 0; max-width: 100%; margin-top: 3px; padding: 6px 8px; min-height: 36px; font-size: 0.875rem; }
+.generationExisting { justify-self: end; }
+.generationOffset, .generationMessage { grid-column: 1 / -1; min-width: 0; margin: 0; }
+.generationOffset { font-size: 0.8125rem; }
+.generationOffset select { max-width: 100%; min-width: 0; }
 @media (max-width: 900px) { .createColumns { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 @media (max-width: 540px) {
   .card { padding: 16px; }
   .modal { width: calc(100% - 24px); }
   .generateModal { width: calc(100% - 24px); }
+  .generationCandidate { grid-template-columns: minmax(0, 1fr); }
+  .generationFields { justify-content: flex-start; }
+  .generationExisting { justify-self: start; }
 }
