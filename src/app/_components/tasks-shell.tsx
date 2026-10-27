@@ -1,6 +1,6 @@
 import type { ReactNode, MouseEvent } from "react";
 import Link from "next/link";
-import { taskSectionHref } from "@/lib/task-filters";
+import { taskSectionHref } from "@/modules/tasks/model/task-filters";
 import styles from "../page.module.css";
 import { LogoutButton } from "./app-access";
 

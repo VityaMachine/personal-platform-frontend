@@ -21,6 +21,12 @@ Gate охоплює всі маршрути перед `AreasProvider` і ком
 
 Після зміни `NEXT_PUBLIC_API_URL` перезапустіть dev-сервер; для production виконайте нову збірку, оскільки Next.js вбудовує публічні змінні у клієнтський код.
 
+## Структура Tasks і Routines
+
+Предметний код Tasks розташований у `src/modules/tasks`: `api` містить API-обгортки, `model` — типи, валідацію та чисту логіку, `hooks` — React hooks, `ui` — компоненти та їхні локальні стилі, `screens` — реалізацію екрана списків. Внутрішній розділ `routines` містить власні `api`, `model`, `hooks`, `ui` та `routines-screen.tsx`. Публічна точка входу екранів — `src/modules/tasks/screens.ts`.
+
+`src/app/page.tsx` і `src/app/routines/page.tsx` залишаються тонкими обгортками наявних маршрутів. URL, композиція shell/providers та поведінка екранів не змінені. Спільний `src/app/page.module.css`, shell, Areas, Settings, access gate й технічні утиліти поки залишаються на попередніх місцях; модуль Tasks тимчасово імпортує їх звідти. Тести та fixtures залишаються в `tests`; імпорти предметного коду в них ведуть у модуль.
+
 ## API
 
 - `GET /tasks` — масив повних Task DTO; `GET /tasks?view=today` — підмножина «Сьогодні»; `GET /tasks?view=backlog` — беклог; `GET /tasks?archived=true` — архів.

@@ -15,12 +15,12 @@ Module._resolveFilename = function (request, ...args) {
 load.extensions[".ts"] = (module, filename) => module._compile(ts.transpileModule(readFileSync(filename, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
 }).outputText, filename);
-const api = load("../src/lib/routines.ts"), validation = load("../src/lib/routine-validation.ts");
-const helpers = load("../src/lib/routine-schedule-versions.ts");
+const api = load("../src/modules/tasks/routines/api/routines.ts"), validation = load("../src/modules/tasks/routines/model/routine-validation.ts");
+const helpers = load("../src/modules/tasks/routines/model/routine-schedule-versions.ts");
 const { Temporal } = load("@js-temporal/polyfill");
-const { routineToFields, parseUpdateRoutineFields } = load("../src/lib/edit-routine-input.ts");
-const { parseCreateRoutineFields, initialRoutineFields, routineApiFieldErrors } = load("../src/lib/create-routine-input.ts");
-const { reconcileGenerationPlanning, buildGenerationPayload } = load("../src/lib/routine-generation-planning.ts");
+const { routineToFields, parseUpdateRoutineFields } = load("../src/modules/tasks/routines/model/edit-routine-input.ts");
+const { parseCreateRoutineFields, initialRoutineFields, routineApiFieldErrors } = load("../src/modules/tasks/routines/model/create-routine-input.ts");
+const { reconcileGenerationPlanning, buildGenerationPayload } = load("../src/modules/tasks/routines/model/routine-generation-planning.ts");
 const now = Temporal.Instant.from("2026-10-26T12:00:00Z");
 
 test("automation defaults, strict DTO, horizon bounds and minimal non-calendar PATCH", () => {
@@ -96,7 +96,7 @@ test("additive conflicts and SKIPPED basis preserve existing DTO contracts", () 
   assert(validation.isRoutineGenerationPreview({ ...generationPreview, occurrences: [{ ...occurrence, basisType: "SKIPPED", basisAt: "2026-10-26T00:00:00Z", basisCompletedAt: null }] }));
 });
 test("full future Task and SKIPPED DTO regression, including basisType/basisAt", () => {
-  const { isTask, isSubtask } = load("../src/lib/task-validation.ts");
+  const { isTask, isSubtask } = load("../src/modules/tasks/model/task-validation.ts");
   assert(isTask(futureTask));
   assert(isTask({ ...futureTask, status: "SKIPPED", skipNote: "Skip", skippedAt: "2026-10-26T12:00:00.000Z",
     routineOccurrence: { ...futureTask.routineOccurrence, basisType: "SKIPPED", basisAt: "2026-10-25T12:00:00.000Z", basisCompletedAt: null } }));
