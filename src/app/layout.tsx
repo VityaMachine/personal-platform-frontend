@@ -4,6 +4,7 @@ import { SettingsProvider } from "./_hooks/use-settings";
 import { AreasProvider } from "./_hooks/use-areas";
 import { themeBootstrap } from "@/lib/theme";
 import { HistoryTraversalProvider } from "./_hooks/use-history-traversal-guard";
+import { AppAccessProvider } from "./_components/app-access";
 
 export const metadata: Metadata = {
   title: "Мої задачі",
@@ -21,7 +22,7 @@ export default function RootLayout({
         <style id="personal-theme-override" />
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
-      <body><HistoryTraversalProvider><SettingsProvider><AreasProvider>{children}</AreasProvider></SettingsProvider></HistoryTraversalProvider></body>
+      <body><HistoryTraversalProvider><SettingsProvider><AppAccessProvider><AreasProvider>{children}</AreasProvider></AppAccessProvider></SettingsProvider></HistoryTraversalProvider></body>
     </html>
   );
 }

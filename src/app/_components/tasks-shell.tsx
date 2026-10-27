@@ -2,6 +2,7 @@ import type { ReactNode, MouseEvent } from "react";
 import Link from "next/link";
 import { taskSectionHref } from "@/lib/task-filters";
 import styles from "../page.module.css";
+import { LogoutButton } from "./app-access";
 
 export function TasksShell({ children, archived = false, today = false, backlog = false, query, areasDisabled, onManageAreas, settingsPage = false, routinesPage = false, onNavigate }: {
   children: ReactNode; archived?: boolean; today?: boolean; backlog?: boolean; query: string; areasDisabled: boolean; onManageAreas: (opener: HTMLButtonElement) => void;
@@ -41,6 +42,7 @@ export function TasksShell({ children, archived = false, today = false, backlog 
           </Link>
           <button type="button" className={`${styles.navItem} ${styles.navButton}`} aria-disabled={areasDisabled} onClick={(event) => { if (!areasDisabled) onManageAreas(event.currentTarget); }}>Сфери</button>
           <Link className={styles.navItem} href={settingsHref} scroll={false} aria-current={settingsPage ? "page" : undefined} aria-disabled={!settingsPage && areasDisabled} onClick={(e) => navigate(e, settingsHref)}>Налаштування</Link>
+          <LogoutButton disabled={areasDisabled && !settingsPage} />
         </nav>
       </aside>
       <main className={`${styles.main} ${settingsPage ? "" : styles.tasksMain}`}>{children}</main>

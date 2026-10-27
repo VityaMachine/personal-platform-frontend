@@ -27,6 +27,14 @@ export function createHistoryTraversalGuard() {
   let blocker: Blocker | null = null;
   let attach: ((blocker: Blocker | null) => void) | undefined;
   return {
+    requestLeave(action: () => void, returnFocus: HTMLElement | null) {
+      if (!blocker?.shouldBlock()) { action(); return; }
+      let decided = false;
+      blocker.confirm({ returnFocus, stay: () => { decided = true; }, leave: () => {
+        if (decided) return;
+        decided = true; action();
+      } });
+    },
     register(next: Blocker) {
       blocker = next;
       attach?.(next);

@@ -127,6 +127,9 @@ on("Fetch.requestPaused", async ({ requestId, request, resourceType }) => {
   ], body: status === 204 ? "" : Buffer.from(JSON.stringify(response)).toString("base64") });
 });
 await cdp("Runtime.enable"); await cdp("Page.enable");
+if (process.env.APP_ACCESS_TEST_PASSWORD) await cdp("Page.addScriptToEvaluateOnNewDocument", {
+  source: `localStorage.setItem('personal-platform.access-password', ${JSON.stringify(process.env.APP_ACCESS_TEST_PASSWORD)});`,
+});
 await cdp("Fetch.enable", { patterns: [{ urlPattern: "*", requestStage: "Request" }] });
 async function navigate() {
   await cdp("Page.navigate", { url: `${appUrl}/routines` });

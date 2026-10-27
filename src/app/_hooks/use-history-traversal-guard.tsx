@@ -20,3 +20,11 @@ export function useHistoryTraversalGuard(dirty: boolean, confirm: (attempt: Trav
     confirm: (attempt) => latest.current.confirm(attempt),
   }), [guard]);
 }
+
+export function useGuardedLeave() {
+  const guard = useContext(Context);
+  return (action: () => void, returnFocus: HTMLElement | null) => {
+    if (guard) guard.requestLeave(action, returnFocus);
+    else action();
+  };
+}
