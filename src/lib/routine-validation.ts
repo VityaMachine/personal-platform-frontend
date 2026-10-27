@@ -45,6 +45,7 @@ export function isRoutine(value: unknown): value is Routine {
     && TASK_PRIORITIES.some((priority) => priority === value.priority)
     && ((value.areaId === null && value.area === null) || (isAreaReference(value.area) && value.areaId === value.area.id))
     && integer(value.estimatedDurationMinutes) && timezone(value.timezone) && isRoutineDate(value.startDate)
+    && typeof value.autoGenerate === "boolean" && integer(value.generationHorizonDays, 1, 30)
     && isRoutineSchedule(value.schedule) && isRoutineEndCondition(value.endCondition)
     && (value.endCondition.type !== "UNTIL_DATE" || value.endCondition.date >= value.startDate)
     && nullableTimestamp(value.pausedAt) && nullableTimestamp(value.deletedAt) && timestamp(value.createdAt) && timestamp(value.updatedAt)

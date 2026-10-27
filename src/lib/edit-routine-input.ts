@@ -4,6 +4,7 @@ import type { SubtaskFields } from "./create-task-input";
 
 export function routineToFields(routine: Routine): CreateRoutineFields {
   const fields = { ...initialRoutineFields(routine.timezone), title: routine.title, description: routine.description ?? "", priority: routine.priority,
+    autoGenerate: routine.autoGenerate, generationHorizonDays: String(routine.generationHorizonDays),
     areaId: routine.areaId ?? "", estimatedDurationMinutes: String(routine.estimatedDurationMinutes), startDate: routine.startDate,
     localTime: routine.schedule.localTime ?? "", recurrence: routine.schedule.recurrence.type, endType: routine.endCondition.type };
   const rule = routine.schedule.recurrence;
@@ -45,7 +46,7 @@ export function parseUpdateRoutineFields(routine: Routine, fields: CreateRoutine
   const baseline = parseCreateRoutineFields(routineToFields(routine), routineSubtasksToFields(routine)).input!;
   const next = parsed.input;
   const patch: UpdateRoutineInput = {};
-  for (const key of ["title", "description", "priority", "areaId"] as const) {
+  for (const key of ["title", "description", "priority", "areaId", "autoGenerate", "generationHorizonDays"] as const) {
     if (!sameNormalized(next[key], baseline[key])) Object.assign(patch, { [key]: next[key] });
   }
   if (!sameNormalized(next.subtasks ?? [], baseline.subtasks ?? [])) patch.subtasks = next.subtasks ?? [];

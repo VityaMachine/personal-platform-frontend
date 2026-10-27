@@ -5,6 +5,7 @@ export const configuration = {
   schedule: { version: 1, localTime: "09:00", recurrence: { type: "DAILY", intervalDays: 1 } }, endCondition: { type: "NEVER" },
 };
 export const routine = {
+  autoGenerate: false, generationHorizonDays: 7,
   id: routineId, title: "Mock Routine", description: null, priority: "MEDIUM", areaId: null, area: null,
   estimatedDurationMinutes: 30, subtasks: [], ...configuration, pausedAt: null, deletedAt: null,
   createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z",

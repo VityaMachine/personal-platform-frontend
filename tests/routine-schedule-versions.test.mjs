@@ -19,9 +19,45 @@ const api = load("../src/lib/routines.ts"), validation = load("../src/lib/routin
 const helpers = load("../src/lib/routine-schedule-versions.ts");
 const { Temporal } = load("@js-temporal/polyfill");
 const { routineToFields, parseUpdateRoutineFields } = load("../src/lib/edit-routine-input.ts");
-const { parseCreateRoutineFields } = load("../src/lib/create-routine-input.ts");
+const { parseCreateRoutineFields, initialRoutineFields, routineApiFieldErrors } = load("../src/lib/create-routine-input.ts");
 const { reconcileGenerationPlanning, buildGenerationPayload } = load("../src/lib/routine-generation-planning.ts");
 const now = Temporal.Instant.from("2026-10-26T12:00:00Z");
+
+test("automation defaults, strict DTO, horizon bounds and minimal non-calendar PATCH", () => {
+  const defaults = initialRoutineFields("Europe/Kyiv");
+  assert.equal(defaults.autoGenerate, false); assert.equal(defaults.generationHorizonDays, "7");
+  const fields = routineToFields(routine);
+  for (const horizon of [1, 30]) {
+    assert(validation.isRoutine({ ...routine, generationHorizonDays: horizon }));
+    assert.equal(parseCreateRoutineFields({ ...fields, generationHorizonDays: String(horizon) }, []).input.generationHorizonDays, horizon);
+  }
+  for (const horizon of [0, 31, 1.5, "7", undefined]) assert(!validation.isRoutine({ ...routine, generationHorizonDays: horizon }));
+  for (const raw of ["0", "31", "1.5", "", "NaN"]) assert(parseCreateRoutineFields({ ...fields, generationHorizonDays: raw }, []).errors.generationHorizonDays);
+  assert(!validation.isRoutine({ ...routine, autoGenerate: "true" }));
+  assert.deepEqual(parseUpdateRoutineFields(routine, { ...fields, autoGenerate: true }, []).input, { autoGenerate: true });
+  assert.deepEqual(parseUpdateRoutineFields(routine, { ...fields, generationHorizonDays: "30" }, []).input, { generationHorizonDays: 30 });
+  const enabled = { ...routine, autoGenerate: true, generationHorizonDays: 30 };
+  assert.deepEqual(parseUpdateRoutineFields(enabled, { ...routineToFields(enabled), autoGenerate: false }, []).input, { autoGenerate: false });
+  const completion = { ...enabled, schedule: { version: 1, localTime: null, recurrence: { type: "AFTER_COMPLETION", intervalDays: 3 } }, pausedAt: "2026-10-27T10:00:00Z" };
+  assert(validation.isRoutine(completion));
+  assert.equal(parseCreateRoutineFields(routineToFields(completion), []).input.generationHorizonDays, 30);
+  assert.equal(parseUpdateRoutineFields(completion, routineToFields(completion), []).input, null);
+  assert.deepEqual(Object.keys(routineApiFieldErrors([{ path: ["autoGenerate"] }, { path: ["generationHorizonDays"] }], fields, []).errors), ["autoGenerate", "generationHorizonDays"]);
+});
+
+test("automation POST/PATCH validate responses without generating or creating schedule versions", async () => {
+  process.env.NEXT_PUBLIC_API_URL = "http://mock.invalid/api";
+  const requests = []; let response = { ...routine, autoGenerate: true, generationHorizonDays: 30 }, status = 200;
+  globalThis.fetch = async (url, options) => { requests.push({ url, ...options }); return new Response(JSON.stringify(response), { status }); };
+  const input = parseCreateRoutineFields({ ...routineToFields(routine), autoGenerate: true, generationHorizonDays: "30" }, []).input;
+  assert.deepEqual(await api.createRoutine(input), response);
+  assert.deepEqual(await api.updateRoutine(routineId, { autoGenerate: true }), response);
+  assert.deepEqual(JSON.parse(requests.at(-1).body), { autoGenerate: true });
+  for (const code of [400, 409, 500]) { status = code; await assert.rejects(api.updateRoutine(routineId, { autoGenerate: false })); }
+  status = 200; response = { ...routine, generationHorizonDays: 31 };
+  await assert.rejects(api.updateRoutine(routineId, { autoGenerate: true }));
+  assert(requests.every(({ url }) => /\/routines(?:\/[\w-]+)?$/.test(url)));
+});
 
 test("initial/current/future are determined by effectiveAt, not insertion order", () => {
   assert(validation.isRoutine(routine)); assert(validation.isRoutineScheduleVersionList(versions));

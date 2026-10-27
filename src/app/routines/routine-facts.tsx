@@ -10,6 +10,9 @@ export function RoutineFacts({ routine, detailed = false }: { routine: Routine; 
   return <>
     <span className={styles.status} data-paused={routine.pausedAt !== null}>{routine.pausedAt ? "На паузі" : "Активний"}</span>
     <dl className={styles.facts}>
+      {(routine.autoGenerate || detailed) && <div><dt>Автоматичне створення</dt><dd>{routine.autoGenerate
+        ? routine.schedule.recurrence.type === "AFTER_COMPLETION" ? "Автоматично · після завершення або пропуску" : `Автоматично · ${routine.generationHorizonDays} днів`
+        : "Вимкнено"}</dd></div>}
       <div><dt>Розклад</dt><dd>{formatRoutineSchedule(routine.schedule)}</dd></div>
       <div><dt>Початок</dt><dd><time dateTime={routine.startDate}>{formatRoutineDate(routine.startDate)}</time></dd></div>
       <div><dt>Завершення розкладу</dt><dd>{formatRoutineEnd(routine.endCondition)}</dd></div>
@@ -25,6 +28,7 @@ export function RoutineFacts({ routine, detailed = false }: { routine: Routine; 
         <div><dt>Ідентифікатор шаблону</dt><dd>{routine.id}</dd></div>
       </>}
     </dl>
+    {detailed && <p className={styles.hint}>Пауза Routine призупиняє і автоматичне створення. Налаштування не підтверджують роботу runner: його глобальне ввімкнення контролюється backend.</p>}
     {detailed && shortMonth && <p className={styles.hint}>{shortMonth}</p>}
   </>;
 }

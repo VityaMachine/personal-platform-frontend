@@ -8,6 +8,7 @@ import { getTitleError, parseDuration, DURATION_ERROR, MAX_DURATION_MINUTES } fr
 import { getSubtaskDuration, type SubtaskFields, type SubtaskErrors } from "./create-task-input";
 
 export type CreateRoutineFields = {
+  autoGenerate: boolean; generationHorizonDays: string;
   title: string; description: string; priority: string; areaId: string; estimatedDurationMinutes: string;
   timezone: string; startDate: string; localTime: string; recurrence: string;
   dailyInterval: string; afterInterval: string; intervalWeeks: string; weeklyMode: string; weekdays: number[];
@@ -17,7 +18,7 @@ export type CreateRoutineFields = {
 };
 export type RoutineFormErrors = Partial<Record<keyof CreateRoutineFields, string>>;
 export function initialRoutineFields(timezone: string): CreateRoutineFields {
-  return { title: "", description: "", priority: "MEDIUM", areaId: "", estimatedDurationMinutes: "",
+  return { autoGenerate: false, generationHorizonDays: "7", title: "", description: "", priority: "MEDIUM", areaId: "", estimatedDurationMinutes: "",
     timezone, startDate: Temporal.Now.zonedDateTimeISO(timezone).toPlainDate().toString(), localTime: "", recurrence: "DAILY",
     dailyInterval: "1", afterInterval: "90", intervalWeeks: "1", weeklyMode: "DAYS", weekdays: [1], startWeekday: "6", endWeekday: "7",
     intervalMonths: "1", monthlyMode: "DAY", monthDay: "1", startDay: "15", endDay: "23", shortMonthPolicy: "SKIP",
@@ -75,6 +76,9 @@ export function parseRoutineRule(fields: CreateRoutineFields): { schedule?: Rout
 export function parseCreateRoutineFields(fields: CreateRoutineFields, subtasks: readonly SubtaskFields[]):
   { input?: CreateRoutineInput; errors: RoutineFormErrors; subtaskErrors: SubtaskErrors } {
   const rule = parseRoutineRule(fields), errors = { ...rule.errors }, subtaskErrors: SubtaskErrors = {};
+  const horizon = Number(fields.generationHorizonDays);
+  if (!/^\d+$/.test(fields.generationHorizonDays) || !Number.isInteger(horizon) || horizon < 1 || horizon > 30) errors.generationHorizonDays = "Введіть ціле число від 1 до 30.";
+  if (typeof fields.autoGenerate !== "boolean") errors.autoGenerate = "Оберіть стан автоматичного створення.";
   const titleError = getTitleError(fields.title, "Введіть назву шаблону.");
   if (titleError) errors.title = titleError;
   if (fields.areaId && !isAreaId(fields.areaId)) errors.areaId = "Виберіть сферу зі списку.";
@@ -94,6 +98,7 @@ export function parseCreateRoutineFields(fields: CreateRoutineFields, subtasks: 
   if (Object.keys(errors).length || Object.keys(subtaskErrors).length || !rule.schedule || !rule.endCondition || !priority) return { errors, subtaskErrors };
   const children = subtasks.map((row) => ({ title: row.title.trim(), estimatedDurationMinutes: Number(row.estimatedDurationMinutes) }));
   return { errors, subtaskErrors, input: {
+    autoGenerate: fields.autoGenerate, generationHorizonDays: horizon,
     title: fields.title.trim(), description: fields.description.trim() || null, areaId: fields.areaId ? fields.areaId.toLowerCase() : null, priority,
     timezone: fields.timezone.trim(), startDate: fields.startDate, schedule: rule.schedule, endCondition: rule.endCondition,
     ...(children.length ? { subtasks: children as [typeof children[number], ...typeof children] } : { estimatedDurationMinutes: duration! }),
@@ -105,6 +110,7 @@ export function routineApiFieldErrors(details: unknown, fields: CreateRoutineFie
   const errors: RoutineFormErrors = {}, subtaskErrors: SubtaskErrors = {};
   if (!Array.isArray(details)) return { errors, subtaskErrors };
   const paths: Record<string, keyof CreateRoutineFields> = {
+    autoGenerate: "autoGenerate", generationHorizonDays: "generationHorizonDays",
     title: "title", description: "description", priority: "priority", areaId: "areaId", estimatedDurationMinutes: "estimatedDurationMinutes", timezone: "timezone", startDate: "startDate",
     "schedule.localTime": "localTime", "schedule.recurrence.type": "recurrence", "schedule.recurrence.intervalDays": fields.recurrence === "AFTER_COMPLETION" ? "afterInterval" : "dailyInterval",
     "schedule.recurrence.intervalWeeks": "intervalWeeks", "schedule.recurrence.intervalMonths": "intervalMonths",

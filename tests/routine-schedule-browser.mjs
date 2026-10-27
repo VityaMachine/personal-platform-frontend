@@ -58,10 +58,11 @@ async function fill(selector, value) {
   await evaluate(`(() => { const input = ${scope}.querySelector(${JSON.stringify(selector)}); if (!input) throw new Error('No input '+${JSON.stringify(selector)}); input.focus(); const proto = input.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value').set.call(input, ${JSON.stringify(value)}); input.dispatchEvent(new Event('input', {bubbles:true})); input.dispatchEvent(new Event('change', {bubbles:true})); })()`);
 }
 const bodyIncludes = (text) => `document.body?.innerText.includes(${JSON.stringify(text)})`;
-let routine, versions, postMode, failVersionGet, failRoutineGet, releasePost, generationMode, generationPosts;
+let routine, versions, postMode, failVersionGet, failRoutineGet, releasePost, generationMode, generationPosts, patchMode;
 function reset() {
   routine = structuredClone(fixture); versions = structuredClone(initialVersions); postMode = "success";
   failVersionGet = false; failRoutineGet = false; releasePost = null; generationMode = "initial"; generationPosts = [];
+  patchMode = "success";
 }
 reset();
 on("Runtime.exceptionThrown", (event) => errors.push(event.exceptionDetails.exception?.description ?? event.exceptionDetails.text));
@@ -112,8 +113,10 @@ on("Fetch.requestPaused", async ({ requestId, request, resourceType }) => {
     else response = { ...generationResult, from: JSON.parse(request.postData).from, to: JSON.parse(request.postData).to,
       ...(generationMode === "empty" ? { createdCount: 0, existingCount: 0, created: [], existing: [], conflicts: undefined } : {}) };
   } else if (route === `/routines/${routineId}`) {
-    if (method === "PATCH") { const patch = JSON.parse(request.postData); routine = { ...routine, ...patch, ...(patch.paused === undefined ? {} : { pausedAt: patch.paused ? "2026-10-26T12:00:00Z" : null }) }; }
+    if (method === "PATCH" && patchMode !== "error") { const patch = JSON.parse(request.postData); routine = { ...routine, ...patch, ...(patch.paused === undefined ? {} : { pausedAt: patch.paused ? "2026-10-26T12:00:00Z" : null }) }; }
     response = routine;
+    if (method === "PATCH" && patchMode === "error") { status = 400; response = { error: { message: "Invalid horizon", details: [{ path: ["generationHorizonDays"] }] } }; }
+    if (method === "PATCH" && patchMode === "invalid") response = { ...routine, generationHorizonDays: 31 };
     if (method === "GET" && failRoutineGet) { status = 500; response = { error: { message: "Mock Routine GET failed" } }; }
     if (method === "DELETE") status = 204;
   } else if (route === "/routines" && method === "POST") { routine = { ...routine, ...JSON.parse(request.postData) }; response = routine; status = 201; }
@@ -243,6 +246,68 @@ try {
   await fill("#routine-title", "Edited Routine"); await click("Зберегти зміни"); await waitFor(bodyIncludes("Шаблон повторення оновлено"));
   assert.deepEqual(JSON.parse(calls.filter((call) => call.method === "PATCH").at(-1).body), { title: "Edited Routine" });
   passed.push("ordinary PATCH sends template fields only");
+
+  reset(); await navigate();
+  const automationStart = calls.length;
+  await click("Деталі"); await waitFor(bodyIncludes("Вимкнено"));
+  assert(await evaluate(bodyIncludes("Пауза Routine призупиняє і автоматичне створення")));
+  await tap(`${scope}.querySelector('button[aria-label]')`); await click("Редагувати"); await waitFor(bodyIncludes("Редагувати повторення"));
+  for (const width of [1440, 390]) for (const theme of ["light", "dark"]) {
+    await cdp("Emulation.setDeviceMetricsOverride", { width, height: 1000, deviceScaleFactor: 1, mobile: false });
+    await cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: theme }] });
+    await tap(`${scope}.querySelector('#routine-autoGenerate')`);
+    await cdp("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+    await cdp("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+    assert.equal(await evaluate("document.activeElement.id"), "routine-generationHorizonDays");
+    const geometry = await evaluate(`(() => { const r=${scope}.querySelector('#routine-generationHorizonDays').getBoundingClientRect(); return {left:r.left,right:r.right}; })()`);
+    assert(geometry.left >= 0 && geometry.right <= width + 1);
+    const screenshot = await cdp("Page.captureScreenshot", { format: "png" });
+    await writeFile(path.join(tmpdir(), `routine-automation-${width}-${theme}.png`), Buffer.from(screenshot.data, "base64"));
+  }
+  assert.equal(await evaluate(`${scope}.querySelector('#routine-autoGenerate').checked`), false);
+  for (const value of ["0", "31", "1.5"]) {
+    await fill("#routine-generationHorizonDays", value); await click("Зберегти зміни");
+    await waitFor(`${scope}.querySelector('#routine-generationHorizonDays').getAttribute('aria-invalid')==='true'`);
+    await waitFor("document.activeElement.id==='routine-generationHorizonDays'");
+  }
+  await fill("#routine-generationHorizonDays", "30");
+  await tap(`${scope}.querySelector('#routine-autoGenerate')`);
+  await tap(`${scope}.querySelector('#routine-autoGenerate')`);
+  assert.equal(await evaluate(`${scope}.querySelector('#routine-generationHorizonDays').value`), "30");
+  await click("Скасувати"); await waitFor(bodyIncludes("Продовжити редагування")); await click("Продовжити редагування");
+  assert.equal(await evaluate(`${scope}.querySelector('#routine-generationHorizonDays').value`), "30");
+  await tap(`${scope}.querySelector('#routine-autoGenerate')`);
+  patchMode = "error"; await click("Зберегти зміни"); await waitFor(`${scope}.querySelector('#routine-generationHorizonDays').getAttribute('aria-invalid')==='true'`);
+  assert.equal(await evaluate(`${scope}.querySelector('#routine-generationHorizonDays').value`), "30");
+  patchMode = "invalid"; await click("Зберегти зміни"); await waitFor(`${scope}.querySelector('[role="alert"]')!==null`);
+  patchMode = "success"; await click("Зберегти зміни"); await waitFor(bodyIncludes("Автоматично · 30 днів"));
+  assert.deepEqual(JSON.parse(calls.filter(c=>c.method==='PATCH').at(-1).body), { autoGenerate: true, generationHorizonDays: 30 });
+  await click("Редагувати"); await waitFor(bodyIncludes("Редагувати повторення"));
+  await tap(`${scope}.querySelector('#routine-autoGenerate')`); await click("Зберегти зміни"); await waitFor("document.querySelectorAll('dialog[open]').length===0");
+  assert.deepEqual(JSON.parse(calls.filter(c=>c.method==='PATCH').at(-1).body), { autoGenerate: false });
+  await click("Редагувати"); await waitFor(bodyIncludes("Редагувати повторення"));
+  assert.equal(await evaluate(`${scope}.querySelector('#routine-generationHorizonDays').value`), "30");
+  await tap(`${scope}.querySelector('#routine-autoGenerate')`); await click("Зберегти зміни"); await waitFor("document.querySelectorAll('dialog[open]').length===0");
+  assert.deepEqual(JSON.parse(calls.filter(c=>c.method==='PATCH').at(-1).body), { autoGenerate: true });
+  await click("Призупинити"); await waitFor(bodyIncludes("Шаблон призупинено."));
+  await click("Деталі"); await waitFor(bodyIncludes("Пауза Routine призупиняє і автоматичне створення")); await tap(`${scope}.querySelector('button[aria-label]')`);
+  assert(calls.slice(automationStart).every(c=>!c.route.endsWith('/generate')&&!c.route.endsWith('/schedule-versions') || c.method==='GET'));
+  assert.equal(generationPosts.length, 0);
+  reset(); await navigate(); await click("Нове повторення"); await waitFor(bodyIncludes("Це шаблон повторення"));
+  assert.equal(await evaluate(`${scope}.querySelector('#routine-autoGenerate').checked`), false);
+  assert.equal(await evaluate(`${scope}.querySelector('#routine-generationHorizonDays').value`), "7");
+  await fill("#routine-generationHorizonDays", "30"); await fill("#routine-recurrence", "AFTER_COMPLETION");
+  assert(await evaluate(`${scope}.querySelector('#routine-generationHorizonDays')===null`));
+  await fill("#routine-recurrence", "DAILY");
+  assert.equal(await evaluate(`${scope}.querySelector('#routine-generationHorizonDays').value`), "30");
+  await fill("#routine-recurrence", "AFTER_COMPLETION"); await tap(`${scope}.querySelector('#routine-autoGenerate')`);
+  await fill("#routine-title", "Completion Auto"); await fill("#routine-duration", "25"); await click("Створити шаблон");
+  await waitFor(bodyIncludes("Автоматично · після завершення або пропуску"));
+  assert.equal(JSON.parse(calls.filter(c=>c.route==='/routines'&&c.method==='POST').at(-1).body).generationHorizonDays, 30);
+  await click("Редагувати"); await waitFor(bodyIncludes("Редагувати повторення"));
+  assert(await evaluate(`${scope}.querySelector('#routine-generationHorizonDays')===null`)); await click("Скасувати");
+  assert.equal(generationPosts.length, 0);
+  passed.push("automation: defaults, 1–30 validation/focus, 1440/390 light/dark keyboard, draft/discard, off/on retention, minimal PATCH, API errors/invalid DTO, completion, pause; no generation/version POST");
 
   reset(); await navigate(); await click("Створити задачі"); await waitFor(bodyIncludes("Після підтвердження будуть створені"));
   await fill('input[type="date"]', range.from);

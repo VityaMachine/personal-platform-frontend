@@ -9,14 +9,14 @@ import styles from "./routines.module.css";
 
 export type RoutineFieldChange = <K extends keyof CreateRoutineFields>(key: K, value: CreateRoutineFields[K]) => void;
 type EditorProps = { fields: CreateRoutineFields; errors: RoutineFormErrors; disabled: boolean; onChange: RoutineFieldChange };
-type FieldName = Exclude<keyof CreateRoutineFields, "weekdays">;
-export function RoutineFormField({ name, label, type = "text", options, max, required = true, ...props }: EditorProps & {
+type FieldName = Exclude<keyof CreateRoutineFields, "weekdays" | "autoGenerate">;
+export function RoutineFormField({ name, label, type = "text", options, max, hint, required = true, ...props }: EditorProps & {
   name: FieldName; label: string; type?: "text" | "number" | "date" | "time";
-  options?: readonly (readonly [string, string])[]; max?: number; required?: boolean;
+  options?: readonly (readonly [string, string])[]; max?: number; hint?: string; required?: boolean;
 }) {
   const id = `routine-${name}`, error = props.errors[name];
   const common = { id, name, value: props.fields[name], disabled: props.disabled, required,
-    "aria-invalid": Boolean(error), "aria-describedby": error ? `${id}-error` : undefined,
+    "aria-invalid": Boolean(error), "aria-describedby": [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined,
     onChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => props.onChange(name, event.target.value) };
   return <label className={shared.field} htmlFor={id}>{label}
     {options ? <select {...common}>{options.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select> :
@@ -24,6 +24,7 @@ export function RoutineFormField({ name, label, type = "text", options, max, req
         min={type === "number" ? 1 : type === "date" ? "0001-01-01" : undefined}
         max={type === "number" ? max ?? MAX_DURATION_MINUTES : type === "date" ? "9999-12-31" : undefined}
         step={type === "number" ? 1 : type === "time" ? 60 : undefined} />}
+    {hint && <span id={`${id}-hint`} className={shared.fieldHint}>{hint}</span>}
     {error && <span id={`${id}-error`} className={shared.fieldError}>{error}</span>}
   </label>;
 }

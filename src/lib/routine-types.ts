@@ -21,6 +21,7 @@ export type Routine = {
   areaId: string | null; area: AreaReference | null; estimatedDurationMinutes: number;
   subtasks: RoutineSubtask[]; timezone: string; startDate: string; schedule: RoutineSchedule;
   endCondition: RoutineEndCondition; pausedAt: string | null; deletedAt: string | null;
+  autoGenerate: boolean; generationHorizonDays: number;
   createdAt: string; updatedAt: string;
 };
 export type RoutinePreviewOccurrence = {
@@ -46,7 +47,7 @@ export type RoutineGenerationResult = {
 
 type RoutineSubtaskInput = { title: string; estimatedDurationMinutes: number };
 /** Editable template fields only. Pause/resume uses its dedicated wrapper. */
-export type UpdateRoutineInput = Partial<Pick<Routine, "title" | "description" | "priority" | "areaId" | "estimatedDurationMinutes">> & {
+export type UpdateRoutineInput = Partial<Pick<Routine, "title" | "description" | "priority" | "areaId" | "estimatedDurationMinutes" | "autoGenerate" | "generationHorizonDays">> & {
   subtasks?: RoutineSubtaskInput[];
 };
 export type RoutineCalendarConfiguration = Pick<Routine, "timezone" | "startDate" | "schedule" | "endCondition">;
@@ -59,6 +60,7 @@ export type RoutineWindowConflict = {
   occurrenceKey: string; retainedOccurrenceKey: string; retainedTaskId: string | null;
 };
 export type CreateRoutineInput = {
+  autoGenerate?: boolean; generationHorizonDays?: number;
   title: string; description?: string | null; priority?: TaskPriority; areaId?: string | null;
   timezone: string; startDate: string; schedule: RoutineSchedule; endCondition?: RoutineEndCondition;
 } & (

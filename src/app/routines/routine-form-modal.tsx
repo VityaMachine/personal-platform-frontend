@@ -13,6 +13,7 @@ import { useHistoryTraversalGuard } from "../_hooks/use-history-traversal-guard"
 import { SubtasksEditor } from "../_components/subtasks-editor";
 import { AreaSelect } from "../_components/area-select";
 import { DiscardChangesDialog } from "../_components/discard-changes-dialog";
+import { RoutineAutomationEditor } from "./routine-automation-editor";
 import { RoutineFormField, RoutineScheduleEditor, type RoutineFieldChange } from "./routine-schedule-editor";
 import shared from "../page.module.css";
 import styles from "./routines.module.css";
@@ -148,6 +149,7 @@ export function RoutineFormModal({ opener, timezone, initialRoutine: loadedRouti
               <SubtasksEditor subtasks={subtasks} errors={subtaskErrors} disabled={submitting} onChange={changeSubtasks} />
             </section>
             {initialRoutine ? <p className={styles.hint}>Календарні налаштування змінюються окремою дією «Змінити розклад» у деталях Routine.</p> : <RoutineScheduleEditor {...editorProps} />}
+            <RoutineAutomationEditor {...editorProps} />
           </div>
           {error && <div role="alert" className={`${shared.error} ${styles.createError}`}><p>{error}</p></div>}
         </form>
