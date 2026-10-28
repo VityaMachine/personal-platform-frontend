@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { cleanTaskQuery } from "../routes";
 import { DEFAULT_TASK_FILTERS, parseTaskFilters, sameTaskFilters, serializeTaskFilters, type TaskFilters } from "@/modules/tasks/model/task-filters";
 
 export function useTaskFilters(blocked: boolean) {
@@ -20,7 +21,7 @@ export function useTaskFilters(blocked: boolean) {
     if (blocked || document.querySelector("dialog[open]")) return;
     const current = new URLSearchParams(window.location.search);
     const value = reset ? DEFAULT_TASK_FILTERS : { ...parseTaskFilters(current), ...next };
-    const query = serializeTaskFilters(current, value).toString();
+    const query = serializeTaskFilters(new URLSearchParams(cleanTaskQuery(current.toString())), value).toString();
     const url = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
     if (query !== current.toString()) {
       // Native history updates do not scroll or request server data. Search uses

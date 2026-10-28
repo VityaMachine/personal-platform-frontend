@@ -90,7 +90,7 @@ const authorized = "[...document.querySelectorAll('button')].some(e=>e.textConte
 let other;
 try {
   if (process.env.MISSING_APP_URL) {
-    for (const route of ["/", "/routines?keep=1", "/settings?keep=1"]) {
+    for (const route of ["/tasks", "/tasks/today", "/tasks/backlog", "/tasks/archive", "/tasks/routines?keep=1", "/settings?keep=1"]) {
       await cdp("Page.navigate", { url: `${process.env.MISSING_APP_URL}${route}` });
       await waitFor("document.body.innerText.includes('Пароль доступу не налаштовано')");
       assert.equal(await evaluate(loginVisible), false);
@@ -102,7 +102,7 @@ try {
     assert.deepEqual(errors, []);
   } else {
     assert(password, "APP_ACCESS_TEST_PASSWORD required for test build");
-    for (const route of ["/?view=today&keep=1", "/routines?keep=1", "/settings?keep=1"]) {
+    for (const route of ["/tasks?keep=1", "/tasks/today?keep=1", "/tasks/backlog?keep=1", "/tasks/archive?keep=1", "/tasks/routines?keep=1", "/settings?keep=1"]) {
       const before = calls.length;
       await navigate(route); await waitFor(loginVisible); await delay(150);
       assert.equal(calls.length, before);
@@ -137,8 +137,8 @@ try {
     await button("Вийти без збереження"); await waitFor(loginVisible);
     assert.equal(calls.length, beforeLogout);
     assert(await evaluate(`localStorage.getItem(${JSON.stringify(key)})===null`));
-    await navigate("/routines?keep=1", "incorrect"); await waitFor(loginVisible);
-    await navigate("/routines?keep=1", password); await waitFor(authorized);
+    await navigate("/tasks/routines?keep=1", "incorrect"); await waitFor(loginVisible);
+    await navigate("/tasks/routines?keep=1", password); await waitFor(authorized);
     other = await connection();
     await other.cdp("Page.navigate", { url: `${appUrl}/settings` });
     await delay(300);
@@ -147,7 +147,7 @@ try {
     await evaluate(`localStorage.setItem(${JSON.stringify(key)},'incorrect')`, other); await waitFor(loginVisible);
     await evaluate("localStorage.clear()", other);
     const beforeUnavailable = calls.length;
-    await navigate("/?view=today&keep=1", null, true); await waitFor(loginVisible);
+    await navigate("/tasks/today?keep=1", null, true); await waitFor(loginVisible);
     assert.equal(calls.length, beforeUnavailable);
     await waitFor("document.body.innerText.includes('Після оновлення пароль доведеться ввести знову')");
     await fill("#access-password", password); await enter(); await waitFor(authorized);

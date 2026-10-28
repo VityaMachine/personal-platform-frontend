@@ -1,13 +1,14 @@
 "use client";
 
 import { Suspense, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTaskList } from "../hooks/use-task-list";
 import { useAreas } from "../../../entities/areas/ui";
 import { useOpenDialog } from "../../../shared/hooks/use-open-dialog";
 import { useTaskMutations } from "../hooks/use-task-mutations";
 import { useTaskFilters } from "../hooks/use-task-filters";
-import { taskSection, taskInSection } from "@/modules/tasks/model/task-context";
+import { taskInSection } from "@/modules/tasks/model/task-context";
+import { taskSectionFromPathname } from "../routes";
 import { groupTaskList, selectTasks } from "@/modules/tasks/model/task-filters";
 import { TaskStatusSummary } from "../ui/task-status-summary";
 import { TaskFiltersPanel } from "../ui/task-filters-panel";
@@ -23,7 +24,8 @@ export default function Home() {
 function TasksPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const requestedSection = taskSection(searchParams);
+  const pathname = usePathname();
+  const requestedSection = taskSectionFromPathname(pathname);
   const [section, setSection] = useState(requestedSection);
   const archived = section === "archive";
   const today = section === "today";

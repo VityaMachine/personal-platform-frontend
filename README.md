@@ -25,16 +25,16 @@ Gate охоплює всі маршрути перед `AreasProvider` і ком
 
 Предметний код Tasks розташований у `src/modules/tasks`: `api` містить API-обгортки, `model` — типи, валідацію та чисту логіку, `hooks` — React hooks, `ui` — компоненти та їхні локальні стилі, `screens` — реалізацію екрана списків. Внутрішній розділ `routines` містить власні `api`, `model`, `hooks`, `ui` та `routines-screen.tsx`. Публічна точка входу екранів — `src/modules/tasks/screens.ts`.
 
-Другий етап відокремлює Areas, Settings, доступ і спільний технічний код. Тонкі обгортки маршрутів — `src/app/page.tsx`, `src/app/routines/page.tsx` і `src/app/settings/page.tsx`. Тести й fixtures залишаються в `tests`.
+Areas, Settings, доступ і спільний технічний код відокремлені від Tasks. Тонкі маршрути Next.js підключають екрани через `src/modules/tasks/screens.ts`; Settings залишається в `src/app/settings/page.tsx`. Тести й fixtures залишаються в `tests`.
 
 - `src/entities/areas/api/areas.ts`, `model/{area-types,area-validation,use-areas}`, `ui/{area-select,areas-modal,delete-area-dialog,areas.module.css}` замінюють відповідні файли в `src/lib`, `app/_hooks` і `app/_components`. Публічні точки входу: `public.ts` (типи, валідація, API), `ui.ts` (provider/hook, вибір і керування).
 - `src/modules/settings/model/{settings,settings-store,settings-storage,theme,use-settings}` і `ui/{settings-screen,settings.module.css}` замінюють реалізації в `src/lib`, `app/_hooks` і `app/settings`. Точки входу: `preferences.ts` (клієнтський provider/hook і типи), `preferences-runtime.ts` (чисті helpers), `screen.ts` (екран), `theme.ts` (bootstrap для layout).
 - `src/application/access/model/app-access.ts` і `ui/{app-access.tsx,app-access.module.css}` замінюють реалізації доступу в `src/lib` та `app/_components`.
 - `src/shared/api/api.ts`, `dates/{format-date,zoned-date}.ts`, `lib/format-duration.ts`, `navigation/{history-traversal-guard,use-history-traversal-guard}`, `hooks/use-open-dialog.ts`, `ui/{discard-changes-dialog,zoned-date-time-field}.tsx` замінюють відповідні старі файли. Предметні `DateField`/`DateOptions` залишені в `src/modules/tasks/model/task-date-options.ts`.
 
-Третій етап переносить оболонку до `src/application/shell/app-shell.tsx` як `AppShell`. Активний пункт задається одним `activeItem`: current/today/backlog/archive/routines/settings. Application використовує вузький `src/modules/tasks/routes.ts`: побудова URL розділів Tasks і збереження фільтрів залишаються в Tasks. Routines і Settings мають ті самі URL та query; реєстру модулів немає.
+Оболонка розташована в `src/application/shell/app-shell.tsx` як `AppShell`. Активний пункт задається одним `activeItem`: current/today/backlog/archive/routines/settings. Application використовує вузький `src/modules/tasks/routes.ts`: канонічні URL, legacy resolver і збереження фільтрів залишаються в Tasks; реєстру модулів немає.
 
-`AppShell` — єдиний власник `AreasModal` та її opener. Він монтується всередині кожного наявного екрана; спільного route layout не додано. Екран передає перевірку переходу та запиту відкриття Areas. Tasks враховує pending, refreshRequired та інші locks навіть без діалогу; зміни розділу залишаються відкладеними до звільнення форми/lock. Routines зберігає modalLock і pending GET редактора; Settings використовує своє dirty-підтвердження та чинний HistoryTraversal blocker. Нових blockers немає.
+`AppShell` — єдиний власник `AreasModal` та її opener. Екран передає перевірку переходу та запиту відкриття Areas. Tasks враховує pending, refreshRequired та інші locks навіть без діалогу; зміни розділу залишаються відкладеними до звільнення форми/lock. Routines зберігає modalLock і pending GET редактора; Settings використовує своє dirty-підтвердження та чинний HistoryTraversal blocker. Нових blockers немає.
 
 Areas повідомляє нейтральну `changeRevision` після успішного створення/перейменування/видалення. Tasks і Routines самі завантажують залежні списки й показують помилки/retry на своїх екранах. AreasModal має лише `opener`/`onClose`; контрактів Tasks або імпортів Tasks/Routines в entity немає. Закриття Areas без змін більше не запускає зайвий GET Routines; зміна сфери запускає GET одразу, незалежно від закриття модалки. Невдалий GET не повторює мутацію.
 
@@ -46,6 +46,20 @@ Areas повідомляє нейтральну `changeRevision` після ус
 
 Третій етап додає `tests/shell-routes.test.mjs` для збереження query/фільтрів у публічному контракті маршрутів і `tests/app-shell-browser.mjs` на тому самому CDP та мокованому API. Браузерний сценарій перевіряє мутації Areas й залежні Tasks/Routines, GET-only retry, pending/refreshRequired без діалогів, чернетки/Back/Forward, одного власника Areas, фокус, scroll і 1440/390 light/dark. `CreateTaskModal` явно обробляє Escape перед native cancel: це зберігає dirty/pending checks після history traversal. Фактичні результати й додаткові зміни описані у [звіті третього етапу](FRONTEND_STAGE3_REPORT.md).
 
+## Маршрути Tasks і сумісність
+
+Канонічні адреси: `/tasks`, `/tasks/today`, `/tasks/backlog`, `/tasks/archive`, `/tasks/routines`; налаштування — `/settings`. Розділ списку визначається pathname, навіть якщо в query лишилися старі `view`/`archived`. Наступні посилання й зміни фільтрів прибирають ці перемикачі, зберігаючи інші фільтри та сторонні повторні параметри.
+
+`src/app/tasks/(lists)/layout.tsx` монтує один `TasksScreen` для чотирьох списків; сторінки всередині — порожні route slots. Клієнтський workspace читає актуальні `usePathname`/`useSearchParams`. Стан розкриття, власників форм, чернеток і mutation locks лишається в тому самому `TasksPage` між списками. Відкриті форми й refreshRequired відкладають застосування нового розділу. При переході до Routines/Settings workspace демонтується; всі екрани платформи постійно не утримуються.
+
+`src/proxy.ts` виконує тимчасовий HTTP 307 до рендерингу лише для старих `/` і `/routines`, використовуючи resolver із `modules/tasks/routes.ts`. Compatibility-сторінки мають серверний fallback на той самий resolver. Канонічні цілі не перенаправляються.
+
+- `/`: перший `archived=true` → archive; інакше перший `view=today` → today; інакше перший `view=backlog` → backlog; інакше наявність будь-якого q/status/priority/area/sort/view/archived, включно з порожнім значенням, → current; інакше → today.
+- `/routines`: завжди → `/tasks/routines`, незалежно від view/archived.
+- Обидва redirects видаляють усі view/archived, зберігаючи решту query за змістом. Для повторних перемикачів діє попередня семантика `URLSearchParams.get`: використовується перше значення.
+
+Четвертий етап розширює `tests/shell-routes.test.mjs` і додає `tests/task-routing-browser.mjs`: resolver, HTTP 307, прямі адреси/F5, один workspace, Back/Forward із чернеткою, запізніла відповідь після abort, Today/Backlog boundaries та всі списки на 1440/390 light/dark. Наявні browser scripts використовують канонічні UI-адреси; API mocks залишають старі backend endpoints. Фактичні результати й обмеження — у [звіті четвертого етапу](FRONTEND_STAGE4_REPORT.md).
+
 ## API
 
 - `GET /tasks` — масив повних Task DTO; `GET /tasks?view=today` — підмножина «Сьогодні»; `GET /tasks?view=backlog` — беклог; `GET /tasks?archived=true` — архів.
@@ -55,7 +69,7 @@ Areas повідомляє нейтральну `changeRevision` після ус
 
 Список, деталі, POST і PATCH отримують `timezone`, `overdueMode`, `overdueDays` із завантажених налаштувань. Історія, DELETE і маршрути підзадач цих параметрів не отримують. Після запису підзадачі окремий GET батька використовує актуальний контекст; повтор після помилки GET не повторює запис. Повний Task із POST/PATCH оновлює список без додаткового GET, якщо контекст не змінився.
 
-URL: `/` — поточні, `/?view=today` — сьогодні, `/?view=backlog` — беклог, `/?archived=true` — архів. Архів має пріоритет над view; невідомі view означають поточні. API ніколи не отримує archived=true разом із view. Переходи зберігають фільтри й сторонні query-параметри; «Скинути» зберігає розділ. Фільтри, пошук, сортування та зміна теми не завантажують задачі повторно.
+UI-адреси списків: `/tasks` — поточні, `/tasks/today` — сьогодні, `/tasks/backlog` — беклог, `/tasks/archive` — архів. Backend як і раніше отримує view=today/view=backlog/archived=true; archived=true ніколи не поєднується з view. Переходи зберігають фільтри й сторонні query-параметри; «Скинути» зберігає pathname розділу. Фільтри, пошук, сортування та зміна теми не завантажують задачі повторно.
 
 «Сьогодні» використовує тільки backend isToday. Після фільтрації задачі поділяються на «До виконання» та «Виконано сьогодні» (DONE), зі збереженням сортування всередині кожної групи. Обидві групи входять до загального лічильника. Повний Task DTO містить `completedAt: string | null` — підтверджений backend момент поточного завершення; frontend його не обчислює. Завершення й повторне відкриття переміщують ту саму картку між групами, якщо isToday залишається true; розгортання підзадач зберігається. Поточні задачі й архів залишаються одним списком.
 
@@ -65,7 +79,7 @@ URL: `/` — поточні, `/?view=today` — сьогодні, `/?view=backlo
 
 Перевірки: `npm run lint`, `npm run typecheck`, `npm run build`.
 
-Ручний сценарій беклогу (лише на мокованому API): відкрийте `/?view=backlog&third=keep`, перезавантажте сторінку, перейдіть у «Сьогодні» й назад через Back/Forward. Поєднайте пошук, статус, пріоритет, сферу й сортування; перевірте лічильник та «Скинути» зі збереженням view/third. Переплануйте задачу й поверніть DTO з isBacklog=false; перевірте зникнення. Повторіть для IN_PROGRESS/DONE/CANCELED та збереження PAUSED/POSTPONED із isBacklog=true. Змініть підзадачу, зімітуйте помилку GET батька й повторіть тільки GET. Перевірте створення поза беклогом, архівування й видалення, розгортання за ID та незбережені форми при переходах. Для часу додайте у базовий список приховану задачу з близькою майбутньою датою, змініть мокований backend-відбір і дочекайтеся одного оновлення; повторіть із прихованою вкладкою та occurrence в іншому поясі. Помилка базового GET має залишити беклог доступним із поясненням. Перевірте запізнілу відповідь старого розділу, повернення з Routines, 1440/390 px, light/dark, клавіатурний фокус і прокручування.
+Ручний сценарій беклогу (лише на мокованому API): відкрийте `/tasks/backlog?third=keep`, перезавантажте сторінку, перейдіть у «Сьогодні» й назад через Back/Forward. Поєднайте пошук, статус, пріоритет, сферу й сортування; перевірте лічильник та «Скинути» зі збереженням pathname/third. Переплануйте задачу й поверніть DTO з isBacklog=false; перевірте зникнення. Повторіть для IN_PROGRESS/DONE/CANCELED та збереження PAUSED/POSTPONED із isBacklog=true. Змініть підзадачу, зімітуйте помилку GET батька й повторіть тільки GET. Перевірте створення поза беклогом, архівування й видалення, розгортання за ID та незбережені форми при переходах. Для часу додайте у базовий список приховану задачу з близькою майбутньою датою, змініть мокований backend-відбір і дочекайтеся одного оновлення; повторіть із прихованою вкладкою та occurrence в іншому поясі. Помилка базового GET має залишити беклог доступним із поясненням. Перевірте запізнілу відповідь старого розділу, повернення з Routines, 1440/390 px, light/dark, клавіатурний фокус і прокручування.
 
 ## Компонування списку задач
 
@@ -99,7 +113,7 @@ AFTER_COMPLETION може продовжуватися після заверше
 
 ## Повторювані задачі
 
-`/routines` показує список шаблонів, створення, редагування, деталі, preview розкладу, паузу/відновлення та явну генерацію задач. Доступне явне видалення шаблону з підтвердженням. «Активний» означає лише відсутність паузи. Шаблони підзадач мають власний порядок і тривалість; вони не є Task/Subtask та не мають статусів виконання.
+`/tasks/routines` показує список шаблонів, створення, редагування, деталі, preview розкладу, паузу/відновлення та явну генерацію задач. Доступне явне видалення шаблону з підтвердженням. «Активний» означає лише відсутність паузи. Шаблони підзадач мають власний порядок і тривалість; вони не є Task/Subtask та не мають статусів виконання.
 
 Окремі модулі `routine-types.ts`, `routine-validation.ts`, `routine-format.ts`, `routines.ts` підтримують schedule v1 (DAILY, WEEKLY DAYS/WINDOW, MONTHLY DAY/WINDOW/LAST_DAY, AFTER_COMPLETION) та NEVER/UNTIL_DATE/COUNT. Routines не отримують today-контекст: календар і час належать timezone шаблону.
 
@@ -179,6 +193,6 @@ Runtime-валідація generate перевіряє посилання, лі�
 
 Помилки 400/404/409 зберігають введення; пауза, очікування DONE, DST, історія й ліміт мають різні пояснення. Для втрати відповіді, 5xx або невалідної успішної відповіді показується невизначений результат: запит міг виконатися. Зберігається точний серіалізований payload із planning; «Повторити точний запит» надсилає його за явною дією незалежно від новіших змін чернетки. Автоматичного POST немає. Повтор не дублює й не переплановує existing. Новий запит із поточної чернетки потребує завершення точного повтору та оновлення кандидатів.
 
-Окрема дія «Перейти до поточних задач» відкриває `/`. Після успіху або невизначеного результату `task-list-invalidation.ts` позначає Tasks для повторного GET, включно зі збереженим станом маршруту. Generate-відповідь не вставляється у Tasks вручну: повних DTO в ній немає. Current/today відбір не змінюється. Допоміжний GET після генерації не запускається, тому його помилка не може повторити запис.
+Окрема дія «Перейти до поточних задач» відкриває `/tasks`. Після успіху або невизначеного результату `task-list-invalidation.ts` позначає Tasks для повторного GET, включно зі збереженим станом маршруту. Generate-відповідь не вставляється у Tasks вручну: повних DTO в ній немає. Current/today відбір не змінюється. Допоміжний GET після генерації не запускається, тому його помилка не може повторити запис.
 
 Ручна перевірка на моках: відкрити діалог без запитів, завантажити три нові кандидати й existing, запланувати два з трьох та перевірити UTC payload і відсутність поля existing. Очистити поле, перевірити порожній planning, DST gap/fold, AFTER_COMPLETION, зміну діапазону й запізнілий GET. При повторному GET перевести ключ в existing або прибрати його та перевірити повідомлення. Змоделювати GET/POST-помилки й втрату відповіді: діалог відкритий, чернетка збережена, точний повтор має ідентичний body навіть після зміни діапазону та введення. Подвійне натискання дає один POST. Валідний успіх закриває діалог без discard, повертає фокус і показує лічильники на сторінці; розгорнути conflicts та перевірити пояснення. Повторити успіх із 0/0 і точний повтор за наявності новіших ненадісланих правок. Перейти до Tasks та перевірити актуальний список. Повторити клавіатуру, discard, прокручування довгого списку, 390 px, light/dark і наявні дії Routines.

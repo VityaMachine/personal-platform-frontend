@@ -1,7 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
+import { resolveLegacyTasksUrl, type LegacyTaskSearchParams } from "@/modules/tasks/routes";
 
-import { TasksScreen } from "@/modules/tasks/screens";
-
-export default function Home() {
-  return <TasksScreen />;
+export default async function Home({ searchParams }: { searchParams: Promise<LegacyTaskSearchParams> }) {
+  redirect(resolveLegacyTasksUrl("/", await searchParams)!);
 }

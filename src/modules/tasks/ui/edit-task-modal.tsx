@@ -152,8 +152,10 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
       onKeyDown={(event) => {
         if (confirmingDiscard) return;
         if (event.key === "Escape") {
+          event.preventDefault();
           event.stopPropagation();
-          if (inFlight.current) event.preventDefault();
+          requestClose();
+          return;
         }
         if (event.key !== "Tab") return;
         const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled)')];

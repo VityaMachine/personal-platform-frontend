@@ -1,6 +1,7 @@
 "use client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { taskHref } from "../routes";
 import type { Routine, RoutineGenerationResult } from "@/modules/tasks/routines/model/routine-types";
 import { formatRoutineDate } from "@/modules/tasks/routines/model/routine-format";
 import { getRoutine, routineError } from "@/modules/tasks/routines/api/routines";
@@ -143,7 +144,7 @@ function RoutinesScreen() {
         setGenerationOutcome({ data, opener: generation.opener }); setGeneration(null);
       }}
       onClose={() => { modalLock.current = false; setGeneration(null); }}
-      onCurrentTasks={() => { modalLock.current = false; setGeneration(null); router.push("/", { scroll: false }); }} />}
+      onCurrentTasks={() => { modalLock.current = false; setGeneration(null); router.push(taskHref("current"), { scroll: false }); }} />}
     {generationOutcome && <RoutineResultModal result={{ type: "generation", data: generationOutcome.data }} opener={generationOutcome.opener}
       onClose={() => { modalLock.current = false; setGenerationOutcome(null); }} />}
     {deleting && <DeleteRoutineDialog key={deleting.routine.id} title={deleting.routine.title} opener={deleting.opener} fallbackFocusRef={headingRef}

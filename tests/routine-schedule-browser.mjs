@@ -80,6 +80,7 @@ on("Fetch.requestPaused", async ({ requestId, request, resourceType }) => {
   calls.push({ route, method, body: request.postData });
   if (method === "OPTIONS") status = 204;
   else if (route === "/areas") response = [];
+  else if (route === "/tasks" && method === "GET") response = [futureTask];
   else if (route === "/routines" && method === "GET") response = [routine];
   else if (route.endsWith("/schedule-versions")) {
     if (method === "GET") {
@@ -132,7 +133,7 @@ if (process.env.APP_ACCESS_TEST_PASSWORD) await cdp("Page.addScriptToEvaluateOnN
 });
 await cdp("Fetch.enable", { patterns: [{ urlPattern: "*", requestStage: "Request" }] });
 async function navigate() {
-  await cdp("Page.navigate", { url: `${appUrl}/routines` });
+  await cdp("Page.navigate", { url: `${appUrl}/tasks/routines` });
   await waitFor(bodyIncludes("Mock Routine"));
   await waitFor("[...document.querySelectorAll('button')].some(e=>e.textContent.trim()==='Деталі'&&!e.disabled)");
 }
@@ -374,6 +375,28 @@ try {
     assert.equal(generationPosts.length, 1);
   }
   passed.push("valid generation closes directly, restores focus, announces counts and keeps conflicts; 400/network/invalid DTO stay open; exact retry closes despite newer drafts; zero counts");
+
+  for (const mode of ["initial", "uncertain"]) {
+    reset(); await navigate(); await click("Створити задачі");
+    await waitFor(bodyIncludes("Після підтвердження будуть створені"));
+    await fill('input[type="date"]', range.from); await fill('input[id$="-to"]', range.to);
+    await click("Показати виконання"); await waitFor(`${scope}.querySelector('input[type="time"]')!==null`);
+    generationMode = mode;
+    const beforeTasks = calls.filter(call => call.route === "/tasks" && call.method === "GET").length;
+    await click("Створити задачі");
+    if (mode === "initial") {
+      await closeResult("Створити задачі");
+      await tap("document.querySelector('nav a[href=\"/tasks\"]')");
+    } else {
+      await waitFor(bodyIncludes("Повторити точний запит"));
+      await click("Перейти до поточних задач");
+      await waitFor(bodyIncludes("Відкинути зміни?")); await click("Відкинути зміни");
+    }
+    await waitFor("location.pathname==='/tasks' && document.querySelector('[data-task-id]')!==null");
+    assert(calls.filter(call => call.route === "/tasks" && call.method === "GET").length > beforeTasks);
+    assert.equal(generationPosts.length, 1, "Navigation after generation must not repeat POST");
+  }
+  passed.push("successful/uncertain generation invalidates Tasks; both shell and explicit result action open canonical /tasks with fresh GET and no repeated POST");
 
   reset(); await navigate(); await click("Призупинити"); await waitFor(bodyIncludes("Шаблон призупинено."));
   await click("Відновити"); await waitFor(bodyIncludes("Шаблон відновлено."));

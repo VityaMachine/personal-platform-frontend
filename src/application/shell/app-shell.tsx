@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode, type MouseEvent } from "react";
 import Link from "next/link";
-import { taskNavigationHrefs } from "@/modules/tasks/routes";
+import { taskNavigationHrefs, taskHref, cleanTaskQuery } from "@/modules/tasks/routes";
 import { AreasModal, useAreas } from "../../entities/areas/ui";
 import styles from "../../app/page.module.css";
 import { LogoutButton } from "../access/ui/app-access";
@@ -17,8 +17,9 @@ export function AppShell({ children, activeItem, query, areasDisabled, logoutDis
   const areas = useAreas();
   const [areasOpener, setAreasOpener] = useState<HTMLButtonElement | null>(null);
   const { current: currentHref, today: todayHref, backlog: backlogHref, archive: archiveHref } = taskNavigationHrefs(query);
-  const routinesHref = `/routines${query ? `?${query}` : ""}`;
-  const settingsHref = `/settings${query ? `?${query}` : ""}`;
+  const routinesHref = taskHref("routines", query);
+  const cleanedQuery = cleanTaskQuery(query);
+  const settingsHref = `/settings${cleanedQuery ? `?${cleanedQuery}` : ""}`;
   const settingsPage = activeItem === "settings";
   function navigate(event: MouseEvent<HTMLAnchorElement>, href: string, destination: AppNavigationItem) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;

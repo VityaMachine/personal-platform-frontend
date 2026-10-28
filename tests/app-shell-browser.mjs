@@ -144,7 +144,7 @@ try {
   const initial = await cdp("Page.addScriptToEvaluateOnNewDocument", {
     source: "localStorage.removeItem('personal-platform.access-password');localStorage.removeItem('personal-platform.settings')",
   });
-  await cdp("Page.navigate", { url: `${app}/?keep=stage3` });
+  await cdp("Page.navigate", { url: `${app}/tasks?keep=stage3` });
   await wait("document.querySelector('#access-password')!==null");
   assert.equal(calls.length, 0);
   assert.equal(await evaluate("document.querySelector('nav')===null && document.querySelector('#tasks-heading')===null"), true);
@@ -152,7 +152,7 @@ try {
   await cdp("Page.addScriptToEvaluateOnNewDocument", {
     source: `localStorage.setItem('personal-platform.access-password',${JSON.stringify(password)})`,
   });
-  await cdp("Page.navigate", { url: `${app}/?keep=stage3&q=Mock&priority=MEDIUM` });
+  await cdp("Page.navigate", { url: `${app}/tasks?keep=stage3&q=Mock&priority=MEDIUM` });
   await wait(`document.querySelector('${taskCard}')!==null`);
   await active("Поточні задачі");
   passed.push("Access gate: no shell, screen or Areas API before login");
@@ -165,7 +165,7 @@ try {
   const beforePending = mutationCount();
   await evaluate("document.querySelector('dialog[open] form').requestSubmit()");
   await link("Налаштування");
-  assert.equal(await evaluate("location.pathname"), "/");
+  assert.equal(await evaluate("location.pathname"), "/tasks");
   assert.equal(await evaluate(`${logoutButton}.disabled`), true);
   assert.equal(mutationCount(), beforePending);
   await escape(); assert.equal(await evaluate("document.querySelectorAll('dialog[open]').length"), 1);
@@ -207,7 +207,7 @@ try {
   await wait("[...document.querySelectorAll('main button')].some(e=>e.textContent.trim()==='Завантаження…')");
   assert.equal(await evaluate("document.querySelector('dialog[open]')===null"), true);
   await link("Налаштування"); await link("Поточні задачі"); await click("Сфери");
-  assert.equal(await evaluate("location.pathname"), "/routines");
+  assert.equal(await evaluate("location.pathname"), "/tasks/routines");
   assert.equal(await evaluate(`${logoutButton}.disabled`), true);
   assert(releaseEdit); holdEdit = false; releaseEdit();
   await wait("document.querySelector('dialog[open]')!==null");
@@ -224,19 +224,19 @@ try {
   await wait(`document.querySelector('${taskCard}').getAttribute('aria-busy')==='true'`);
   assert.equal(await evaluate("document.querySelector('dialog[open]')===null"), true);
   await link("Налаштування"); await link("Повторювані задачі"); await click("Сфери");
-  assert.equal(await evaluate("location.pathname"), "/");
+  assert.equal(await evaluate("location.pathname"), "/tasks");
   assert.equal(await evaluate(`${logoutButton}.disabled`), true);
   assert.equal(await evaluate(`${areasButton}.getAttribute('aria-disabled')`), "true");
   assert(releaseMutation); holdMutation = false; releaseMutation();
   await wait(`document.querySelector('${taskCard}')?.innerText.includes('Зміну збережено, але дані не вдалося оновити')`);
   await link("Налаштування"); await link("Повторювані задачі"); await click("Сфери");
-  assert.equal(await evaluate("location.pathname"), "/");
+  assert.equal(await evaluate("location.pathname"), "/tasks");
   assert.equal(await evaluate(`${logoutButton}.disabled`), true);
   await link("Сьогодні");
-  await wait("new URLSearchParams(location.search).get('view')==='today'");
+  await wait("location.pathname==='/tasks/today'");
   await active("Поточні задачі"); // A locked screen defers applying the requested Task section.
   await evaluate("history.back()");
-  await wait("!new URLSearchParams(location.search).has('view')");
+  await wait("location.pathname==='/tasks'");
   failDetails = false; await click("Повторити завантаження");
   await wait(`${areasButton}.getAttribute('aria-disabled')==='false'`);
   assert.equal(mutationCount(), beforeChild + 1);
@@ -246,7 +246,7 @@ try {
   await link("Сьогодні"); await active("Сьогодні");
   await click("+ Нова задача"); await wait("document.querySelector('dialog[open] input[name=title]')!==null");
   await fill("dialog[open] input[name=title]", "Task draft");
-  await evaluate("history.back()"); await wait("!new URLSearchParams(location.search).has('view')");
+  await evaluate("history.back()"); await wait("location.pathname==='/tasks'");
   assert.equal(await evaluate("document.querySelector('dialog[open] input[name=title]').value"), "Task draft");
   await active("Сьогодні");
   await escape(); await wait("document.querySelectorAll('dialog[open]').length===2");
@@ -272,7 +272,7 @@ try {
   await link("Сьогодні"); await active("Сьогодні");
   area = structuredClone(originalArea); await openAreas();
   await fill("dialog[open] input", "Area draft across history");
-  await evaluate("history.back()"); await wait("!new URLSearchParams(location.search).has('view')");
+  await evaluate("history.back()"); await wait("location.pathname==='/tasks'");
   assert.equal(await evaluate("document.querySelector('dialog[open] input').value"), "Area draft across history");
   await active("Сьогодні");
   await escape(); await wait("document.querySelectorAll('dialog[open]').length===2");

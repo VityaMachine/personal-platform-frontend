@@ -9,9 +9,6 @@ export function taskContext(settings: Pick<Settings, "timeZone" | "todayOverdueM
 export function taskContextQuery(context: TaskContext): string {
   return new URLSearchParams({ timezone: context.timezone, overdueMode: context.overdueMode, overdueDays: String(context.overdueDays) }).toString();
 }
-export function taskSection(params: Pick<URLSearchParams, "get">): TaskSection {
-  return params.get("archived") === "true" ? "archive" : params.get("view") === "today" ? "today" : params.get("view") === "backlog" ? "backlog" : "current";
-}
 export function taskInSection(task: Task, section: TaskSection) {
   return task.deletedAt === null && (section === "archive" ? task.archivedAt !== null : task.archivedAt === null && (section === "today" ? task.isToday : section === "backlog" ? task.isBacklog : true));
 }

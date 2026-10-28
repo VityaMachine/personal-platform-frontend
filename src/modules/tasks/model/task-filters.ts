@@ -42,16 +42,6 @@ export function sameTaskFilters(left: TaskFilters, right: TaskFilters) {
   return keys.every((key) => left[key] === right[key]);
 }
 
-export function taskSectionHref(params: URLSearchParams, section: TaskSection | boolean) {
-  const result = new URLSearchParams(params);
-  result.delete("view");
-  if (section === "today" || section === "backlog") result.set("view", section);
-  if (section === true || section === "archive") result.set("archived", "true");
-  else result.delete("archived");
-  const query = result.toString();
-  return query ? `/?${query}` : "/";
-}
-
 const priorityRank: Record<TaskPriority, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
 const idAsc = (left: Task, right: Task) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0;
 const newest = (left: Task, right: Task) => Date.parse(right.createdAt) - Date.parse(left.createdAt);
