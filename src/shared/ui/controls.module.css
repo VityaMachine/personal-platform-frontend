@@ -1,0 +1,389 @@
+.sectionTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  width: min(1080px, calc(100% - 48px));
+  max-width: calc(100% - 48px);
+  height: min(740px, calc(100dvh - 48px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 24px 80px var(--shadow);
+  overflow: hidden;
+}
+
+.modal::backdrop {
+  background: var(--backdrop);
+}
+
+.discardDialog {
+  position: fixed;
+  inset: 0;
+  width: min(480px, calc(100% - 32px));
+  max-width: calc(100% - 32px);
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 28px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--surface-muted);
+  color: var(--text);
+  box-shadow: 0 16px 64px var(--shadow);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.discardDialog::backdrop {
+  background: var(--backdrop-nested);
+}
+
+.discardDescription {
+  margin: 12px 0 24px;
+  color: var(--secondary);
+  line-height: 1.5;
+}
+
+.discardActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.discardActions > button {
+  min-width: 0;
+  max-width: 100%;
+  padding: 12px;
+  overflow-wrap: anywhere;
+}
+
+.dangerButton {
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: var(--danger);
+  color: var(--on-accent);
+}
+
+.dangerButton:hover {
+  background: var(--danger-hover);
+}
+
+.dangerButton:focus-visible {
+  outline: 3px solid var(--danger);
+  outline-offset: 3px;
+}
+
+.modalLayout {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-width: 0;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modalBody {
+  min-height: 0;
+  min-width: 0;
+  padding: 28px;
+  background: var(--surface-muted);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 28px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.field {
+  display: block;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.required {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.field input, .field textarea, .field select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  background: var(--input);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.field input[type="datetime-local"] {
+  max-width: 100%;
+  padding-inline: 10px;
+}
+
+.field input[readonly] {
+  background: var(--readonly);
+  color: var(--secondary);
+  cursor: default;
+}
+
+.fieldHint {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.field input::placeholder, .field textarea::placeholder {
+  color: var(--placeholder);
+}
+
+.primaryButton, .secondaryButton, .deleteButton, .closeButton, .dangerButton {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primaryButton {
+  justify-self: start;
+  padding: 12px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.primaryButton:disabled, .secondaryButton:disabled, .deleteButton:disabled, .closeButton:disabled, .dangerButton:disabled, .discardActions > button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible, .primaryButton:focus-visible, .secondaryButton:focus-visible, .deleteButton:focus-visible, .dangerButton:focus-visible, .closeButton:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.closeButton {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--button-border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--secondary);
+}
+
+.fieldError {
+  display: block;
+  margin-top: 6px;
+  color: var(--danger);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.field [aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.notice {
+  margin: 0;
+  color: var(--notice);
+  font-size: 0.875rem;
+}
+
+.notice:empty {
+  display: none;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  margin-top: 12px;
+  border: 1px solid var(--error-border);
+  border-radius: 10px;
+  background: var(--error-bg);
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}
+
+.error p {
+  min-width: 0;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.secondaryButton {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  color: inherit;
+  background: transparent;
+}
+
+.loading {
+  padding: 20px 0;
+  color: var(--secondary);
+}
+
+.empty {
+  padding: 48px 20px;
+  text-align: center;
+  border: 1px dashed var(--empty-border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.emptyIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--empty-icon);
+  color: var(--notice);
+  font-size: 1.5rem;
+}
+
+.empty h3 {
+  margin: 18px 0 8px;
+  font-size: 1.125rem;
+}
+
+.empty p {
+  margin: 0;
+  color: var(--secondary);
+  line-height: 1.6;
+}
+
+.addSubtaskButton:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.addSubtaskButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--notice);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.addSubtaskButton:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.addSubtaskButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.deleteButton {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--delete);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.deleteButton:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+  .field textarea {
+    min-height: 96px;
+  }
+}
+
+@media (max-width: 540px) {
+  .discardDialog {
+    padding: 20px;
+  }
+  .discardActions {
+    flex-direction: column;
+  }
+  .modal {
+    width: calc(100% - 24px);
+    max-width: calc(100% - 24px);
+    height: calc(100dvh - 24px);
+    max-height: calc(100dvh - 24px);
+    border-radius: 12px;
+  }
+  .modalHeader, .modalBody, .modalFooter {
+    padding: 16px;
+  }
+  .error {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

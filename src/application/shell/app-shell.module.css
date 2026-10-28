@@ -1,0 +1,164 @@
+/* Shell and screen layout. The desktop list viewport falls back to document
+   scrolling at the original narrow-width and low-height breakpoints. */
+.shell {
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+  min-height: 100svh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100svh;
+  padding: 32px 16px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.brand {
+  display: block;
+  margin: 0 12px 36px;
+  color: var(--text);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.navItem[aria-current="page"], .navItem:hover {
+  background: var(--nav);
+}
+
+.navButton {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.navItem[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.main {
+  min-width: 0;
+  padding: 40px clamp(20px, 4vw, 64px);
+}
+
+.tasksToolbar {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tasksToolbar .header { margin-bottom: 0; }
+.tasksToolbar .feedback { margin: 0; }
+.tasksToolbar .feedback:has(> :only-child:empty) { display: none; }
+.taskHeaderActions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.taskHeaderActions > button { max-width: 100%; overflow-wrap: anywhere; }
+.taskScroll { min-width: 0; min-height: 0; }
+.taskScroll:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (min-width: 761px) and (min-height: 48rem) {
+  .tasksShell { height: 100dvh; min-height: 0; }
+  .tasksShell .sidebar { height: 100dvh; }
+  .tasksMain {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(12rem, 1fr);
+    gap: 16px;
+    padding: 24px clamp(20px, 3vw, 48px);
+  }
+  .tasksToolbar { margin-bottom: 0; }
+  .taskScroll {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scroll-padding-block: 12px;
+    padding: 2px 4px 12px 2px;
+  }
+  .tasksShell:has(dialog[open]) .taskScroll, .tasksShell:has(dialog[open]) .sidebar {
+    overflow-y: hidden;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+
+.counter {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.navItem:focus-visible, .brand:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.feedback {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 760px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sidebar {
+    position: static;
+    height: auto;
+    padding: 20px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    margin: 0 0 16px;
+  }
+  .navItem {
+    width: fit-content;
+  }
+  .main {
+    padding: 28px 20px;
+  }
+}
+
+@media (max-width: 540px) {
+  .main {
+    padding: 24px 16px;
+  }
+  .header {
+    gap: 16px;
+  }
+}

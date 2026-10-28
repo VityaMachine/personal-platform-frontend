@@ -1,10 +1,11 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { Task } from "@/modules/tasks/model/task-types";
 import { CreateTaskForm } from "./create-task-form";
 import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
-import styles from "../../../app/page.module.css";
 
 type Props = {
   returnFocusRef: RefObject<HTMLButtonElement | null>;
@@ -48,7 +49,7 @@ export function CreateTaskModal({ returnFocusRef, onClose, onCreated, onSubmitti
   return (
     <dialog
       ref={dialogRef}
-      className={styles.modal}
+      className={uiStyles.modal}
       aria-labelledby="create-heading"
       onKeyDown={(event) => {
         // Keep dirty/pending close checks synchronous across history traversals.
@@ -62,12 +63,12 @@ export function CreateTaskModal({ returnFocusRef, onClose, onCreated, onSubmitti
         requestClose();
       }}
     >
-      <div className={styles.modalLayout}>
-        <header className={styles.modalHeader}>
-          <h2 id="create-heading" className={styles.sectionTitle}>Нова задача</h2>
-          <button type="button" className={styles.closeButton} disabled={submitting} onClick={requestClose} aria-label="Закрити вікно створення задачі">✕</button>
+      <div className={uiStyles.modalLayout}>
+        <header className={uiStyles.modalHeader}>
+          <h2 id="create-heading" className={uiStyles.sectionTitle}>Нова задача</h2>
+          <button type="button" className={uiStyles.closeButton} disabled={submitting} onClick={requestClose} aria-label="Закрити вікно створення задачі">✕</button>
         </header>
-        <div className={styles.modalBody}>
+        <div className={uiStyles.modalBody}>
           <CreateTaskForm
             formId="create-task-form"
             disabled={submitting}
@@ -80,9 +81,9 @@ export function CreateTaskModal({ returnFocusRef, onClose, onCreated, onSubmitti
             onCreated={onCreated}
           />
         </div>
-        <footer className={styles.modalFooter}>
-          <button type="button" className={styles.secondaryButton} disabled={submitting} onClick={requestClose}>Скасувати</button>
-          <button type="submit" form="create-task-form" className={styles.primaryButton} disabled={submitting}>
+        <footer className={uiStyles.modalFooter}>
+          <button type="button" className={uiStyles.secondaryButton} disabled={submitting} onClick={requestClose}>Скасувати</button>
+          <button type="submit" form="create-task-form" className={uiStyles.primaryButton} disabled={submitting}>
             {submitting ? "Створення…" : "Створити задачу"}
           </button>
         </footer>

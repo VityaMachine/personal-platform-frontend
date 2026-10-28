@@ -1,8 +1,9 @@
 "use client";
+
+import uiStyles from "../../../../shared/ui/controls.module.css";
 import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react";
 import type { RoutineRemovalOutcome, RoutineRemovalCheckOutcome } from "../hooks/use-routines";
 import { useHistoryTraversalGuard } from "../../../../shared/navigation/use-history-traversal-guard";
-import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 
 export function DeleteRoutineDialog({ title, opener, fallbackFocusRef, onConfirm, onCheck, onClose, onDeleted }: {
@@ -72,7 +73,7 @@ export function DeleteRoutineDialog({ title, opener, fallbackFocusRef, onConfirm
     } catch { setCheckError("Не вдалося перевірити актуальний список. Попередній результат видалення залишається невідомим."); }
     finally { inFlight.current = false; setPending(null); }
   }
-  return <dialog ref={dialogRef} className={shared.discardDialog} role="alertdialog" aria-modal="true" aria-labelledby={`${id}-heading`} aria-describedby={`${id}-description`}
+  return <dialog ref={dialogRef} className={uiStyles.discardDialog} role="alertdialog" aria-modal="true" aria-labelledby={`${id}-heading`} aria-describedby={`${id}-description`}
     onCancel={(event) => { event.preventDefault(); event.stopPropagation(); close(); }}
     onKeyDown={(event) => {
       if (event.key === "Escape") event.stopPropagation();
@@ -82,18 +83,18 @@ export function DeleteRoutineDialog({ title, opener, fallbackFocusRef, onConfirm
       else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0]?.focus(); }
     }}>
     <form onSubmit={submit} aria-busy={pending !== null}>
-      <h2 id={`${id}-heading`} className={shared.sectionTitle}>Видалити повторення?</h2>
-      <p id={`${id}-description`} className={`${shared.discardDescription} ${styles.text}`}>Шаблон “{title}” буде видалено. Уже створені задачі та їхня історія залишаться. Нові виконання з цього шаблону створювати буде неможливо. Відновлення через інтерфейс недоступне.</p>
-      {error && <div role="alert" className={shared.error}><p>{error.message}</p>
-        <button type="button" className={shared.secondaryButton} aria-disabled={pending !== null} onClick={() => void check()}>Перевірити актуальний список</button>
+      <h2 id={`${id}-heading`} className={uiStyles.sectionTitle}>Видалити повторення?</h2>
+      <p id={`${id}-description`} className={`${uiStyles.discardDescription} ${styles.text}`}>Шаблон “{title}” буде видалено. Уже створені задачі та їхня історія залишаться. Нові виконання з цього шаблону створювати буде неможливо. Відновлення через інтерфейс недоступне.</p>
+      {error && <div role="alert" className={uiStyles.error}><p>{error.message}</p>
+        <button type="button" className={uiStyles.secondaryButton} aria-disabled={pending !== null} onClick={() => void check()}>Перевірити актуальний список</button>
         {error.uncertain && <p>Перевірка лише оновлює список і не повторює видалення.</p>}
       </div>}
-      {checkError && <p role="alert" className={shared.fieldError}>{checkError}</p>}
-      {notice && <p role="status" className={shared.notice}>{notice}</p>}
+      {checkError && <p role="alert" className={uiStyles.fieldError}>{checkError}</p>}
+      {notice && <p role="status" className={uiStyles.notice}>{notice}</p>}
       {pending && <p role="status">{pending === "delete" ? "Видалення повторення…" : "Перевірка актуального списку…"}</p>}
-      <div className={shared.discardActions}>
-        <button ref={cancelRef} type="button" className={shared.secondaryButton} aria-disabled={pending !== null} onClick={close}>Скасувати</button>
-        <button type="submit" className={shared.dangerButton} disabled={missing} aria-disabled={pending !== null || missing}>Видалити повторення</button>
+      <div className={uiStyles.discardActions}>
+        <button ref={cancelRef} type="button" className={uiStyles.secondaryButton} aria-disabled={pending !== null} onClick={close}>Скасувати</button>
+        <button type="submit" className={uiStyles.dangerButton} disabled={missing} aria-disabled={pending !== null || missing}>Видалити повторення</button>
       </div>
     </form>
   </dialog>;

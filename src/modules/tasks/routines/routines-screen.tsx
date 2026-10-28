@@ -1,4 +1,7 @@
 "use client";
+
+import shellStyles from "../../../application/shell/app-shell.module.css";
+import uiStyles from "../../../shared/ui/controls.module.css";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { taskHref } from "../routes";
@@ -18,7 +21,6 @@ import { DeleteRoutineDialog } from "./ui/delete-routine-dialog";
 import { RoutineFacts } from "./ui/routine-facts";
 import { RoutineConflicts } from "./ui/routine-conflicts";
 import { RoutineResultModal } from "./ui/routine-result-modal";
-import shared from "../../../app/page.module.css";
 import styles from "./ui/routines.module.css";
 
 export default function RoutinesPage() {
@@ -67,30 +69,30 @@ function RoutinesScreen() {
   }} onManageAreas={(open) => {
     if (!directory.pending && !modalLock.current && !document.querySelector("dialog[open]")) { modalLock.current = true; open(); }
   }} onAreasClose={() => { modalLock.current = false; }}>
-    <div className={shared.tasksToolbar}>
-      <header className={shared.header}>
-        <h1 ref={headingRef} tabIndex={-1} id="routines-heading" className={shared.title}>Повторювані задачі</h1>
-        <div className={shared.taskHeaderActions}>
-          <button type="button" className={shared.secondaryButton} disabled={directory.loading || directory.pending || dialogOpen || Boolean(editLoad?.pending) || generation !== null} onClick={directory.reload}>Оновити список</button>
-          <button type="button" className={shared.primaryButton} disabled={!preferences.ready || directory.loading || directory.pending || dialogOpen || Boolean(editLoad?.pending)} onClick={(event) => {
+    <div className={shellStyles.tasksToolbar}>
+      <header className={shellStyles.header}>
+        <h1 ref={headingRef} tabIndex={-1} id="routines-heading" className={shellStyles.title}>Повторювані задачі</h1>
+        <div className={shellStyles.taskHeaderActions}>
+          <button type="button" className={uiStyles.secondaryButton} disabled={directory.loading || directory.pending || dialogOpen || Boolean(editLoad?.pending) || generation !== null} onClick={directory.reload}>Оновити список</button>
+          <button type="button" className={uiStyles.primaryButton} disabled={!preferences.ready || directory.loading || directory.pending || dialogOpen || Boolean(editLoad?.pending)} onClick={(event) => {
             if (!modalLock.current && !document.querySelector("dialog[open]")) { modalLock.current = true; setNotice(""); setCreateOpener(event.currentTarget); }
           }}>Нове повторення</button>
         </div>
       </header>
       <p className={styles.hint}>Шаблони повторень. «Активний» означає відсутність паузи, а не гарантію майбутніх виконань.</p>
-      {notice && <p role="status" className={shared.notice}>{notice}</p>}
+      {notice && <p role="status" className={uiStyles.notice}>{notice}</p>}
       {!!generationResult?.data.conflicts?.length && <details className={styles.generationResult}>
         <summary>Конфлікти останньої генерації ({generationResult.data.conflicts.length})</summary>
         <p className={styles.text}>{generationResult.title} · {formatRoutineDate(generationResult.data.from)} — {formatRoutineDate(generationResult.data.to)}</p>
         <RoutineConflicts conflicts={generationResult.data.conflicts} />
       </details>}
     </div>
-    <section className={shared.taskScroll} aria-labelledby="routines-heading" aria-busy={directory.loading} tabIndex={0}>
+    <section className={shellStyles.taskScroll} aria-labelledby="routines-heading" aria-busy={directory.loading} tabIndex={0}>
       {directory.loading && <p role="status">Завантаження повторюваних задач…</p>}
-      {directory.error && <div role="alert" className={shared.error}><p>{directory.error}</p>
-        <button type="button" className={shared.secondaryButton} disabled={directory.pending} onClick={directory.reload}>Повторити завантаження</button>
+      {directory.error && <div role="alert" className={uiStyles.error}><p>{directory.error}</p>
+        <button type="button" className={uiStyles.secondaryButton} disabled={directory.pending} onClick={directory.reload}>Повторити завантаження</button>
       </div>}
-      {!directory.loading && !directory.error && directory.routines.length === 0 && <div className={shared.empty}>
+      {!directory.loading && !directory.error && directory.routines.length === 0 && <div className={uiStyles.empty}>
         <h2>Повторюваних задач поки немає</h2><p>Збережені шаблони з’являться тут.</p>
       </div>}
       <ul className={styles.list}>{directory.routines.map((routine) => {
@@ -100,31 +102,31 @@ function RoutinesScreen() {
           <h2>{routine.title}</h2>
           <RoutineFacts routine={routine} />
           <div className={styles.actions}>
-            <button type="button" className={shared.secondaryButton} disabled={Boolean(state?.pending || editBusy)} aria-label={`Деталі: ${routine.title}`} onClick={(event) => {
+            <button type="button" className={uiStyles.secondaryButton} disabled={Boolean(state?.pending || editBusy)} aria-label={`Деталі: ${routine.title}`} onClick={(event) => {
               if (!directory.isLocked(routine.id) && !modalLock.current && !document.querySelector("dialog[open]")) { modalLock.current = true; setSelected({ id: routine.id, opener: event.currentTarget }); }
             }}>Деталі</button>
-            <button type="button" className={shared.secondaryButton} disabled={Boolean(state?.pending || editBusy)} aria-label={`Редагувати: ${routine.title}`} onClick={(event) => void beginEdit(routine, event.currentTarget)}>
+            <button type="button" className={uiStyles.secondaryButton} disabled={Boolean(state?.pending || editBusy)} aria-label={`Редагувати: ${routine.title}`} onClick={(event) => void beginEdit(routine, event.currentTarget)}>
               {editLoad?.id === routine.id && editLoad.pending ? "Завантаження…" : "Редагувати"}
             </button>
-            <button type="button" className={shared.secondaryButton} disabled={Boolean(state?.pending || editBusy || routine.pausedAt)}
+            <button type="button" className={uiStyles.secondaryButton} disabled={Boolean(state?.pending || editBusy || routine.pausedAt)}
               aria-label={`Створити задачі: ${routine.title}`} aria-describedby={routine.pausedAt ? `generate-paused-${routine.id}` : undefined} onClick={(event) => {
                 if (routine.pausedAt === null && !directory.isLocked(routine.id) && !modalLock.current && !document.querySelector("dialog[open]")) {
                   modalLock.current = true; setNotice(""); setGeneration({ routine, opener: event.currentTarget });
                 }
               }}>Створити задачі</button>
-            <button type="button" className={shared.secondaryButton} disabled={Boolean(state?.pending || editBusy)} aria-label={`${routine.pausedAt ? "Відновити" : "Призупинити"}: ${routine.title}`} onClick={() => { if (!modalLock.current) void directory.toggle(routine); }}>
+            <button type="button" className={uiStyles.secondaryButton} disabled={Boolean(state?.pending || editBusy)} aria-label={`${routine.pausedAt ? "Відновити" : "Призупинити"}: ${routine.title}`} onClick={() => { if (!modalLock.current) void directory.toggle(routine); }}>
               {state?.pending ? "Збереження…" : routine.pausedAt ? "Відновити" : "Призупинити"}
             </button>
-            <button type="button" className={shared.deleteButton} disabled={Boolean(state?.pending || editBusy)} aria-label={`Видалити повторення: ${routine.title}`} onClick={(event) => {
+            <button type="button" className={uiStyles.deleteButton} disabled={Boolean(state?.pending || editBusy)} aria-label={`Видалити повторення: ${routine.title}`} onClick={(event) => {
               if (!directory.isLocked(routine.id) && !modalLock.current && !document.querySelector("dialog[open]")) {
                 modalLock.current = true; setNotice(""); setDeleting({ routine, opener: event.currentTarget });
               }
             }}>Видалити</button>
           </div>
           {routine.pausedAt && <p id={`generate-paused-${routine.id}`} className={styles.hint}>Щоб створити задачі, спочатку відновіть повторення з паузи.</p>}
-          {state?.error && <p role="alert" className={shared.fieldError}>{state.error}</p>}
-          {state?.notice && <p role="status" className={shared.notice}>{state.notice}</p>}
-          {editLoad?.id === routine.id && editLoad.error && <p role="alert" className={shared.fieldError}>{editLoad.error}</p>}
+          {state?.error && <p role="alert" className={uiStyles.fieldError}>{state.error}</p>}
+          {state?.notice && <p role="status" className={uiStyles.notice}>{state.notice}</p>}
+          {editLoad?.id === routine.id && editLoad.error && <p role="alert" className={uiStyles.fieldError}>{editLoad.error}</p>}
         </li>;
       })}</ul>
     </section>

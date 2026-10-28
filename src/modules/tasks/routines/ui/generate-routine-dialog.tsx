@@ -1,4 +1,6 @@
 "use client";
+
+import uiStyles from "../../../../shared/ui/controls.module.css";
 import { useEffect, useId, useRef, useState } from "react";
 import type { Routine, RoutineGenerationResult } from "@/modules/tasks/routines/model/routine-types";
 import { formatRoutineDate } from "@/modules/tasks/routines/model/routine-format";
@@ -8,7 +10,6 @@ import { RoutineConflicts } from "./routine-conflicts";
 import type { TraversalAttempt } from "@/shared/navigation/history-traversal-guard";
 import { useHistoryTraversalGuard } from "../../../../shared/navigation/use-history-traversal-guard";
 import { DiscardChangesDialog } from "../../../../shared/ui/discard-changes-dialog";
-import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 
 export function GenerateRoutineDialog({ routine, opener, onClose, onGenerated, onCurrentTasks, onSubmittingChange, navigationDisabled = false }: {
@@ -70,7 +71,7 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onGenerated, o
     if (model.isPosting() || confirming) return;
     focusOutcome(await model.generate());
   }
-  return <dialog ref={dialogRef} className={`${shared.modal} ${styles.generateModal}`} aria-modal="true" aria-labelledby={`${id}-heading`} aria-describedby={`${id}-warning`}
+  return <dialog ref={dialogRef} className={`${uiStyles.modal} ${styles.generateModal}`} aria-modal="true" aria-labelledby={`${id}-heading`} aria-describedby={`${id}-warning`}
     onCancel={(event) => { event.preventDefault(); event.stopPropagation(); requestClose(); }}
     onKeyDown={(event) => {
       if (event.key !== "Tab" || confirming || (event.target as HTMLElement).closest("dialog") !== event.currentTarget) return;
@@ -78,12 +79,12 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onGenerated, o
       if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1)?.focus(); }
       else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0]?.focus(); }
     }}>
-    <div className={`${shared.modalLayout} ${styles.createLayout}`}>
-      <header className={shared.modalHeader}>
-        <h2 id={`${id}-heading`} className={`${shared.sectionTitle} ${styles.modalTitle}`}>Створити задачі</h2>
-        <button type="button" className={shared.closeButton} disabled={pending} onClick={() => requestClose()} aria-label="Закрити створення задач">✕</button>
+    <div className={`${uiStyles.modalLayout} ${styles.createLayout}`}>
+      <header className={uiStyles.modalHeader}>
+        <h2 id={`${id}-heading`} className={`${uiStyles.sectionTitle} ${styles.modalTitle}`}>Створити задачі</h2>
+        <button type="button" className={uiStyles.closeButton} disabled={pending} onClick={() => requestClose()} aria-label="Закрити створення задач">✕</button>
       </header>
-      <div className={`${shared.modalBody} ${styles.body}`} tabIndex={0} role="region" aria-label="Підтвердження створення задач і результат">
+      <div className={`${uiStyles.modalBody} ${styles.body}`} tabIndex={0} role="region" aria-label="Підтвердження створення задач і результат">
         <h3 className={styles.text}>{routine.title}</h3>
         <p>Часовий пояс: <strong>{model.preview.data?.timezone ?? routine.timezone}</strong></p>
         <p id={`${id}-warning`}>Після підтвердження будуть створені реальні задачі з цього шаблону.</p>
@@ -93,25 +94,25 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onGenerated, o
           <li>Максимум 100 нових задач за запит. Якщо ліміт перевищено, звузьте діапазон.</li>
         </ul>
         {routine.schedule.recurrence.type === "AFTER_COMPLETION" && <p className={styles.hint}>Один запуск створює максимум одне нове виконання. Наступне залежить від фактичного завершення або пропуску попередньої задачі. Дати й наступника визначає сервер.</p>}
-        {routine.pausedAt && <p className={shared.fieldError}>Повторення на паузі. Перед запуском потрібно його відновити.</p>}
+        {routine.pausedAt && <p className={uiStyles.fieldError}>Повторення на паузі. Перед запуском потрібно його відновити.</p>}
         <form id={`${id}-form`} onSubmit={(event) => { event.preventDefault(); if (!confirming) void model.loadPreview(); }} noValidate className={styles.range} aria-busy={pending}>
-          <label className={shared.field} htmlFor={`${id}-from`}>З дати
+          <label className={uiStyles.field} htmlFor={`${id}-from`}>З дати
             <input ref={fromRef} id={`${id}-from`} type="date" min="0001-01-01" max="9999-12-31" required disabled={pending} value={range.from}
               aria-invalid={Boolean(fieldError)} aria-describedby={fieldError ? `${id}-range-error` : `${id}-range-hint`} onChange={(event) => model.changeRange("from", event.target.value)} />
           </label>
-          <label className={shared.field} htmlFor={`${id}-to`}>До дати
+          <label className={uiStyles.field} htmlFor={`${id}-to`}>До дати
             <input id={`${id}-to`} type="date" min="0001-01-01" max="9999-12-31" required disabled={pending} value={range.to}
               aria-invalid={Boolean(fieldError)} aria-describedby={fieldError ? `${id}-range-error` : `${id}-range-hint`} onChange={(event) => model.changeRange("to", event.target.value)} />
           </label>
-          <button type="submit" className={shared.secondaryButton} disabled={pending || confirming || model.preview.loading || routine.pausedAt !== null}>Показати виконання</button>
-          {model.preview.loading && <button type="button" className={shared.secondaryButton} disabled={pending} onClick={model.cancelPreview}>Скасувати завантаження</button>}
+          <button type="submit" className={uiStyles.secondaryButton} disabled={pending || confirming || model.preview.loading || routine.pausedAt !== null}>Показати виконання</button>
+          {model.preview.loading && <button type="button" className={uiStyles.secondaryButton} disabled={pending} onClick={model.cancelPreview}>Скасувати завантаження</button>}
         </form>
         <p id={`${id}-range-hint`} className={styles.hint}>Локальні календарні дати включно, не більше 366 днів.</p>
-        {fieldError && <p id={`${id}-range-error`} role="alert" className={shared.fieldError}>{fieldError}</p>}
+        {fieldError && <p id={`${id}-range-error`} role="alert" className={uiStyles.fieldError}>{fieldError}</p>}
         <section aria-busy={model.preview.loading} aria-label="Фактичні кандидати генерації">
           {model.preview.loading && <p role="status">Завантаження виконань…</p>}
-          {model.preview.error && <div role="alert" className={shared.error}><p>{model.preview.error}</p>
-            <button type="button" className={shared.secondaryButton} disabled={pending || confirming} onClick={() => void model.loadPreview()}>Повторити завантаження виконань</button>
+          {model.preview.error && <div role="alert" className={uiStyles.error}><p>{model.preview.error}</p>
+            <button type="button" className={uiStyles.secondaryButton} disabled={pending || confirming} onClick={() => void model.loadPreview()}>Повторити завантаження виконань</button>
           </div>}
           {model.notice && <p role="status" className={styles.hint}>{model.notice}</p>}
           {model.preview.data && <>
@@ -127,22 +128,22 @@ export function GenerateRoutineDialog({ routine, opener, onClose, onGenerated, o
         </section>
         {pending && <p role="status">Створення задач…</p>}
         {error && <div ref={errorRef} role="alert" tabIndex={-1} className={styles.generationResult}>
-          <p className={shared.fieldError}>{error.message}</p>
+          <p className={uiStyles.fieldError}>{error.message}</p>
           <p className={styles.hint}>Запитаний діапазон: {formatRoutineDate(error.payload.from)} — {formatRoutineDate(error.payload.to)}</p>
           {model.uncertainPayload && <>
             <p className={styles.hint}>Збережено точний надісланий запит із {model.uncertainPayload.planning?.length ?? 0} записами планування. Зміни поточної чернетки не впливають на його повтор. Повтор не переплановує вже створені задачі.</p>
-            <button type="button" className={shared.secondaryButton} disabled={pending || model.preview.loading || confirming}
+            <button type="button" className={uiStyles.secondaryButton} disabled={pending || model.preview.loading || confirming}
               onClick={async () => focusOutcome(await model.retryExact())}>Повторити точний запит</button>
             <p className={styles.hint}>Новий запит із поточного планування доступний після завершення точного повтору й оновлення виконань.</p>
           </>}
         </div>}
-        {error?.uncertain && <button type="button" className={shared.secondaryButton} disabled={pending || navigationDisabled} onClick={() => {
+        {error?.uncertain && <button type="button" className={uiStyles.secondaryButton} disabled={pending || navigationDisabled} onClick={() => {
           if (!navigationDisabled) requestClose(onCurrentTasks);
         }}>Перейти до поточних задач</button>}
       </div>
-      <footer className={shared.modalFooter}>
-        <button type="button" className={shared.secondaryButton} disabled={pending} onClick={() => requestClose()}>Скасувати</button>
-        <button type="button" onClick={submit} className={shared.primaryButton} disabled={pending || confirming || !model.canGenerate}>
+      <footer className={uiStyles.modalFooter}>
+        <button type="button" className={uiStyles.secondaryButton} disabled={pending} onClick={() => requestClose()}>Скасувати</button>
+        <button type="button" onClick={submit} className={uiStyles.primaryButton} disabled={pending || confirming || !model.canGenerate}>
           {pending ? "Створення…" : "Створити задачі"}
         </button>
       </footer>

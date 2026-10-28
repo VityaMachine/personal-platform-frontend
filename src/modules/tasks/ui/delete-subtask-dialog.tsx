@@ -1,7 +1,8 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+
 import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react";
-import styles from "../../../app/page.module.css";
 
 type Props = {
   subtaskTitle: string;
@@ -61,7 +62,7 @@ export function DeleteSubtaskDialog({ subtaskTitle, opener, successFocusRef, dis
   return (
     <dialog
       ref={dialogRef}
-      className={styles.discardDialog}
+      className={uiStyles.discardDialog}
       role="alertdialog"
       aria-modal="true"
       aria-labelledby={`${id}-heading`}
@@ -84,14 +85,14 @@ export function DeleteSubtaskDialog({ subtaskTitle, opener, successFocusRef, dis
       }}
     >
       <form onSubmit={submit} aria-busy={submitting}>
-        <h2 id={`${id}-heading`} className={styles.sectionTitle}>Видалити підзадачу?</h2>
-        <p id={`${id}-title`} className={styles.discardDescription}>{subtaskTitle}</p>
-        <p id={`${id}-description`} className={styles.discardDescription}>Підзадача зникне зі списку. Відновити її не можна.</p>
-        {error && <p role="alert" className={styles.error}>{error}</p>}
+        <h2 id={`${id}-heading`} className={uiStyles.sectionTitle}>Видалити підзадачу?</h2>
+        <p id={`${id}-title`} className={uiStyles.discardDescription}>{subtaskTitle}</p>
+        <p id={`${id}-description`} className={uiStyles.discardDescription}>Підзадача зникне зі списку. Відновити її не можна.</p>
+        {error && <p role="alert" className={uiStyles.error}>{error}</p>}
         {submitting && <p role="status">Видалення та оновлення даних…</p>}
-        <div className={styles.discardActions}>
-          <button ref={cancelRef} type="button" className={styles.secondaryButton} aria-disabled={submitting} onClick={() => close()}>Скасувати</button>
-          <button ref={deleteRef} type="submit" className={styles.dangerButton} aria-disabled={disabled || submitting}>Видалити</button>
+        <div className={uiStyles.discardActions}>
+          <button ref={cancelRef} type="button" className={uiStyles.secondaryButton} aria-disabled={submitting} onClick={() => close()}>Скасувати</button>
+          <button ref={deleteRef} type="submit" className={uiStyles.dangerButton} aria-disabled={disabled || submitting}>Видалити</button>
         </div>
       </form>
     </dialog>

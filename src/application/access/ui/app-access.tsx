@@ -1,9 +1,11 @@
 "use client";
 
+import shellStyles from "../../shell/app-shell.module.css";
+import uiStyles from "../../../shared/ui/controls.module.css";
+
 import { createContext, useContext, useRef, useState, useSyncExternalStore, useEffect, type FormEvent, type ReactNode } from "react";
 import { browserAccessStorage, createAppAccessStore } from "@/application/access/model/app-access";
 import { useGuardedLeave } from "../../../shared/navigation/use-history-traversal-guard";
-import shared from "../../../app/page.module.css";
 import styles from "./app-access.module.css";
 
 const AccessContext = createContext<(() => void) | null>(null);
@@ -17,7 +19,7 @@ export function AppAccessProvider({ children }: { children: ReactNode }) {
       {children}
     </> : <main className={styles.screen}>
       <section className={styles.panel} aria-labelledby="access-heading">
-        <h1 id="access-heading" className={shared.title}>PersonalPlatform</h1>
+        <h1 id="access-heading" className={shellStyles.title}>PersonalPlatform</h1>
         {!state.ready ? <p role="status">Завантаження…</p> : !state.configured ? <p role="alert">Пароль доступу не налаштовано</p>
           : <AccessForm login={store.login} storageAvailable={state.storageAvailable} />}
       </section>
@@ -35,21 +37,21 @@ function AccessForm({ login, storageAvailable }: { login: (password: string) => 
     if (!login(password)) { setError(true); input.current?.focus(); }
   }
   return <form onSubmit={submit} className={styles.form}>
-    <label className={shared.field} htmlFor="access-password">Пароль
+    <label className={uiStyles.field} htmlFor="access-password">Пароль
       <input ref={input} id="access-password" type="password" autoComplete="current-password" value={password}
         onChange={(event) => { setPassword(event.target.value); setError(false); }}
         aria-invalid={error} aria-describedby={error ? "access-error" : undefined} />
     </label>
-    {error && <p id="access-error" role="alert" className={shared.fieldError}>Неправильний пароль. Введіть ще раз</p>}
-    {!storageAvailable && <p role="status" className={shared.fieldHint}>Сховище браузера недоступне. Після оновлення пароль доведеться ввести знову.</p>}
-    <button type="submit" className={shared.primaryButton}>Увійти</button>
+    {error && <p id="access-error" role="alert" className={uiStyles.fieldError}>Неправильний пароль. Введіть ще раз</p>}
+    {!storageAvailable && <p role="status" className={uiStyles.fieldHint}>Сховище браузера недоступне. Після оновлення пароль доведеться ввести знову.</p>}
+    <button type="submit" className={uiStyles.primaryButton}>Увійти</button>
   </form>;
 }
 
 export function LogoutButton({ disabled = false }: { disabled?: boolean }) {
   const logout = useContext(AccessContext);
   const leave = useGuardedLeave();
-  return <button type="button" className={`${shared.navItem} ${shared.navButton}`} disabled={disabled} onClick={(event) => {
+  return <button type="button" className={`${shellStyles.navItem} ${shellStyles.navButton}`} disabled={disabled} onClick={(event) => {
     if (!logout || document.querySelector("dialog[open]")) return;
     leave(logout, event.currentTarget);
   }}>Вийти</button>;

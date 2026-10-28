@@ -1,12 +1,14 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+import taskStyles from "./tasks.module.css";
+
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { getCancellationNoteError } from "@/modules/tasks/model/task-field-input";
 import { getPostponeTaskFields, parsePostponeTaskFields, type PostponeTaskErrors, type PostponeTaskFields } from "@/modules/tasks/model/task-status-input";
 import type { Task, TaskStatusChange } from "@/modules/tasks/model/task-types";
 import { useFormDates } from "../hooks/use-form-dates";
 import { ZonedDateTimeField } from "../../../shared/ui/zoned-date-time-field";
-import styles from "../../../app/page.module.css";
 
 type Props = {
   task: Task;
@@ -105,7 +107,7 @@ export function TaskStatusDialog({ task, status, opener, disabled, onConfirm, on
   return (
     <dialog
       ref={dialogRef}
-      className={styles.discardDialog}
+      className={uiStyles.discardDialog}
       aria-modal="true"
       aria-labelledby={`${id}-heading`}
       aria-describedby={`${id}-task`}
@@ -126,11 +128,11 @@ export function TaskStatusDialog({ task, status, opener, disabled, onConfirm, on
         }
       }}
     >
-      <form noValidate className={styles.editSubtaskForm} onSubmit={submit} aria-busy={submitting}>
-        <h2 id={`${id}-heading`} className={styles.sectionTitle}>{canceling ? "Скасувати задачу?" : "Перенести задачу"}</h2>
-        <p id={`${id}-task`} className={styles.discardDescription}>{task.title}</p>
+      <form noValidate className={taskStyles.editSubtaskForm} onSubmit={submit} aria-busy={submitting}>
+        <h2 id={`${id}-heading`} className={uiStyles.sectionTitle}>{canceling ? "Скасувати задачу?" : "Перенести задачу"}</h2>
+        <p id={`${id}-task`} className={uiStyles.discardDescription}>{task.title}</p>
         {canceling ? (
-          <label className={styles.field} htmlFor={`${id}-note`}>
+          <label className={uiStyles.field} htmlFor={`${id}-note`}>
             Причина скасування (обов’язково)
             <textarea
               ref={noteRef}
@@ -144,7 +146,7 @@ export function TaskStatusDialog({ task, status, opener, disabled, onConfirm, on
               aria-describedby={noteError ? `${id}-note-error` : undefined}
               onChange={(event) => { if (!locked && !inFlight.current) { setNote(event.target.value); setNoteError(null); setError(null); } }}
             />
-            {noteError && <span id={`${id}-note-error`} className={styles.fieldError}>{noteError}</span>}
+            {noteError && <span id={`${id}-note-error`} className={uiStyles.fieldError}>{noteError}</span>}
           </label>
         ) : (
           <>
@@ -168,11 +170,11 @@ export function TaskStatusDialog({ task, status, opener, disabled, onConfirm, on
             />
           </>
         )}
-        {error && <p role="alert" className={styles.error}>{error}</p>}
+        {error && <p role="alert" className={uiStyles.error}>{error}</p>}
         {submitting && <p role="status">Збереження статусу…</p>}
-        <div className={styles.discardActions}>
-          <button type="button" className={styles.secondaryButton} aria-disabled={submitting} onClick={close}>Назад</button>
-          <button ref={saveRef} type="submit" className={canceling ? styles.dangerButton : styles.primaryButton} aria-disabled={locked}>{canceling ? "Скасувати задачу" : "Перенести"}</button>
+        <div className={uiStyles.discardActions}>
+          <button type="button" className={uiStyles.secondaryButton} aria-disabled={submitting} onClick={close}>Назад</button>
+          <button ref={saveRef} type="submit" className={canceling ? uiStyles.dangerButton : uiStyles.primaryButton} aria-disabled={locked}>{canceling ? "Скасувати задачу" : "Перенести"}</button>
         </div>
       </form>
     </dialog>

@@ -1,5 +1,9 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+import shellStyles from "../../../application/shell/app-shell.module.css";
+import taskStyles from "../ui/tasks.module.css";
+
 import { Suspense, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTaskList } from "../hooks/use-task-list";
@@ -15,10 +19,9 @@ import { TaskFiltersPanel } from "../ui/task-filters-panel";
 import { CreateTaskModal } from "../ui/create-task-modal";
 import { TaskCard } from "../ui/task-card";
 import { AppShell } from "../../../application/shell/app-shell";
-import styles from "../../../app/page.module.css";
 
 export default function Home() {
-  return <Suspense fallback={<p role="status" className={styles.loading}>Завантаження задач…</p>}><TasksPage /></Suspense>;
+  return <Suspense fallback={<p role="status" className={uiStyles.loading}>Завантаження задач…</p>}><TasksPage /></Suspense>;
 }
 
 function TasksPage() {
@@ -72,15 +75,15 @@ function TasksPage() {
     }} onManageAreas={(open) => {
       if (!busy && !creating && !mutations.hasLockedTasks && !document.querySelector("dialog[open]")) open();
     }}>
-      <div className={styles.tasksToolbar}>
-        <header className={styles.header}>
+      <div className={shellStyles.tasksToolbar}>
+        <header className={shellStyles.header}>
           <div>
-            <h1 id="tasks-heading" className={styles.title}>{archived ? "Архів" : today ? "Сьогодні" : backlog ? "Беклог" : "Поточні задачі"}</h1>
-            {backlog && <p className={styles.counter}>Задачі, які потребують нового плану: без актуального планування чи майбутнього дедлайну</p>}
+            <h1 id="tasks-heading" className={shellStyles.title}>{archived ? "Архів" : today ? "Сьогодні" : backlog ? "Беклог" : "Поточні задачі"}</h1>
+            {backlog && <p className={shellStyles.counter}>Задачі, які потребують нового плану: без актуального планування чи майбутнього дедлайну</p>}
           </div>
-          <div className={styles.taskHeaderActions}>
-            <button type="button" className={styles.secondaryButton} disabled={busy || filtersBlocked} onClick={reload}>Оновити список</button>
-            {!archived && <button ref={createButtonRef} className={styles.primaryButton} type="button" disabled={busy} onClick={() => setCreating(true)}>+ Нова задача</button>}
+          <div className={shellStyles.taskHeaderActions}>
+            <button type="button" className={uiStyles.secondaryButton} disabled={busy || filtersBlocked} onClick={reload}>Оновити список</button>
+            {!archived && <button ref={createButtonRef} className={uiStyles.primaryButton} type="button" disabled={busy} onClick={() => setCreating(true)}>+ Нова задача</button>}
           </div>
         </header>
 
@@ -105,11 +108,11 @@ function TasksPage() {
           }}
         />}
 
-        <div className={styles.feedback}>
-          <p role="status" className={styles.notice}>{notice}</p>
-          {inventoryWarning && <p role="status" className={styles.notice}>{inventoryWarning}</p>}
-          {retained.length > 0 && <p role="status" className={styles.notice}>Дані відкритої форми збережено. Її попередня картка тимчасово залишається до закриття форми або завершення оновлення; вона не є результатом актуального запиту.</p>}
-          {(navigationDeferred || view.deferred) && <p role="status" className={styles.notice}>Перехід та зміну умов списку буде застосовано після закриття форми та завершення поточних змін.</p>}
+        <div className={shellStyles.feedback}>
+          <p role="status" className={uiStyles.notice}>{notice}</p>
+          {inventoryWarning && <p role="status" className={uiStyles.notice}>{inventoryWarning}</p>}
+          {retained.length > 0 && <p role="status" className={uiStyles.notice}>Дані відкритої форми збережено. Її попередня картка тимчасово залишається до закриття форми або завершення оновлення; вона не є результатом актуального запиту.</p>}
+          {(navigationDeferred || view.deferred) && <p role="status" className={uiStyles.notice}>Перехід та зміну умов списку буде застосовано після закриття форми та завершення поточних змін.</p>}
         </div>
 
         <TaskStatusSummary tasks={tasks} loading={loading} error={Boolean(loadError)} />
@@ -118,31 +121,31 @@ function TasksPage() {
           total={tasks.length} found={selectedTasks.length} loading={loading} error={Boolean(loadError)} />
       </div>
 
-      <section className={styles.taskScroll} aria-labelledby="tasks-heading" aria-busy={loading} tabIndex={0}>
+      <section className={shellStyles.taskScroll} aria-labelledby="tasks-heading" aria-busy={loading} tabIndex={0}>
         {loadError && (
-          <div role="alert" className={styles.error}>
+          <div role="alert" className={uiStyles.error}>
             <p>{loadError}</p>
-            <button type="button" className={styles.secondaryButton} disabled={busy || filtersBlocked} onClick={reload}>Повторити завантаження</button>
+            <button type="button" className={uiStyles.secondaryButton} disabled={busy || filtersBlocked} onClick={reload}>Повторити завантаження</button>
           </div>
         )}
-        {loading && <p role="status" className={styles.loading}>Завантаження задач…</p>}
+        {loading && <p role="status" className={uiStyles.loading}>Завантаження задач…</p>}
         {!loading && !loadError && tasks.length === 0 && retained.length === 0 && (
-          <div className={styles.empty}>
-            <span className={styles.emptyIcon} aria-hidden="true">✓</span>
+          <div className={uiStyles.empty}>
+            <span className={uiStyles.emptyIcon} aria-hidden="true">✓</span>
             <h3>{archived ? "Архів порожній" : today ? "На сьогодні задач немає" : backlog ? "Беклог порожній" : "Тут починається ваш план"}</h3>
             {!today && !backlog && <p>{archived ? "Архівовані задачі з’являться тут. Їх можна повернути до поточних задач." : "Натисніть «+ Нова задача», щоб додати першу справу."}</p>}
           </div>
         )}
-        {!loading && !loadError && tasks.length > 0 && selectedTasks.length === 0 && retained.length === 0 && <div className={styles.empty}>
+        {!loading && !loadError && tasks.length > 0 && selectedTasks.length === 0 && retained.length === 0 && <div className={uiStyles.empty}>
           <h3>За цими умовами задач не знайдено</h3>
           <p>Змініть умови або скиньте пошук, фільтри й сортування.</p>
-          <button type="button" className={styles.secondaryButton} disabled={filtersBlocked} onClick={view.reset}>Скинути</button>
+          <button type="button" className={uiStyles.secondaryButton} disabled={filtersBlocked} onClick={view.reset}>Скинути</button>
         </div>}
         {shownTasks.length > 0 && (
-          <ul className={styles.taskList}>
+          <ul className={taskStyles.taskList}>
             {/* Keep every keyed card under the same parent across group moves. */}
             {groupTaskList(shownTasks, section).flatMap((group) => [
-              ...(group.title ? [<li key={`group-${group.id}`} className={styles.taskGroupHeading} role="presentation">
+              ...(group.title ? [<li key={`group-${group.id}`} className={taskStyles.taskGroupHeading} role="presentation">
                 <h2>{group.title} <span>({group.tasks.length})</span></h2>
               </li>] : []),
               ...group.tasks.map((task) => (

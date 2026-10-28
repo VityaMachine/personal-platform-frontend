@@ -1,11 +1,13 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+import taskStyles from "./tasks.module.css";
+
 import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react";
 import { parseCreateSubtaskFields, type CreateSubtaskErrors, type CreateSubtaskFields } from "@/modules/tasks/model/create-subtask-input";
 import { MAX_DURATION_MINUTES } from "@/modules/tasks/model/task-field-input";
 import type { InitialSubtaskInput } from "@/modules/tasks/model/task-types";
 import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
-import styles from "../../../app/page.module.css";
 
 type Props = {
   taskTitle: string;
@@ -93,7 +95,7 @@ export function CreateSubtaskDialog({ taskTitle, opener, fallbackFocusRef, disab
   return (
     <dialog
       ref={dialogRef}
-      className={styles.discardDialog}
+      className={uiStyles.discardDialog}
       aria-modal="true"
       aria-labelledby={`${id}-heading`}
       aria-describedby={`${id}-parent`}
@@ -119,10 +121,10 @@ export function CreateSubtaskDialog({ taskTitle, opener, fallbackFocusRef, disab
         }
       }}
     >
-      <form noValidate className={styles.editSubtaskForm} onSubmit={submit} aria-busy={submitting}>
-        <h2 id={`${id}-heading`} className={styles.sectionTitle}>Нова підзадача</h2>
-        <p id={`${id}-parent`} className={styles.discardDescription}>{taskTitle}</p>
-        <label className={styles.field} htmlFor={`${id}-title`}>
+      <form noValidate className={taskStyles.editSubtaskForm} onSubmit={submit} aria-busy={submitting}>
+        <h2 id={`${id}-heading`} className={uiStyles.sectionTitle}>Нова підзадача</h2>
+        <p id={`${id}-parent`} className={uiStyles.discardDescription}>{taskTitle}</p>
+        <label className={uiStyles.field} htmlFor={`${id}-title`}>
           Назва
           <input
             ref={titleRef}
@@ -135,9 +137,9 @@ export function CreateSubtaskDialog({ taskTitle, opener, fallbackFocusRef, disab
             aria-describedby={errors.title ? `${id}-title-error` : undefined}
             onChange={(event) => change("title", event.target.value)}
           />
-          {errors.title && <span id={`${id}-title-error`} className={styles.fieldError}>{errors.title}</span>}
+          {errors.title && <span id={`${id}-title-error`} className={uiStyles.fieldError}>{errors.title}</span>}
         </label>
-        <label className={styles.field} htmlFor={`${id}-duration`}>
+        <label className={uiStyles.field} htmlFor={`${id}-duration`}>
           Орієнтовна тривалість у хвилинах
           <input
             ref={durationRef}
@@ -154,13 +156,13 @@ export function CreateSubtaskDialog({ taskTitle, opener, fallbackFocusRef, disab
             aria-describedby={errors.estimatedDurationMinutes ? `${id}-duration-error` : undefined}
             onChange={(event) => change("estimatedDurationMinutes", event.target.value)}
           />
-          {errors.estimatedDurationMinutes && <span id={`${id}-duration-error`} className={styles.fieldError}>{errors.estimatedDurationMinutes}</span>}
+          {errors.estimatedDurationMinutes && <span id={`${id}-duration-error`} className={uiStyles.fieldError}>{errors.estimatedDurationMinutes}</span>}
         </label>
-        {error && <p role="alert" className={styles.error}>{error}</p>}
+        {error && <p role="alert" className={uiStyles.error}>{error}</p>}
         {submitting && <p role="status">Додавання та оновлення даних…</p>}
-        <div className={styles.discardActions}>
-          <button ref={cancelRef} type="button" className={styles.secondaryButton} aria-disabled={submitting} onClick={requestClose}>Скасувати</button>
-          <button ref={saveRef} type="submit" className={styles.primaryButton} aria-disabled={locked}>Додати</button>
+        <div className={uiStyles.discardActions}>
+          <button ref={cancelRef} type="button" className={uiStyles.secondaryButton} aria-disabled={submitting} onClick={requestClose}>Скасувати</button>
+          <button ref={saveRef} type="submit" className={uiStyles.primaryButton} aria-disabled={locked}>Додати</button>
         </div>
       </form>
       {confirmingDiscard && <DiscardChangesDialog

@@ -21,7 +21,11 @@ async function connection() {
     if (message.id) {
       const request = pending.get(message.id); pending.delete(message.id);
       if (message.error) request.reject(Error(`CDP ${message.error.code}: ${message.error.message}`)); else request.resolve(message.result);
-    } else for (const handler of handlers.get(message.method) ?? []) void Promise.resolve(handler(message.params)).catch(error => errors.push(`${message.method}: ${error.message}`));
+    } else for (const handler of handlers.get(message.method) ?? []) void Promise.resolve(handler(message.params)).catch(error => {
+      // Navigation can cancel a paused request before continue/fulfill reaches CDP.
+      if (message.method === "Fetch.requestPaused" && error.message.includes("Invalid InterceptionId")) return;
+      errors.push(`${message.method}: ${error.message}`);
+    });
   });
   return {
     cdp: (method, params = {}) => new Promise((resolve, reject) => {

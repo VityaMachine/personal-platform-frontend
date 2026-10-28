@@ -1,5 +1,8 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+import shellStyles from "../../../application/shell/app-shell.module.css";
+
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSettings } from "../model/use-settings";
@@ -8,7 +11,6 @@ import { useHistoryTraversalGuard } from "../../../shared/navigation/use-history
 import { AppShell } from "../../../application/shell/app-shell";
 import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
 import { isTimeZone, timeZoneOptions, type Settings } from "@/modules/settings/model/settings";
-import styles from "../../../app/page.module.css";
 import local from "./settings.module.css";
 
 type Draft = Omit<Settings, "todayOverdueDays"> & { todayOverdueDays: string };
@@ -16,7 +18,7 @@ const draftOf = (settings: Settings): Draft => ({ ...settings, todayOverdueDays:
 
 export function SettingsScreen() {
   const settings = useSettings();
-  return settings.ready ? <SettingsForm /> : <p role="status" className={styles.loading}>Завантаження налаштувань…</p>;
+  return settings.ready ? <SettingsForm /> : <p role="status" className={uiStyles.loading}>Завантаження налаштувань…</p>;
 }
 
 function SettingsForm() {
@@ -103,48 +105,48 @@ function SettingsForm() {
   return <AppShell activeItem="settings" query={query} areasDisabled={dialogOpen || saving} logoutDisabled={dialogOpen || saving || confirming} onNavigate={(href) => {
     if (!href.startsWith("/settings")) request(() => router.push(href, { scroll: false }));
   }} onManageAreas={(open) => { request(open); }}>
-    <header className={styles.header}><h1 className={styles.title}>Налаштування</h1></header>
+    <header className={shellStyles.header}><h1 className={shellStyles.title}>Налаштування</h1></header>
     <div className={local.panel}>
       <p>Налаштування зберігаються в цьому браузері й поки не синхронізуються між пристроями.</p>
       {!preferences.storageAvailable && <p role="status" className={local.warning}>Сховище браузера недоступне. Зміни діятимуть лише в поточній вкладці та можуть зникнути після перезавантаження.</p>}
       {externalChange && dirty && !saving && <div role="status" className={local.warning}>
         <p>Налаштування змінено в іншій вкладці. Ваші незбережені дані залишилися у формі. Завантажте нові значення або натисніть «Зберегти», щоб застосувати власні.</p>
-        <button type="button" className={styles.secondaryButton} onClick={loadExternal}>Завантажити нові значення</button>
+        <button type="button" className={uiStyles.secondaryButton} onClick={loadExternal}>Завантажити нові значення</button>
       </div>}
       <form noValidate onSubmit={save} className={local.form} aria-busy={saving}>
         <fieldset disabled={saving} className={local.fields}>
           <legend className={local.srOnly}>Особисті налаштування</legend>
-          <label className={styles.field} htmlFor="settings-zone">Часовий пояс
+          <label className={uiStyles.field} htmlFor="settings-zone">Часовий пояс
             <input id="settings-zone" list="settings-timezones" value={draft.timeZone} autoComplete="off" aria-invalid={Boolean(errors.timeZone)} aria-describedby="settings-zone-hint settings-zone-error" onChange={(e) => change("timeZone", e.target.value)} />
             <datalist id="settings-timezones">{[...new Set([...zones, preferences.settings.timeZone])].map((zone) => <option key={zone} value={zone} />)}</datalist>
-            <span id="settings-zone-hint" className={styles.fieldHint}>Почніть вводити назву для пошуку. У цьому поясі показуються та вводяться дати задач.</span>
-            <span id="settings-zone-error" className={styles.fieldError}>{errors.timeZone}</span>
+            <span id="settings-zone-hint" className={uiStyles.fieldHint}>Почніть вводити назву для пошуку. У цьому поясі показуються та вводяться дати задач.</span>
+            <span id="settings-zone-error" className={uiStyles.fieldError}>{errors.timeZone}</span>
           </label>
-          <label className={styles.field} htmlFor="settings-language">Мова
+          <label className={uiStyles.field} htmlFor="settings-language">Мова
             <select id="settings-language" value="uk" disabled aria-describedby="settings-language-hint"><option value="uk">Українська</option></select>
-            <span id="settings-language-hint" className={styles.fieldHint}>Інші мови з’являться пізніше.</span>
+            <span id="settings-language-hint" className={uiStyles.fieldHint}>Інші мови з’являться пізніше.</span>
           </label>
-          <label className={styles.field} htmlFor="settings-theme">Тема
+          <label className={uiStyles.field} htmlFor="settings-theme">Тема
             <select id="settings-theme" value={draft.theme} onChange={(e) => change("theme", e.target.value as Settings["theme"])}>
               <option value="system">Системна</option><option value="light">Світла</option><option value="dark">Темна</option>
             </select>
           </label>
           <fieldset className={local.overdue}><legend>Прострочені задачі у «Сьогодні»</legend>
-            <label className={styles.field} htmlFor="settings-overdue">Показувати прострочені задачі
+            <label className={uiStyles.field} htmlFor="settings-overdue">Показувати прострочені задачі
               <select id="settings-overdue" value={draft.todayOverdueMode} onChange={(e) => change("todayOverdueMode", e.target.value as Settings["todayOverdueMode"])}>
                 <option value="none">Не показувати</option><option value="limited">За останні N днів</option><option value="all">Показувати всі</option>
               </select>
             </label>
-            <label className={styles.field} htmlFor="settings-days">Кількість попередніх календарних днів
+            <label className={uiStyles.field} htmlFor="settings-days">Кількість попередніх календарних днів
               <input id="settings-days" type="number" min={1} max={365} step={1} disabled={draft.todayOverdueMode !== "limited"} value={draft.todayOverdueDays} aria-invalid={Boolean(errors.todayOverdueDays)} aria-describedby="settings-days-hint settings-days-error" onChange={(e) => change("todayOverdueDays", e.target.value)} />
-              <span id="settings-days-error" className={styles.fieldError}>{errors.todayOverdueDays}</span>
+              <span id="settings-days-error" className={uiStyles.fieldError}>{errors.todayOverdueDays}</span>
             </label>
-            <p id="settings-days-hint" className={styles.fieldHint}>Сьогодні входить завжди. Обмежений режим додає N попередніх календарних днів; «Не показувати» залишає лише сьогодні, «Показувати всі» додає всі попередні дні.</p>
+            <p id="settings-days-hint" className={uiStyles.fieldHint}>Сьогодні входить завжди. Обмежений режим додає N попередніх календарних днів; «Не показувати» залишає лише сьогодні, «Показувати всі» додає всі попередні дні.</p>
           </fieldset>
-          <div className={local.actions}><button type="submit" className={styles.primaryButton}>Зберегти</button>{dirty && <span className={styles.fieldHint}>Є незбережені зміни</span>}</div>
+          <div className={local.actions}><button type="submit" className={uiStyles.primaryButton}>Зберегти</button>{dirty && <span className={uiStyles.fieldHint}>Є незбережені зміни</span>}</div>
         </fieldset>
         {saving && <p role="status">Збереження налаштувань…</p>}
-        <p role="status" className={styles.notice}>{notice}</p>
+        <p role="status" className={uiStyles.notice}>{notice}</p>
       </form>
     </div>
     {confirming && <DiscardChangesDialog returnFocus={returnFocus} continueLabel="Залишитися" discardLabel="Вийти без збереження" onContinue={() => {

@@ -1,5 +1,8 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+import taskStyles from "./tasks.module.css";
+
 import { useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { createTask, type Task } from "@/modules/tasks/api/tasks";
 import { ApiError } from "@/shared/api/api";
@@ -11,7 +14,6 @@ import { SubtasksEditor } from "./subtasks-editor";
 import { useTaskContext } from "../hooks/use-task-context";
 import { useFormDates } from "../hooks/use-form-dates";
 import { ZonedDateTimeField } from "../../../shared/ui/zoned-date-time-field";
-import styles from "../../../app/page.module.css";
 
 type Props = {
   formId: string;
@@ -74,7 +76,7 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
   }
 
   function fieldError(field: keyof CreateTaskFields) {
-    return errors[field] && <span id={`create-${field}-error`} className={styles.fieldError}>{errors[field]}</span>;
+    return errors[field] && <span id={`create-${field}-error`} className={uiStyles.fieldError}>{errors[field]}</span>;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -118,20 +120,20 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
   }
 
   return (
-    <form id={formId} onSubmit={handleSubmit} className={styles.form} noValidate aria-busy={submitting}>
-      <div className={styles.formColumn}>
-        <label className={styles.field} htmlFor="create-title">
-          Назва <span className={styles.required}>(обов’язково, до 160 символів)</span>
+    <form id={formId} onSubmit={handleSubmit} className={taskStyles.form} noValidate aria-busy={submitting}>
+      <div className={taskStyles.formColumn}>
+        <label className={uiStyles.field} htmlFor="create-title">
+          Назва <span className={uiStyles.required}>(обов’язково, до 160 символів)</span>
           <input {...fieldProps("title")} required onChange={(event) => change("title", event.target.value)} placeholder="Що потрібно зробити?" />
           {fieldError("title")}
         </label>
-        <label className={styles.field} htmlFor="create-description">
-          Опис <span className={styles.required}>(необов’язково)</span>
+        <label className={uiStyles.field} htmlFor="create-description">
+          Опис <span className={uiStyles.required}>(необов’язково)</span>
           <textarea {...fieldProps("description")} rows={3} onChange={(event) => change("description", event.target.value)} placeholder="Деталі, які допоможуть почати" />
         </label>
         <SubtasksEditor subtasks={subtasks} errors={subtaskErrors} disabled={locked} onChange={changeSubtasks} />
       </div>
-      <div className={styles.formColumn}>
+      <div className={taskStyles.formColumn}>
         <ZonedDateTimeField
           id="create-dueAt" name="dueAt" label="Дедлайн: дата й час (обов’язково)"
           value={fields.dueAt} timeZone={dates.timeZone} hint={dates.hint}
@@ -151,15 +153,15 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
           onChange={(value) => change("plannedAt", value)}
           onChoice={(iso) => dates.choose("plannedAt", iso)}
         />
-        <label className={styles.field} htmlFor="create-priority">
+        <label className={uiStyles.field} htmlFor="create-priority">
           Пріоритет
           <select {...fieldProps("priority")} onChange={(event) => change("priority", event.target.value)}>
             {TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{TASK_PRIORITY_LABELS[priority]}</option>)}
           </select>
           {fieldError("priority")}
         </label>
-        <label className={styles.field} htmlFor="create-estimatedDurationMinutes">
-          Орієнтовна тривалість у хвилинах <span className={styles.required}>(обов’язково)</span>
+        <label className={uiStyles.field} htmlFor="create-estimatedDurationMinutes">
+          Орієнтовна тривалість у хвилинах <span className={uiStyles.required}>(обов’язково)</span>
           <input
             {...fieldProps("estimatedDurationMinutes")}
             type="number" min={1} max={MAX_DURATION_MINUTES} step={1} required
@@ -171,11 +173,11 @@ export function CreateTaskForm({ formId, disabled, onCreated, onSubmittingChange
             ].filter(Boolean).join(" ") || undefined}
             onChange={(event) => { if (!hasSubtasks) change("estimatedDurationMinutes", event.target.value); }}
           />
-          {hasSubtasks && <span id="create-duration-hint" className={styles.fieldHint}>Сума тривалостей підзадач</span>}
+          {hasSubtasks && <span id="create-duration-hint" className={uiStyles.fieldHint}>Сума тривалостей підзадач</span>}
           {fieldError("estimatedDurationMinutes")}
         </label>
       </div>
-      {error && <div role="alert" className={`${styles.error} ${styles.formError}`}><p>{error}</p></div>}
+      {error && <div role="alert" className={`${uiStyles.error} ${taskStyles.formError}`}><p>{error}</p></div>}
     </form>
   );
 }

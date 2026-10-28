@@ -1,5 +1,8 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+import taskStyles from "./tasks.module.css";
+
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { getEditTaskFields, parseEditTaskFields, type EditTaskErrors, type EditTaskFields } from "@/modules/tasks/model/edit-task-input";
 import { MAX_DURATION_MINUTES } from "@/modules/tasks/model/task-field-input";
@@ -11,7 +14,6 @@ import { AreaSelect } from "../../../entities/areas/ui";
 import { useFormDates } from "../hooks/use-form-dates";
 import { ZonedDateTimeField } from "../../../shared/ui/zoned-date-time-field";
 import { TaskPlanningFields } from "./task-planning-fields";
-import styles from "../../../app/page.module.css";
 
 type Props = {
   task: Task;
@@ -102,7 +104,7 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
   }
 
   function fieldError(field: keyof EditTaskFields) {
-    return errors[field] && <span id={`${id}-${field}-error`} className={styles.fieldError}>{errors[field]}</span>;
+    return errors[field] && <span id={`${id}-${field}-error`} className={uiStyles.fieldError}>{errors[field]}</span>;
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -140,7 +142,7 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
   return (
     <dialog
       ref={dialogRef}
-      className={styles.modal}
+      className={uiStyles.modal}
       aria-modal="true"
       aria-labelledby={`${id}-heading`}
       onCancel={(event) => {
@@ -168,26 +170,26 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
         }
       }}
     >
-      <div className={styles.modalLayout}>
-        <header className={styles.modalHeader}>
-          <h2 id={`${id}-heading`} className={styles.sectionTitle}>Редагувати задачу</h2>
-          <button type="button" className={styles.closeButton} aria-disabled={submitting} onClick={requestClose} aria-label="Закрити вікно редагування задачі">✕</button>
+      <div className={uiStyles.modalLayout}>
+        <header className={uiStyles.modalHeader}>
+          <h2 id={`${id}-heading`} className={uiStyles.sectionTitle}>Редагувати задачу</h2>
+          <button type="button" className={uiStyles.closeButton} aria-disabled={submitting} onClick={requestClose} aria-label="Закрити вікно редагування задачі">✕</button>
         </header>
-        <div className={styles.modalBody}>
-          <form id={formId} className={styles.form} noValidate onSubmit={submit} aria-busy={submitting}>
-            <div className={styles.formColumn}>
-              <label className={styles.field} htmlFor={`${id}-title`}>
-                Назва <span className={styles.required}>(обов’язково, до 160 символів)</span>
+        <div className={uiStyles.modalBody}>
+          <form id={formId} className={taskStyles.form} noValidate onSubmit={submit} aria-busy={submitting}>
+            <div className={taskStyles.formColumn}>
+              <label className={uiStyles.field} htmlFor={`${id}-title`}>
+                Назва <span className={uiStyles.required}>(обов’язково, до 160 символів)</span>
                 <input {...fieldProps("title")} ref={titleRef} required onChange={(event) => change("title", event.target.value)} />
                 {fieldError("title")}
               </label>
-              <label className={styles.field} htmlFor={`${id}-description`}>
-                Опис <span className={styles.required}>(необов’язково)</span>
+              <label className={uiStyles.field} htmlFor={`${id}-description`}>
+                Опис <span className={uiStyles.required}>(необов’язково)</span>
                 <textarea {...fieldProps("description")} rows={5} onChange={(event) => change("description", event.target.value)} />
                 {fieldError("description")}
               </label>
             </div>
-            <div className={styles.formColumn}>
+            <div className={taskStyles.formColumn}>
               <ZonedDateTimeField
                 id={`${id}-dueAt`} name="dueAt" label="Дедлайн: дата й час (необов’язково)"
                 value={fields.dueAt} timeZone={dates.timeZone} hint={dates.hint}
@@ -209,14 +211,14 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
                 onChoice={(iso) => dates.choose("plannedAt", iso)}
                 onRemove={removePlanning}
               />
-              <label className={styles.field} htmlFor={`${id}-priority`}>
+              <label className={uiStyles.field} htmlFor={`${id}-priority`}>
                 Пріоритет
                 <select {...fieldProps("priority")} onChange={(event) => change("priority", event.target.value)}>
                   {TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{TASK_PRIORITY_LABELS[priority]}</option>)}
                 </select>
                 {fieldError("priority")}
               </label>
-              <label className={styles.field} htmlFor={`${id}-estimatedDurationMinutes`}>
+              <label className={uiStyles.field} htmlFor={`${id}-estimatedDurationMinutes`}>
                 Орієнтовна тривалість у хвилинах
                 <input
                   {...fieldProps("estimatedDurationMinutes")}
@@ -224,17 +226,17 @@ export function EditTaskModal({ task, opener, disabled, onSave, onClose }: Props
                   aria-describedby={hasSubtasks ? `${id}-duration-hint` : errors.estimatedDurationMinutes ? `${id}-estimatedDurationMinutes-error` : undefined}
                   onChange={(event) => change("estimatedDurationMinutes", event.target.value)}
                 />
-                {hasSubtasks && <span id={`${id}-duration-hint`} className={styles.fieldHint}>Сума тривалостей підзадач</span>}
+                {hasSubtasks && <span id={`${id}-duration-hint`} className={uiStyles.fieldHint}>Сума тривалостей підзадач</span>}
                 {fieldError("estimatedDurationMinutes")}
               </label>
             </div>
-            {error && <div role="alert" className={`${styles.error} ${styles.formError}`}><p>{error}</p></div>}
-            {submitting && <p className={styles.formError} role="status">Збереження задачі…</p>}
+            {error && <div role="alert" className={`${uiStyles.error} ${taskStyles.formError}`}><p>{error}</p></div>}
+            {submitting && <p className={taskStyles.formError} role="status">Збереження задачі…</p>}
           </form>
         </div>
-        <footer className={styles.modalFooter}>
-          <button type="button" className={styles.secondaryButton} aria-disabled={submitting} onClick={requestClose}>Скасувати</button>
-          <button ref={saveRef} type="submit" form={formId} className={styles.primaryButton} aria-disabled={locked}>Зберегти</button>
+        <footer className={uiStyles.modalFooter}>
+          <button type="button" className={uiStyles.secondaryButton} aria-disabled={submitting} onClick={requestClose}>Скасувати</button>
+          <button ref={saveRef} type="submit" form={formId} className={uiStyles.primaryButton} aria-disabled={locked}>Зберегти</button>
         </footer>
       </div>
       {confirmingDiscard && <DiscardChangesDialog onContinue={() => setConfirmingDiscard(false)} onDiscard={close} />}

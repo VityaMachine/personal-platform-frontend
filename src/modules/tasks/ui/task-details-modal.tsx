@@ -1,18 +1,19 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+
 import { useEffect, useId, useRef } from "react";
 import { useTaskDetails } from "../hooks/use-task-details";
 import { TaskDetailsContent } from "./task-details-content";
 import { TaskHistory } from "./task-history";
 import styles from "./task-details.module.css";
-import shared from "../../../app/page.module.css";
 
 type Props = { taskId: string; opener: HTMLButtonElement; onClose: () => void };
 
 function LoadError({ error, retry, label }: { error: string; retry: () => void; label: string }) {
-  return <div role="alert" className={shared.error}>
+  return <div role="alert" className={uiStyles.error}>
     <p>{error}</p>
-    <button type="button" className={shared.secondaryButton} onClick={retry}>{label}</button>
+    <button type="button" className={uiStyles.secondaryButton} onClick={retry}>{label}</button>
   </div>;
 }
 
@@ -37,7 +38,7 @@ export function TaskDetailsModal({ taskId, opener, onClose }: Props) {
     };
   }, [opener]);
 
-  return <dialog ref={dialogRef} className={`${shared.modal} ${styles.detailsModal}`} aria-modal="true" aria-labelledby={`${id}-heading`}
+  return <dialog ref={dialogRef} className={`${uiStyles.modal} ${styles.detailsModal}`} aria-modal="true" aria-labelledby={`${id}-heading`}
     onCancel={(event) => { event.preventDefault(); event.stopPropagation(); onClose(); }}
     onKeyDown={(event) => {
       if (event.key !== "Tab") return;
@@ -48,12 +49,12 @@ export function TaskDetailsModal({ taskId, opener, onClose }: Props) {
         event.preventDefault(); controls[0]?.focus();
       }
     }}>
-    <div className={`${shared.modalLayout} ${styles.layout}`}>
-      <header className={shared.modalHeader}>
-        <h2 id={`${id}-heading`} className={`${shared.sectionTitle} ${styles.heading}`}>{task.data?.title ?? "Деталі задачі"}</h2>
-        <button ref={closeRef} type="button" className={shared.closeButton} onClick={onClose} aria-label="Закрити деталі задачі">✕</button>
+    <div className={`${uiStyles.modalLayout} ${styles.layout}`}>
+      <header className={uiStyles.modalHeader}>
+        <h2 id={`${id}-heading`} className={`${uiStyles.sectionTitle} ${styles.heading}`}>{task.data?.title ?? "Деталі задачі"}</h2>
+        <button ref={closeRef} type="button" className={uiStyles.closeButton} onClick={onClose} aria-label="Закрити деталі задачі">✕</button>
       </header>
-      <div className={`${shared.modalBody} ${styles.body}`} tabIndex={0} role="region" aria-label="Вміст деталей задачі">
+      <div className={`${uiStyles.modalBody} ${styles.body}`} tabIndex={0} role="region" aria-label="Вміст деталей задачі">
         <div aria-busy={task.loading}>
           {task.loading && <p role="status">Завантаження деталей задачі…</p>}
           {task.error && <LoadError error={task.error} retry={task.retry} label="Повторити завантаження задачі" />}

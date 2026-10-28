@@ -1,253 +1,12 @@
-.shell {
-  display: grid;
-  grid-template-columns: 224px minmax(0, 1fr);
-  min-height: 100svh;
-}
-
-.sidebar {
-  position: sticky;
-  top: 0;
-  align-self: start;
-  height: 100svh;
-  padding: 32px 16px;
-  border-right: 1px solid var(--border);
-  background: var(--surface);
-  overflow-y: auto;
-  min-width: 0;
-}
-
-.brand {
-  display: block;
-  margin: 0 12px 36px;
-  color: var(--text);
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  text-decoration: none;
-  overflow-wrap: anywhere;
-}
-
-.navItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 8px;
-  color: var(--accent);
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: none;
-  overflow-wrap: anywhere;
-}
-
-.navItem[aria-current="page"], .navItem:hover {
-  background: var(--nav);
-}
-
-.navButton {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
-}
-
-.navItem[aria-disabled="true"] {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.main {
-  min-width: 0;
-  padding: 40px clamp(20px, 4vw, 64px);
-}
-
-.tasksToolbar {
-  min-width: 0;
-  display: grid;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.tasksToolbar .header { margin-bottom: 0; }
-.tasksToolbar .feedback { margin: 0; }
-.tasksToolbar .feedback:has(> :only-child:empty) { display: none; }
-.taskHeaderActions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
-.taskHeaderActions > button { max-width: 100%; overflow-wrap: anywhere; }
-.taskScroll { min-width: 0; min-height: 0; }
-.taskScroll:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-
-/* Fixed viewport layout is confined to task routes with enough room. At low
-   heights, narrow widths, or zoomed viewports the document scrolls normally.
-   The minimum list row also lets the document grow if text alone gets larger. */
-@media (min-width: 761px) and (min-height: 48rem) {
-  .tasksShell { height: 100dvh; min-height: 0; }
-  .tasksShell .sidebar { height: 100dvh; }
-  .tasksMain {
-    min-height: 0;
-    display: grid;
-    grid-template-rows: auto minmax(12rem, 1fr);
-    gap: 16px;
-    padding: 24px clamp(20px, 3vw, 48px);
-  }
-  .tasksToolbar { margin-bottom: 0; }
-  .taskScroll {
-    overflow-y: auto;
-    scrollbar-gutter: stable;
-    scroll-padding-block: 12px;
-    padding: 2px 4px 12px 2px;
-  }
-  .tasksShell:has(dialog[open]) .taskScroll,
-  .tasksShell:has(dialog[open]) .sidebar {
-    overflow-y: hidden;
-  }
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-.title {
-  margin: 0;
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  line-height: 1.2;
-  letter-spacing: -0.04em;
-}
-
-.counter {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 0.8125rem;
-}
-
-.sectionTitle {
-  margin: 0;
-  font-size: 1.25rem;
-  letter-spacing: -0.02em;
-}
-
-.modal {
-  position: fixed;
-  inset: 0;
-  width: min(1080px, calc(100% - 48px));
-  max-width: calc(100% - 48px);
-  height: min(740px, calc(100dvh - 48px));
-  max-height: calc(100dvh - 48px);
-  margin: auto;
-  padding: 0;
-  border: 1px solid var(--border-soft);
-  border-radius: 16px;
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 24px 80px var(--shadow);
-  overflow: hidden;
-}
-
-.modal::backdrop {
-  background: var(--backdrop);
-}
-
-.discardDialog {
-  position: fixed;
-  inset: 0;
-  width: min(480px, calc(100% - 32px));
-  max-width: calc(100% - 32px);
-  max-height: calc(100dvh - 32px);
-  margin: auto;
-  padding: 28px;
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
-  background: var(--surface-muted);
-  color: var(--text);
-  box-shadow: 0 16px 64px var(--shadow);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.discardDialog::backdrop {
-  background: var(--backdrop-nested);
-}
-
-.discardDescription {
-  margin: 12px 0 24px;
-  color: var(--secondary);
-  line-height: 1.5;
-}
-
-.discardActions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.discardActions > button {
-  min-width: 0;
-  max-width: 100%;
-  padding: 12px;
-  overflow-wrap: anywhere;
+/* Task cards, list content, planning and subtask editors. Composition binds the
+   subtask error to the shared field style and loads controls before overrides. */
+.subtaskError {
+  composes: fieldError from "../../../shared/ui/controls.module.css";
 }
 
 .editSubtaskForm {
   display: grid;
   gap: 18px;
-}
-
-.dangerButton {
-  border: 1px solid var(--danger);
-  border-radius: 8px;
-  background: var(--danger);
-  color: var(--on-accent);
-}
-
-.dangerButton:hover {
-  background: var(--danger-hover);
-}
-
-.dangerButton:focus-visible {
-  outline: 3px solid var(--danger);
-  outline-offset: 3px;
-}
-
-.modalLayout {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  height: 100%;
-  min-width: 0;
-}
-
-.modalHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 20px 28px;
-  border-bottom: 1px solid var(--border);
-}
-
-.modalBody {
-  min-height: 0;
-  min-width: 0;
-  padding: 28px;
-  background: var(--surface-muted);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.modalFooter {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px 28px;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
 }
 
 .form {
@@ -267,64 +26,12 @@
   grid-column: 1 / -1;
 }
 
-.field {
-  display: block;
-  min-width: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
 .planningFields { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .planningFields legend { padding: 0; font-size: 0.875rem; font-weight: 600; }
 .planningInputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .planningInputs input { max-width: 100%; }
 .planningFields > button { justify-self: start; max-width: 100%; }
 @media (max-width: 540px) { .planningInputs { grid-template-columns: minmax(0, 1fr); } }
-
-.required {
-  color: var(--muted);
-  font-weight: 400;
-}
-
-.field input, .field textarea, .field select {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  margin-top: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--input-border);
-  border-radius: 8px;
-  background: var(--input);
-  color: var(--text);
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 400;
-  line-height: 1.5;
-}
-
-.field textarea {
-  resize: vertical;
-  min-height: 96px;
-}
-
-.field input[type="datetime-local"] {
-  max-width: 100%;
-  padding-inline: 10px;
-}
-
-.field input[readonly] {
-  background: var(--readonly);
-  color: var(--secondary);
-  cursor: default;
-}
-
-.fieldHint {
-  display: block;
-  margin-top: 6px;
-  color: var(--muted);
-  font-weight: 400;
-}
 
 .subtasksEditor {
   --subtask-delete-size: 36px;
@@ -369,7 +76,7 @@
   overflow-wrap: anywhere;
 }
 
-.subtaskLabel, .visuallyHidden {
+.subtaskLabel {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -386,7 +93,7 @@
   margin-top: 0;
 }
 
-.subtaskField .fieldError {
+.subtaskField .subtaskError {
   grid-row: 2;
   margin-top: 6px;
 }
@@ -413,140 +120,14 @@
   }
 }
 
-.field input::placeholder, .field textarea::placeholder {
-  color: var(--placeholder);
-}
-
-.primaryButton, .secondaryButton, .deleteButton, .closeButton, .dangerButton {
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.primaryButton {
-  justify-self: start;
-  padding: 12px 18px;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--on-accent);
-}
-
-.primaryButton:hover:not(:disabled) {
-  background: var(--accent-hover);
-}
-
-.primaryButton:disabled, .secondaryButton:disabled, .deleteButton:disabled, .closeButton:disabled, .checkbox:disabled, .dangerButton:disabled, .nestedSubtaskStatus:disabled, .discardActions > button[aria-disabled="true"] {
+.checkbox:disabled, .nestedSubtaskStatus:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
 
-.field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible, .primaryButton:focus-visible, .secondaryButton:focus-visible, .deleteButton:focus-visible, .dangerButton:focus-visible, .closeButton:focus-visible, .checkbox:focus-visible, .nestedSubtaskStatus:focus-visible, .navItem:focus-visible, .brand:focus-visible {
+.checkbox:focus-visible, .nestedSubtaskStatus:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
-}
-
-.closeButton {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 1px solid var(--button-border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--secondary);
-}
-
-.feedback {
-  margin-bottom: 16px;
-}
-
-.fieldError {
-  display: block;
-  margin-top: 6px;
-  color: var(--danger);
-  font-weight: 400;
-  line-height: 1.5;
-}
-
-.field [aria-invalid="true"] {
-  border-color: var(--danger);
-}
-
-.notice {
-  margin: 0;
-  color: var(--notice);
-  font-size: 0.875rem;
-}
-
-.notice:empty {
-  display: none;
-}
-
-.error {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px;
-  margin-top: 12px;
-  border: 1px solid var(--error-border);
-  border-radius: 10px;
-  background: var(--error-bg);
-  color: var(--danger);
-  overflow-wrap: anywhere;
-}
-
-.error p {
-  min-width: 0;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.secondaryButton {
-  flex-shrink: 0;
-  padding: 8px 12px;
-  border: 1px solid currentColor;
-  border-radius: 8px;
-  color: inherit;
-  background: transparent;
-}
-
-.loading {
-  padding: 20px 0;
-  color: var(--secondary);
-}
-
-.empty {
-  padding: 48px 20px;
-  text-align: center;
-  border: 1px dashed var(--empty-border);
-  border-radius: 12px;
-  background: var(--surface);
-}
-
-.emptyIcon {
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--empty-icon);
-  color: var(--notice);
-  font-size: 1.5rem;
-}
-
-.empty h3 {
-  margin: 18px 0 8px;
-  font-size: 1.125rem;
-}
-
-.empty p {
-  margin: 0;
-  color: var(--secondary);
-  line-height: 1.6;
 }
 
 .taskList {
@@ -777,35 +358,9 @@
   opacity: 0.55;
 }
 
-.iconButton:focus-visible, .addSubtaskButton:focus-visible, .taskTitle:focus-visible {
+.iconButton:focus-visible, .taskTitle:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
-}
-
-.addSubtaskButton {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  max-width: 100%;
-  padding: 8px 4px;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--notice);
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-  text-align: left;
-  overflow-wrap: anywhere;
-}
-
-.addSubtaskButton:hover:not(:disabled) {
-  text-decoration: underline;
-}
-
-.addSubtaskButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 
 .disclosureArrow {
@@ -917,21 +472,6 @@
   text-decoration: line-through;
 }
 
-.deleteButton {
-  min-height: 44px;
-  max-width: 100%;
-  padding: 8px;
-  border: 0;
-  background: transparent;
-  color: var(--delete);
-  font-size: 0.875rem;
-  overflow-wrap: anywhere;
-}
-
-.deleteButton:hover:not(:disabled) {
-  text-decoration: underline;
-}
-
 @container task-card (max-width: 660px) {
   .nestedSubtaskContainer {
     grid-template-columns: 24px minmax(0, 1fr) 44px 44px;
@@ -997,37 +537,10 @@
     padding: 8px 12px;
   }
 }
-
-/* Keep native date/time controls roomy before the planning column gets too narrow. */
 @media (max-width: 960px) {
   .form {
     grid-template-columns: minmax(0, 1fr);
     gap: 18px;
-  }
-}
-
-@media (max-width: 760px) {
-  .field textarea {
-    min-height: 96px;
-  }
-  .shell {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .sidebar {
-    position: static;
-    height: auto;
-    padding: 20px;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .brand {
-    margin: 0 0 16px;
-  }
-  .navItem {
-    width: fit-content;
-  }
-  .main {
-    padding: 28px 20px;
   }
 }
 
@@ -1064,37 +577,11 @@
   .subtaskField input {
     grid-row: 2;
   }
-  .subtaskField .fieldError {
+  .subtaskField .subtaskError {
     grid-row: 3;
   }
   .subtaskRow > .subtaskRemove {
     grid-column: 2;
     grid-row: 5;
-  }
-  .discardDialog {
-    padding: 20px;
-  }
-  .discardActions {
-    flex-direction: column;
-  }
-  .main {
-    padding: 24px 16px;
-  }
-  .header {
-    gap: 16px;
-  }
-  .modal {
-    width: calc(100% - 24px);
-    max-width: calc(100% - 24px);
-    height: calc(100dvh - 24px);
-    max-height: calc(100dvh - 24px);
-    border-radius: 12px;
-  }
-  .modalHeader, .modalBody, .modalFooter {
-    padding: 16px;
-  }
-  .error {
-    align-items: flex-start;
-    flex-direction: column;
   }
 }

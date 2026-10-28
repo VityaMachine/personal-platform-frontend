@@ -1,7 +1,8 @@
 "use client";
 
+import uiStyles from "./controls.module.css";
+
 import { useEffect, useRef } from "react";
-import styles from "../../app/page.module.css";
 
 type Props = {
   onContinue: () => void;
@@ -34,7 +35,7 @@ export function DiscardChangesDialog({ onContinue, onDiscard, returnFocus, conti
   return (
     <dialog
       ref={dialogRef}
-      className={styles.discardDialog}
+      className={uiStyles.discardDialog}
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="discard-heading"
@@ -57,11 +58,11 @@ export function DiscardChangesDialog({ onContinue, onDiscard, returnFocus, conti
         }
       }}
     >
-      <h2 id="discard-heading" className={styles.sectionTitle}>Відкинути зміни?</h2>
-      <p id="discard-description" className={styles.discardDescription}>Введені дані буде втрачено.</p>
-      <div className={styles.discardActions}>
-        <button ref={continueRef} type="button" className={styles.secondaryButton} onClick={continueEditing}>{continueLabel}</button>
-        <button ref={discardRef} type="button" className={styles.dangerButton} onClick={onDiscard}>{discardLabel}</button>
+      <h2 id="discard-heading" className={uiStyles.sectionTitle}>Відкинути зміни?</h2>
+      <p id="discard-description" className={uiStyles.discardDescription}>Введені дані буде втрачено.</p>
+      <div className={uiStyles.discardActions}>
+        <button ref={continueRef} type="button" className={uiStyles.secondaryButton} onClick={continueEditing}>{continueLabel}</button>
+        <button ref={discardRef} type="button" className={uiStyles.dangerButton} onClick={onDiscard}>{discardLabel}</button>
       </div>
     </dialog>
   );

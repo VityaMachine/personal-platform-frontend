@@ -1,4 +1,6 @@
 "use client";
+
+import uiStyles from "../../../../shared/ui/controls.module.css";
 import { useEffect, useId, useRef, useState } from "react";
 import type { Routine, RoutineScheduleVersion } from "@/modules/tasks/routines/model/routine-types";
 import { createRoutineScheduleVersion, getRoutine } from "@/modules/tasks/routines/api/routines";
@@ -12,7 +14,6 @@ import type { TraversalAttempt } from "@/shared/navigation/history-traversal-gua
 import { DiscardChangesDialog } from "../../../../shared/ui/discard-changes-dialog";
 import { RoutineScheduleEditor, type RoutineFieldChange } from "./routine-schedule-editor";
 import { RoutineResultModal } from "./routine-result-modal";
-import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 
 export function ChangeRoutineScheduleModal({ routine, versions, opener, onClose, reloadVersions, onRoutine }: {
@@ -122,7 +123,7 @@ export function ChangeRoutineScheduleModal({ routine, versions, opener, onClose,
   }
   if (saved) return <RoutineResultModal result={{ type: "schedule", data: saved }} opener={opener} onClose={onClose}
     refreshing={pending} refreshError={error} onRefresh={() => void refresh()} />;
-  return <dialog ref={dialog} closedby="none" className={`${shared.modal} ${styles.modal}`} aria-modal="true" aria-labelledby={`${id}-heading`}
+  return <dialog ref={dialog} closedby="none" className={`${uiStyles.modal} ${styles.modal}`} aria-modal="true" aria-labelledby={`${id}-heading`}
     onCancel={(event) => { event.preventDefault(); event.stopPropagation(); if (event.target === event.currentTarget && !discard) close(); }}
     onKeyDown={(event) => {
       if (event.key === "Escape" && (event.target as HTMLElement).closest("dialog") === event.currentTarget) {
@@ -133,20 +134,20 @@ export function ChangeRoutineScheduleModal({ routine, versions, opener, onClose,
       if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1)?.focus(); }
       else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0]?.focus(); }
     }}>
-    <div className={`${shared.modalLayout} ${styles.createLayout}`}>
-      <header className={shared.modalHeader}><h2 id={`${id}-heading`} className={shared.sectionTitle}>Змінити розклад</h2>
-        <button className={shared.closeButton} type="button" disabled={pending} onClick={close} aria-label="Закрити зміну розкладу">✕</button></header>
-      <div className={`${shared.modalBody} ${styles.body}`} tabIndex={0}>
+    <div className={`${uiStyles.modalLayout} ${styles.createLayout}`}>
+      <header className={uiStyles.modalHeader}><h2 id={`${id}-heading`} className={uiStyles.sectionTitle}>Змінити розклад</h2>
+        <button className={uiStyles.closeButton} type="button" disabled={pending} onClick={close} aria-label="Закрити зміну розкладу">✕</button></header>
+      <div className={`${uiStyles.modalBody} ${styles.body}`} tabIndex={0}>
         <p>Основа чернетки — остання збережена версія №{source.number}, з {formatRoutineDate(source.effectiveDate)}. Вона може ще не діяти.</p>
         <p>Новий розклад діятиме з вибраної дати. Уже створені задачі, включно з майбутніми, залишаться без змін</p>
         <form ref={form} id={`${id}-form`} onSubmit={submit} noValidate>
           <div className={styles.createColumns}>
             <section className={styles.mainFields}>
-              <label className={shared.field}>Дата початку дії
+              <label className={uiStyles.field}>Дата початку дії
                 <input type="date" required min={minimum ?? "9999-12-31"} max="9999-12-31" value={effectiveDate} disabled={pending || !!saved || uncertain}
                   aria-invalid={!!effectiveError} aria-describedby={`${id}-date-hint${effectiveError ? ` ${id}-date-error` : ""}`}
                   onChange={(event) => { setEffectiveDate(event.target.value); setEffectiveError(undefined); setConfirmed(false); }} />
-                {effectiveError && <span id={`${id}-date-error`} className={shared.fieldError}>{effectiveError}</span>}
+                {effectiveError && <span id={`${id}-date-error`} className={uiStyles.fieldError}>{effectiveError}</span>}
               </label>
               <p id={`${id}-date-hint`} className={styles.hint}>Початок локального дня в {history[0].effectiveTimezone} — незмінному часовому поясі першої версії. Зміна timezone розкладу не змінює цю межу. Найраніше: {minimum ? formatRoutineDate(minimum) : "немає допустимої дати"}. Сервер повторно перевіряє дату під час збереження.</p>
               <p className={styles.hint}>Дата початку в календарних полях задає прив’язку повторення, а дата початку дії — межу застосування версії.</p>
@@ -158,13 +159,13 @@ export function ChangeRoutineScheduleModal({ routine, versions, opener, onClose,
           {!saved && !uncertain && <label className={styles.confirmSchedule}><input type="checkbox" checked={confirmed} disabled={pending} onChange={(event) => setConfirmed(event.target.checked)} /> Підтверджую створення нової незмінної версії розкладу</label>}
         </form>
         <div ref={outcome} tabIndex={-1}>
-          {notice && <p role="status" className={shared.notice}>{notice}</p>}
-          {error && <p role="alert" className={shared.fieldError}>{error}</p>}
+          {notice && <p role="status" className={uiStyles.notice}>{notice}</p>}
+          {error && <p role="alert" className={uiStyles.fieldError}>{error}</p>}
         </div>
-        {(saved || uncertain || error) && <button type="button" className={shared.secondaryButton} disabled={pending} onClick={() => void refresh()}>{uncertain ? "Перевірити версії (лише GET)" : "Оновити дані (лише GET)"}</button>}
+        {(saved || uncertain || error) && <button type="button" className={uiStyles.secondaryButton} disabled={pending} onClick={() => void refresh()}>{uncertain ? "Перевірити версії (лише GET)" : "Оновити дані (лише GET)"}</button>}
       </div>
-      <footer className={shared.modalFooter}><button type="button" className={shared.secondaryButton} disabled={pending} onClick={close}>{saved ? "Закрити" : "Скасувати"}</button>
-        {!saved && !uncertain && <button type="submit" form={`${id}-form`} className={shared.primaryButton} disabled={pending || discard || !confirmed || !minimum}>{pending ? "Збереження…" : "Створити версію"}</button>}</footer>
+      <footer className={uiStyles.modalFooter}><button type="button" className={uiStyles.secondaryButton} disabled={pending} onClick={close}>{saved ? "Закрити" : "Скасувати"}</button>
+        {!saved && !uncertain && <button type="submit" form={`${id}-form`} className={uiStyles.primaryButton} disabled={pending || discard || !confirmed || !minimum}>{pending ? "Збереження…" : "Створити версію"}</button>}</footer>
     </div>
     {discard && <DiscardChangesDialog returnFocus={returnFocus} onContinue={() => { traversal.current?.stay(); traversal.current = null; setDiscard(false); }} onDiscard={() => {
       if (lock.current) return; const attempt = traversal.current; traversal.current = null; onClose(); attempt?.leave();

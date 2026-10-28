@@ -1,9 +1,10 @@
 "use client";
+
+import uiStyles from "../../../../shared/ui/controls.module.css";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import type { Routine, RoutinePreview as Preview, RoutinePreviewRange } from "@/modules/tasks/routines/model/routine-types";
 import { getRoutinePreview, routineError } from "@/modules/tasks/routines/api/routines";
 import { defaultRoutinePreviewRange, routinePreviewRangeError, formatRoutineDate, formatPreviewDiagnostic, formatPreviewLimitation } from "@/modules/tasks/routines/model/routine-format";
-import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 import { RoutineConflicts } from "./routine-conflicts";
 import { SCHEDULE_CHANGED_EVENT } from "@/modules/tasks/routines/model/routine-schedule-versions";
@@ -42,22 +43,22 @@ export function RoutinePreview({ routine, disabled }: { routine: Routine; disabl
     {routine.schedule.recurrence.type === "AFTER_COMPLETION" && <p className={styles.hint}>Фактичний наступник залежить від завершення або пропуску попереднього виконання. Без контексту результату тут доступне лише перше виконання, якщо воно потрапляє у діапазон. Фактичного кандидата зі збереженого результату можна перевірити в діалозі «Створити задачі».</p>}
     {routine.pausedAt && <p className={styles.hint}>Відкритий період паузи може прибрати майбутні виконання з preview. Уже створені задачі залишаються доступними.</p>}
     <form onSubmit={submit} className={styles.range} noValidate>
-      <label className={shared.field}>З дати
+      <label className={uiStyles.field}>З дати
         <input type="date" min="0001-01-01" max="9999-12-31" value={draft.from} disabled={disabled} aria-invalid={Boolean(fieldError)} aria-describedby={`${id}-range-hint${fieldError ? ` ${id}-error` : ""}`} onChange={(event) => setDraft({ ...draft, from: event.target.value })} />
       </label>
-      <label className={shared.field}>До дати
+      <label className={uiStyles.field}>До дати
         <input type="date" min="0001-01-01" max="9999-12-31" value={draft.to} disabled={disabled} aria-invalid={Boolean(fieldError)} aria-describedby={`${id}-range-hint${fieldError ? ` ${id}-error` : ""}`} onChange={(event) => setDraft({ ...draft, to: event.target.value })} />
       </label>
-      <button type="submit" className={shared.secondaryButton} disabled={disabled}>Показати виконання</button>
+      <button type="submit" className={uiStyles.secondaryButton} disabled={disabled}>Показати виконання</button>
     </form>
     <p id={`${id}-range-hint`} className={styles.hint}>Локальні дати в {routine.timezone}. Максимум 366 днів включно, до 100 виконань.</p>
-    {fieldError && <p id={`${id}-error`} role="alert" className={shared.fieldError}>{fieldError}</p>}
+    {fieldError && <p id={`${id}-error`} role="alert" className={uiStyles.fieldError}>{fieldError}</p>}
     <div aria-busy={!current}>
       <p className={styles.hint}>Застосований діапазон: {formatRoutineDate(range.from)} — {formatRoutineDate(range.to)}</p>
       {!current && <p role="status">Завантаження preview…</p>}
-      {current && result.error && <div role="alert" className={shared.error}>
+      {current && result.error && <div role="alert" className={uiStyles.error}>
         <p>Не вдалося завантажити preview. {result.error}</p>
-        <button type="button" className={shared.secondaryButton} disabled={disabled} onClick={() => setRange({ ...range })}>Повторити preview</button>
+        <button type="button" className={uiStyles.secondaryButton} disabled={disabled} onClick={() => setRange({ ...range })}>Повторити preview</button>
       </div>}
       {data && <>
         <RoutineConflicts conflicts={data.conflicts} />

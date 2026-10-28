@@ -1,10 +1,11 @@
 "use client";
+
+import uiStyles from "../../../../shared/ui/controls.module.css";
 import { useState, type ChangeEvent } from "react";
 import { timeZoneOptions } from "@/modules/settings/preferences-runtime";
 import { parseRoutineRule, type CreateRoutineFields, type RoutineFormErrors } from "@/modules/tasks/routines/model/create-routine-input";
 import { formatRoutineSchedule, formatRoutineEnd } from "@/modules/tasks/routines/model/routine-format";
 import { MAX_DURATION_MINUTES } from "@/modules/tasks/model/task-field-input";
-import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 
 export type RoutineFieldChange = <K extends keyof CreateRoutineFields>(key: K, value: CreateRoutineFields[K]) => void;
@@ -18,14 +19,14 @@ export function RoutineFormField({ name, label, type = "text", options, max, hin
   const common = { id, name, value: props.fields[name], disabled: props.disabled, required,
     "aria-invalid": Boolean(error), "aria-describedby": [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined,
     onChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => props.onChange(name, event.target.value) };
-  return <label className={shared.field} htmlFor={id}>{label}
+  return <label className={uiStyles.field} htmlFor={id}>{label}
     {options ? <select {...common}>{options.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select> :
       <input {...common} type={type} list={name === "timezone" ? "routine-timezones" : undefined}
         min={type === "number" ? 1 : type === "date" ? "0001-01-01" : undefined}
         max={type === "number" ? max ?? MAX_DURATION_MINUTES : type === "date" ? "9999-12-31" : undefined}
         step={type === "number" ? 1 : type === "time" ? 60 : undefined} />}
-    {hint && <span id={`${id}-hint`} className={shared.fieldHint}>{hint}</span>}
-    {error && <span id={`${id}-error`} className={shared.fieldError}>{error}</span>}
+    {hint && <span id={`${id}-hint`} className={uiStyles.fieldHint}>{hint}</span>}
+    {error && <span id={`${id}-error`} className={uiStyles.fieldError}>{error}</span>}
   </label>;
 }
 const week = ["Понеділок", "Вівторок", "Середа", "Четвер", "П’ятниця", "Субота", "Неділя"];
@@ -36,7 +37,7 @@ export function RoutineScheduleEditor(props: EditorProps & { mode?: "calendar" |
   const [zones] = useState(() => timeZoneOptions(fields.timezone));
   const rule = parseRoutineRule(fields);
   return <section className={styles.scheduleEditor} aria-labelledby="routine-schedule-heading">
-    <h3 id="routine-schedule-heading" className={shared.sectionTitle}>Розклад</h3>
+    <h3 id="routine-schedule-heading" className={uiStyles.sectionTitle}>Розклад</h3>
     <RoutineFormField {...props} name="timezone" label="Часовий пояс (IANA)" />
     <datalist id="routine-timezones">{zones.map((zone) => <option key={zone} value={zone} />)}</datalist>
     <RoutineFormField {...props} disabled={disabled || props.mode === "completion"} name="startDate" label="Дата початку" type="date" />
@@ -58,7 +59,7 @@ export function RoutineScheduleEditor(props: EditorProps & { mode?: "calendar" |
         <legend>Дні виконання (хоча б один)</legend>
         {week.map((label, index) => <label key={index}><input type="checkbox" checked={fields.weekdays.includes(index + 1)} aria-invalid={Boolean(errors.weekdays)}
           aria-describedby={errors.weekdays ? "routine-weekdays-error" : undefined} onChange={(event) => onChange("weekdays", event.target.checked ? [...fields.weekdays, index + 1] : fields.weekdays.filter((day) => day !== index + 1))} /> {label}</label>)}
-        {errors.weekdays && <span id="routine-weekdays-error" className={shared.fieldError}>{errors.weekdays}</span>}
+        {errors.weekdays && <span id="routine-weekdays-error" className={uiStyles.fieldError}>{errors.weekdays}</span>}
       </fieldset> : <>
         <RoutineFormField {...props} name="startWeekday" label="Початковий день вікна" options={dayOptions} />
         <RoutineFormField {...props} name="endWeekday" label="Кінцевий день вікна" options={dayOptions} />

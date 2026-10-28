@@ -1,4 +1,6 @@
 "use client";
+
+import uiStyles from "../../../../shared/ui/controls.module.css";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import type { Routine } from "@/modules/tasks/routines/model/routine-types";
 import { createRoutine, updateRoutine, routineError } from "@/modules/tasks/routines/api/routines";
@@ -15,7 +17,6 @@ import { AreaSelect } from "../../../../entities/areas/ui";
 import { DiscardChangesDialog } from "../../../../shared/ui/discard-changes-dialog";
 import { RoutineAutomationEditor } from "./routine-automation-editor";
 import { RoutineFormField, RoutineScheduleEditor, type RoutineFieldChange } from "./routine-schedule-editor";
-import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 
 export function RoutineFormModal({ opener, timezone, initialRoutine: loadedRoutine, onClose, onSaved, onSubmittingChange }: {
@@ -113,7 +114,7 @@ export function RoutineFormModal({ opener, timezone, initialRoutine: loadedRouti
     if (!controller.signal.aborted) onSaved(created);
   }
   const editorProps = { fields, errors, disabled: submitting, onChange: change };
-  return <dialog ref={dialogRef} className={`${shared.modal} ${styles.modal}`} aria-modal="true" aria-labelledby={`${id}-heading`} aria-describedby={`${id}-hint`}
+  return <dialog ref={dialogRef} className={`${uiStyles.modal} ${styles.modal}`} aria-modal="true" aria-labelledby={`${id}-heading`} aria-describedby={`${id}-hint`}
     onCancel={(event) => { event.preventDefault(); event.stopPropagation(); requestClose(); }}
     onKeyDown={(event) => {
       if (event.key !== "Tab" || (event.target as HTMLElement).closest("dialog") !== event.currentTarget || confirming) return;
@@ -121,29 +122,29 @@ export function RoutineFormModal({ opener, timezone, initialRoutine: loadedRouti
       if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1)?.focus(); }
       else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0]?.focus(); }
     }}>
-    <div className={`${shared.modalLayout} ${styles.createLayout}`}>
-      <header className={shared.modalHeader}>
-        <h2 id={`${id}-heading`} className={`${shared.sectionTitle} ${styles.modalTitle}`}>{initialRoutine ? "Редагувати повторення" : "Нове повторення"}</h2>
-        <button type="button" className={shared.closeButton} disabled={submitting} onClick={requestClose} aria-label={initialRoutine ? "Закрити редагування повторення" : "Закрити створення повторення"}>✕</button>
+    <div className={`${uiStyles.modalLayout} ${styles.createLayout}`}>
+      <header className={uiStyles.modalHeader}>
+        <h2 id={`${id}-heading`} className={`${uiStyles.sectionTitle} ${styles.modalTitle}`}>{initialRoutine ? "Редагувати повторення" : "Нове повторення"}</h2>
+        <button type="button" className={uiStyles.closeButton} disabled={submitting} onClick={requestClose} aria-label={initialRoutine ? "Закрити редагування повторення" : "Закрити створення повторення"}>✕</button>
       </header>
-      <div className={shared.modalBody} tabIndex={0} role="region" aria-label={initialRoutine ? "Форма редагування шаблону" : "Форма створення шаблону"}>
+      <div className={uiStyles.modalBody} tabIndex={0} role="region" aria-label={initialRoutine ? "Форма редагування шаблону" : "Форма створення шаблону"}>
         <p id={`${id}-hint`} className={styles.hint}>{initialRoutine ? "Зміна шаблону не переписує вже створені задачі." : "Це шаблон повторення. Збереження не створює задачі автоматично"}</p>
         <form ref={formRef} id={`${id}-form`} onSubmit={submit} noValidate aria-busy={submitting}>
           <div className={styles.createColumns}>
             <section className={styles.mainFields} aria-label="Основні поля та шаблони підзадач">
               <RoutineFormField {...editorProps} name="title" label="Назва (обов’язково, до 160 символів)" />
-              <label className={shared.field} htmlFor="routine-description">Опис (необов’язково)
+              <label className={uiStyles.field} htmlFor="routine-description">Опис (необов’язково)
                 <textarea id="routine-description" rows={3} value={fields.description} disabled={submitting} onChange={(event) => change("description", event.target.value)} aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? "routine-description-error" : undefined} />
-                {errors.description && <span id="routine-description-error" className={shared.fieldError}>{errors.description}</span>}
+                {errors.description && <span id="routine-description-error" className={uiStyles.fieldError}>{errors.description}</span>}
               </label>
               <RoutineFormField {...editorProps} name="priority" label="Пріоритет" options={TASK_PRIORITIES.map((value) => [value, TASK_PRIORITY_LABELS[value]] as const)} />
               <AreaSelect id="routine-areaId" value={fields.areaId} disabled={submitting} currentArea={initialRoutine?.area} error={errors.areaId} onChange={(value) => change("areaId", value)} />
-              <label className={shared.field} htmlFor="routine-duration">Тривалість, хв
+              <label className={uiStyles.field} htmlFor="routine-duration">Тривалість, хв
                 <input id="routine-duration" type="number" min={1} max={MAX_DURATION_MINUTES} step={1} required disabled={submitting} readOnly={hasSubtasks}
                   value={hasSubtasks ? total ?? "" : fields.estimatedDurationMinutes} onChange={(event) => { if (!hasSubtasks) change("estimatedDurationMinutes", event.target.value); }}
                   aria-invalid={Boolean(errors.estimatedDurationMinutes)} aria-describedby={`routine-duration-hint${errors.estimatedDurationMinutes ? " routine-duration-error" : ""}`} />
-                <span id="routine-duration-hint" className={shared.fieldHint}>{hasSubtasks ? "Сума тривалостей шаблонів підзадач (лише для читання)." : "Ручна оцінка тривалості шаблону."}</span>
-                {errors.estimatedDurationMinutes && <span id="routine-duration-error" className={shared.fieldError}>{errors.estimatedDurationMinutes}</span>}
+                <span id="routine-duration-hint" className={uiStyles.fieldHint}>{hasSubtasks ? "Сума тривалостей шаблонів підзадач (лише для читання)." : "Ручна оцінка тривалості шаблону."}</span>
+                {errors.estimatedDurationMinutes && <span id="routine-duration-error" className={uiStyles.fieldError}>{errors.estimatedDurationMinutes}</span>}
               </label>
               <p className={styles.hint}>Нижче — шаблони підзадач, без статусів виконання. Вони не є створеними задачами.</p>
               <SubtasksEditor subtasks={subtasks} errors={subtaskErrors} disabled={submitting} onChange={changeSubtasks} />
@@ -151,12 +152,12 @@ export function RoutineFormModal({ opener, timezone, initialRoutine: loadedRouti
             {initialRoutine ? <p className={styles.hint}>Календарні налаштування змінюються окремою дією «Змінити розклад» у деталях Routine.</p> : <RoutineScheduleEditor {...editorProps} />}
             <RoutineAutomationEditor {...editorProps} />
           </div>
-          {error && <div role="alert" className={`${shared.error} ${styles.createError}`}><p>{error}</p></div>}
+          {error && <div role="alert" className={`${uiStyles.error} ${styles.createError}`}><p>{error}</p></div>}
         </form>
       </div>
-      <footer className={shared.modalFooter}>
-        <button type="button" className={shared.secondaryButton} disabled={submitting} onClick={requestClose}>Скасувати</button>
-        <button type="submit" form={`${id}-form`} className={shared.primaryButton} disabled={submitting || confirming}>{submitting ? (initialRoutine ? "Збереження…" : "Створення…") : initialRoutine ? "Зберегти зміни" : "Створити шаблон"}</button>
+      <footer className={uiStyles.modalFooter}>
+        <button type="button" className={uiStyles.secondaryButton} disabled={submitting} onClick={requestClose}>Скасувати</button>
+        <button type="submit" form={`${id}-form`} className={uiStyles.primaryButton} disabled={submitting || confirming}>{submitting ? (initialRoutine ? "Збереження…" : "Створення…") : initialRoutine ? "Зберегти зміни" : "Створити шаблон"}</button>
       </footer>
     </div>
     {confirming && <DiscardChangesDialog returnFocus={discardFocus} onContinue={() => {

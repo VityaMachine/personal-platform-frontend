@@ -1,12 +1,14 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+import taskStyles from "./tasks.module.css";
+
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import type { TaskStatusChange } from "@/modules/tasks/model/task-types";
 import type { TraversalAttempt } from "@/shared/navigation/history-traversal-guard";
 import { parseSkipTaskNote } from "@/modules/tasks/model/skip-task-input";
 import { useHistoryTraversalGuard } from "../../../shared/navigation/use-history-traversal-guard";
 import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
-import styles from "../../../app/page.module.css";
 
 export function SkipTaskDialog({ taskTitle, opener, disabled, onConfirm, onClose }: {
   taskTitle: string; opener: HTMLButtonElement | HTMLSelectElement; disabled: boolean;
@@ -73,7 +75,7 @@ export function SkipTaskDialog({ taskTitle, opener, disabled, onConfirm, onClose
     if (saved) onClose();
   }
 
-  return <dialog ref={dialogRef} className={styles.discardDialog} aria-modal="true" aria-labelledby={`${id}-heading`} aria-describedby={`${id}-task ${id}-hint`}
+  return <dialog ref={dialogRef} className={uiStyles.discardDialog} aria-modal="true" aria-labelledby={`${id}-heading`} aria-describedby={`${id}-task ${id}-hint`}
     onCancel={(event) => { event.preventDefault(); event.stopPropagation(); requestClose(); }}
     onKeyDown={(event) => {
       if (event.key === "Escape") {
@@ -84,20 +86,20 @@ export function SkipTaskDialog({ taskTitle, opener, disabled, onConfirm, onClose
       if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1)?.focus(); }
       else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0]?.focus(); }
     }}>
-    <form noValidate className={styles.editSubtaskForm} onSubmit={submit} aria-busy={submitting}>
-      <h2 id={`${id}-heading`} className={styles.sectionTitle}>Пропустити виконання?</h2>
-      <p id={`${id}-task`} className={styles.discardDescription}>{taskTitle}</p>
-      <p id={`${id}-hint`} className={styles.fieldHint}>Пропускається лише це виконання. Створені підзадачі залишаться без змін. Наступне виконання автоматично не створюється.</p>
-      <label className={styles.field} htmlFor={`${id}-note`}>Причина пропуску (необов’язково, до 2000 символів)
+    <form noValidate className={taskStyles.editSubtaskForm} onSubmit={submit} aria-busy={submitting}>
+      <h2 id={`${id}-heading`} className={uiStyles.sectionTitle}>Пропустити виконання?</h2>
+      <p id={`${id}-task`} className={uiStyles.discardDescription}>{taskTitle}</p>
+      <p id={`${id}-hint`} className={uiStyles.fieldHint}>Пропускається лише це виконання. Створені підзадачі залишаться без змін. Наступне виконання автоматично не створюється.</p>
+      <label className={uiStyles.field} htmlFor={`${id}-note`}>Причина пропуску (необов’язково, до 2000 символів)
         <textarea ref={noteRef} id={`${id}-note`} name="skipNote" rows={3} value={note} disabled={submitting}
           aria-invalid={Boolean(error)} aria-describedby={error ? `${id}-error` : undefined}
           onChange={(event) => { if (!submitting && !inFlight.current) { setNote(event.target.value); setError(null); } }} />
       </label>
-      {error && <p id={`${id}-error`} role="alert" className={styles.error}>{error}</p>}
+      {error && <p id={`${id}-error`} role="alert" className={uiStyles.error}>{error}</p>}
       {submitting && <p role="status">Збереження пропуску…</p>}
-      <div className={styles.discardActions}>
-        <button type="button" className={styles.secondaryButton} aria-disabled={submitting} onClick={requestClose}>Скасувати</button>
-        <button ref={saveRef} type="submit" className={styles.primaryButton} aria-disabled={locked}>Пропустити</button>
+      <div className={uiStyles.discardActions}>
+        <button type="button" className={uiStyles.secondaryButton} aria-disabled={submitting} onClick={requestClose}>Скасувати</button>
+        <button ref={saveRef} type="submit" className={uiStyles.primaryButton} aria-disabled={locked}>Пропустити</button>
       </div>
     </form>
     {confirming && <DiscardChangesDialog onContinue={() => {

@@ -1,4 +1,6 @@
 "use client";
+
+import taskStyles from "./tasks.module.css";
 import { RoutineOccurrence } from "./routine-occurrence";
 
 import type { Task } from "@/modules/tasks/model/task-types";
@@ -8,7 +10,6 @@ import { formatDate } from "@/shared/dates/format-date";
 import { formatDuration } from "@/shared/lib/format-duration";
 import { TaskTimeSummary } from "./task-time-summary";
 import styles from "./task-details.module.css";
-import shared from "../../../app/page.module.css";
 
 function DateValue({ value, empty }: { value: string | null; empty?: string }) {
   const { settings: { timeZone } } = useSettings();
@@ -35,7 +36,7 @@ export function TaskDetailsContent({ task }: { task: Task }) {
           <ul className={styles.subtasks}>
             {subtasks.map((subtask) => <li key={subtask.id}>
               <h4>{subtask.title}</h4>
-              <p><span className={shared.taskStatus} data-status={subtask.status}>{TASK_STATUS_LABELS[subtask.status]}</span> · {formatDuration(subtask.estimatedDurationMinutes)}</p>
+              <p><span className={taskStyles.taskStatus} data-status={subtask.status}>{TASK_STATUS_LABELS[subtask.status]}</span> · {formatDuration(subtask.estimatedDurationMinutes)}</p>
               {subtask.cancellationNote && <p className={styles.fullText}>Причина скасування: {subtask.cancellationNote}</p>}
             </li>)}
           </ul>
@@ -47,8 +48,8 @@ export function TaskDetailsContent({ task }: { task: Task }) {
       <RoutineOccurrence task={task} />
       <dl>
         <div><dt>Сфера</dt><dd>{task.area?.name ?? "Без сфери"}</dd></div>
-        <div><dt>Статус</dt><dd><span className={shared.taskStatus} data-status={task.status}>{TASK_STATUS_LABELS[task.status]}</span></dd></div>
-        <div><dt>Пріоритет</dt><dd><span className={shared.taskPriority} data-priority={task.priority}>{TASK_PRIORITY_LABELS[task.priority]}</span></dd></div>
+        <div><dt>Статус</dt><dd><span className={taskStyles.taskStatus} data-status={task.status}>{TASK_STATUS_LABELS[task.status]}</span></dd></div>
+        <div><dt>Пріоритет</dt><dd><span className={taskStyles.taskPriority} data-priority={task.priority}>{TASK_PRIORITY_LABELS[task.priority]}</span></dd></div>
         <div><dt>Заплановано</dt><dd><DateValue value={task.plannedAt} empty="Не заплановано" /></dd></div>
         <div><dt>Дедлайн</dt><dd><DateValue value={task.dueAt} empty="Не встановлено" /></dd></div>
         <div><dt>Орієнтовна тривалість</dt><dd>{formatDuration(task.estimatedDurationMinutes)}</dd></div>

@@ -1,9 +1,9 @@
+import uiStyles from "../../../../shared/ui/controls.module.css";
 import type { RoutineGenerationPreview } from "@/modules/tasks/routines/model/routine-types";
 import type { GenerationPlanningDrafts } from "@/modules/tasks/routines/model/routine-generation-planning";
 import { planningOutsideOccurrence } from "@/modules/tasks/routines/model/routine-generation-planning";
 import { formatRoutineDate, formatPreviewDiagnostic, formatRoutineBasis } from "@/modules/tasks/routines/model/routine-format";
 import { localDateCandidates } from "@/shared/dates/zoned-date";
-import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 
 export function GenerationPlanningRows({ id, preview, drafts, errors, disabled, onChange }: {
@@ -32,18 +32,18 @@ export function GenerationPlanningRows({ id, preview, drafts, errors, disabled, 
       {entry.basisType && entry.basisAt && <p className={styles.hint}>{formatRoutineBasis(entry, entry.timezone)}</p>}
       {entry.existing ? <span className={`${styles.hint} ${styles.generationExisting}`}>Уже створено</span> : <>
         <div className={styles.generationFields}>
-          {window && <label className={`${shared.field} ${styles.generationField}`} htmlFor={`${fieldId}-date`}>Дата
+          {window && <label className={`${uiStyles.field} ${styles.generationField}`} htmlFor={`${fieldId}-date`}>Дата
             <input id={`${fieldId}-date`} type="date" min="0001-01-01" max="9999-12-31" value={date} disabled={disabled}
               aria-invalid={Boolean(error)} aria-describedby={error ? `${fieldId}-error` : undefined}
               onChange={(event) => update(event.target.value, time)} />
           </label>}
-          <label className={`${shared.field} ${styles.generationField}`} htmlFor={`${fieldId}-time`}>Час, необов’язково
+          <label className={`${uiStyles.field} ${styles.generationField}`} htmlFor={`${fieldId}-time`}>Час, необов’язково
             <input id={`${fieldId}-time`} type="time" step={60} value={time} disabled={disabled}
               aria-invalid={Boolean(error)} aria-describedby={error ? `${fieldId}-error` : undefined}
               onChange={(event) => update(date, event.target.value)} />
           </label>
         </div>
-        {candidates.length > 1 && <label className={`${shared.field} ${styles.generationOffset}`} htmlFor={`${fieldId}-offset`}>Уточніть час: годинник переводиться назад
+        {candidates.length > 1 && <label className={`${uiStyles.field} ${styles.generationOffset}`} htmlFor={`${fieldId}-offset`}>Уточніть час: годинник переводиться назад
           <select id={`${fieldId}-offset`} value={draft?.choice ?? ""} disabled={disabled}
             aria-invalid={Boolean(error) && !draft?.choice} aria-describedby={error ? `${fieldId}-error` : undefined}
             onChange={(event) => update(date, time, event.target.value)}>
@@ -51,7 +51,7 @@ export function GenerationPlanningRows({ id, preview, drafts, errors, disabled, 
             {candidates.map((candidate, candidateIndex) => <option key={candidate.iso} value={candidate.iso}>UTC{candidate.offset} — {candidateIndex === 0 ? "перше" : "друге"} входження</option>)}
           </select>
         </label>}
-        {error && <p id={`${fieldId}-error`} className={`${shared.fieldError} ${styles.generationMessage}`} role="alert">{error}</p>}
+        {error && <p id={`${fieldId}-error`} className={`${uiStyles.fieldError} ${styles.generationMessage}`} role="alert">{error}</p>}
         {draft?.value && planningOutsideOccurrence(draft.value, entry) && <p className={`${styles.hint} ${styles.generationMessage}`}>Особистий план відрізняється від початкового періоду виконання. Це дозволено й не змінює вікно розкладу.</p>}
       </>}
       {entry.diagnostics.map((diagnostic, diagnosticIndex) => <p key={diagnosticIndex} className={`${styles.hint} ${styles.generationMessage}`}>{formatPreviewDiagnostic(diagnostic)}</p>)}

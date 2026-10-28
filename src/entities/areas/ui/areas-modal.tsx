@@ -1,5 +1,7 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { createArea, updateArea, deleteArea, type Area } from "@/entities/areas/api/areas";
 import { areaNameError } from "@/entities/areas/model/area-validation";
@@ -7,7 +9,6 @@ import { ApiError } from "@/shared/api/api";
 import { useAreas } from "../model/use-areas";
 import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
 import { DeleteAreaDialog } from "./delete-area-dialog";
-import styles from "../../../app/page.module.css";
 import local from "./areas.module.css";
 
 export function AreasModal({ opener, onClose }: {
@@ -74,7 +75,7 @@ export function AreasModal({ opener, onClose }: {
     void mutate(() => editor.id ? updateArea(editor.id, { name: editor.name.trim() }) : createArea({ name: editor.name.trim() }),
       editor.id ? "Сферу перейменовано." : "Сферу створено.", editor.id || undefined);
   }
-  return <dialog ref={dialogRef} className={styles.modal} aria-modal="true" aria-labelledby={`${id}-heading`}
+  return <dialog ref={dialogRef} className={uiStyles.modal} aria-modal="true" aria-labelledby={`${id}-heading`}
     onCancel={(event) => { if (event.target !== event.currentTarget) return; event.preventDefault(); request(onClose); }}
     onKeyDown={(event) => {
       if (event.key === "Escape") {
@@ -87,34 +88,34 @@ export function AreasModal({ opener, onClose }: {
       if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1)?.focus(); }
       else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0]?.focus(); }
     }}>
-    <div className={styles.modalLayout}>
-      <header className={styles.modalHeader}>
-        <h2 ref={headingRef} tabIndex={-1} id={`${id}-heading`} className={styles.sectionTitle}>Сфери</h2>
-        <button ref={closeRef} type="button" className={styles.closeButton} aria-label="Закрити керування сферами" aria-disabled={pending} onClick={() => request(onClose)}>✕</button>
+    <div className={uiStyles.modalLayout}>
+      <header className={uiStyles.modalHeader}>
+        <h2 ref={headingRef} tabIndex={-1} id={`${id}-heading`} className={uiStyles.sectionTitle}>Сфери</h2>
+        <button ref={closeRef} type="button" className={uiStyles.closeButton} aria-label="Закрити керування сферами" aria-disabled={pending} onClick={() => request(onClose)}>✕</button>
       </header>
-      <div className={styles.modalBody}>
+      <div className={uiStyles.modalBody}>
         <form onSubmit={save} className={local.editor} aria-busy={pending} noValidate>
-          <label className={styles.field} htmlFor={`${id}-name`}>{editor.id ? "Перейменувати сферу" : "Нова сфера"}
+          <label className={uiStyles.field} htmlFor={`${id}-name`}>{editor.id ? "Перейменувати сферу" : "Нова сфера"}
             <input ref={nameRef} id={`${id}-name`} value={editor.name} disabled={pending} aria-invalid={Boolean(fieldError)} aria-describedby={fieldError ? `${id}-error` : undefined}
               onChange={(event) => { if (!inFlight.current) { setEditor({ ...editor, name: event.target.value }); setFieldError(undefined); } }} />
-            {fieldError && <span id={`${id}-error`} className={styles.fieldError}>{fieldError}</span>}
+            {fieldError && <span id={`${id}-error`} className={uiStyles.fieldError}>{fieldError}</span>}
           </label>
           <div className={local.actions}>
-            <button type="submit" className={styles.primaryButton} disabled={locked}>{pending ? "Збереження…" : editor.id ? "Зберегти назву" : "Створити сферу"}</button>
-            {editor.id && <button type="button" className={styles.secondaryButton} disabled={pending} onClick={() => request(() => edit())}>Скасувати перейменування</button>}
+            <button type="submit" className={uiStyles.primaryButton} disabled={locked}>{pending ? "Збереження…" : editor.id ? "Зберегти назву" : "Створити сферу"}</button>
+            {editor.id && <button type="button" className={uiStyles.secondaryButton} disabled={pending} onClick={() => request(() => edit())}>Скасувати перейменування</button>}
           </div>
         </form>
-        {notice && <p role="status" className={styles.notice}>{notice}</p>}
-        {error && !deleting && <p role="alert" className={styles.error}>{error}</p>}
-        {directory.error && <p role="alert" className={styles.error}>{directory.error}</p>}
-        <button type="button" className={styles.addSubtaskButton} disabled={locked} onClick={directory.reload}>Оновити список сфер</button>
+        {notice && <p role="status" className={uiStyles.notice}>{notice}</p>}
+        {error && !deleting && <p role="alert" className={uiStyles.error}>{error}</p>}
+        {directory.error && <p role="alert" className={uiStyles.error}>{directory.error}</p>}
+        <button type="button" className={uiStyles.addSubtaskButton} disabled={locked} onClick={directory.reload}>Оновити список сфер</button>
         {directory.loading && <p role="status">Завантаження сфер…</p>}
         {!directory.loading && !directory.error && directory.areas.length === 0 && <p>Сфер ще немає. Створіть першу сферу.</p>}
         <ul className={local.list}>
           {directory.areas.map((area) => <li key={area.id}>
             <span>{area.name}</span><div className={local.actions}>
-              <button type="button" className={styles.secondaryButton} disabled={locked} onClick={() => request(() => edit(area))}>Перейменувати</button>
-              <button type="button" className={styles.deleteButton} disabled={locked} onClick={() => request(() => { edit(); setError(null); setDeleting(area); })}>Видалити</button>
+              <button type="button" className={uiStyles.secondaryButton} disabled={locked} onClick={() => request(() => edit(area))}>Перейменувати</button>
+              <button type="button" className={uiStyles.deleteButton} disabled={locked} onClick={() => request(() => { edit(); setError(null); setDeleting(area); })}>Видалити</button>
             </div>
           </li>)}
         </ul>

@@ -1,8 +1,9 @@
 "use client";
 
+import uiStyles from "../../../shared/ui/controls.module.css";
+
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { getCancellationNoteError } from "@/modules/tasks/model/task-field-input";
-import styles from "../../../app/page.module.css";
 
 type Props = {
   subtaskTitle: string;
@@ -72,7 +73,7 @@ export function CancelSubtaskDialog({ subtaskTitle, opener, disabled, onConfirm,
   return (
     <dialog
       ref={dialogRef}
-      className={styles.discardDialog}
+      className={uiStyles.discardDialog}
       aria-labelledby={`${id}-heading`}
       aria-describedby={`${id}-description`}
       onCancel={(event) => {
@@ -82,9 +83,9 @@ export function CancelSubtaskDialog({ subtaskTitle, opener, disabled, onConfirm,
       }}
     >
       <form noValidate onSubmit={submit} aria-busy={submitting}>
-        <h2 id={`${id}-heading`} className={styles.sectionTitle}>Скасувати підзадачу?</h2>
-        <p id={`${id}-description`} className={styles.discardDescription}>{subtaskTitle}</p>
-        <label className={styles.field} htmlFor={`${id}-note`}>
+        <h2 id={`${id}-heading`} className={uiStyles.sectionTitle}>Скасувати підзадачу?</h2>
+        <p id={`${id}-description`} className={uiStyles.discardDescription}>{subtaskTitle}</p>
+        <label className={uiStyles.field} htmlFor={`${id}-note`}>
           Причина скасування (обов’язково)
           <textarea
             ref={noteRef}
@@ -97,13 +98,13 @@ export function CancelSubtaskDialog({ subtaskTitle, opener, disabled, onConfirm,
             aria-describedby={validationError ? `${id}-validation` : undefined}
             onChange={(event) => { setNote(event.target.value); setValidationError(null); }}
           />
-          {validationError && <span id={`${id}-validation`} className={styles.fieldError}>{validationError}</span>}
+          {validationError && <span id={`${id}-validation`} className={uiStyles.fieldError}>{validationError}</span>}
         </label>
-        {error && <p role="alert" className={styles.error}>{error}</p>}
+        {error && <p role="alert" className={uiStyles.error}>{error}</p>}
         {submitting && <p role="status">Збереження та оновлення даних…</p>}
-        <div className={styles.discardActions}>
-          <button type="button" className={styles.secondaryButton} disabled={submitting} onClick={requestClose}>Назад</button>
-          <button type="submit" className={styles.dangerButton} disabled={disabled || submitting}>Скасувати підзадачу</button>
+        <div className={uiStyles.discardActions}>
+          <button type="button" className={uiStyles.secondaryButton} disabled={submitting} onClick={requestClose}>Назад</button>
+          <button type="submit" className={uiStyles.dangerButton} disabled={disabled || submitting}>Скасувати підзадачу</button>
         </div>
       </form>
     </dialog>
