@@ -1,7 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { RoutineSchedule, RoutineEndCondition, RoutinePreviewRange } from "./routine-types";
 import { isRoutineDate } from "./routine-validation";
-import { formatDate } from "../../../../lib/format-date";
+import { formatDate } from "../../../../shared/dates/format-date";
 import type { OccurrenceBasis } from "../../model/task-types";
 
 export function formatRoutineBasis(basis: Pick<OccurrenceBasis, "basisType" | "basisAt">, timeZone: string) {

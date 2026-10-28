@@ -9,7 +9,7 @@ import { useRoutineScheduleVersions } from "../hooks/use-routine-schedule-versio
 import { ChangeRoutineScheduleModal } from "./change-routine-schedule-modal";
 import { scheduleVersionStatus } from "@/modules/tasks/routines/model/routine-schedule-versions";
 import { formatRoutineDate, formatRoutineSchedule, formatRoutineEnd, formatShortMonth } from "@/modules/tasks/routines/model/routine-format";
-import { formatDuration } from "@/lib/format-duration";
+import { formatDuration } from "@/shared/lib/format-duration";
 import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 

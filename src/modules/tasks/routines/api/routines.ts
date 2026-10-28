@@ -1,4 +1,4 @@
-import { jsonRequest, requestDto, requestDelete, ApiError } from "../../../../lib/api";
+import { jsonRequest, requestDto, requestDelete, ApiError } from "../../../../shared/api/api";
 import { isRoutineScheduleVersion, isRoutineScheduleVersionList, isRoutine, isRoutineList, isRoutinePreview, isRoutineGenerationResult, isRoutineGenerationPreview } from "../model/routine-validation";
 import type { CreateRoutineInput, UpdateRoutineInput, RoutinePreviewRange, GenerateRoutineInput, RoutineGenerationResult, RoutineGenerationPreview } from "../model/routine-types";
 const routinePath = (id: string) => `/routines/${encodeURIComponent(id)}`;

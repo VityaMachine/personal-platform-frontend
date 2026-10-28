@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import { createSettingsStore } from "@/lib/settings-store";
-import { browserSettingsStorage, type SettingsStorage } from "@/lib/settings-storage";
-import { applyTheme } from "@/lib/theme";
+import { createSettingsStore } from "@/modules/settings/model/settings-store";
+import { browserSettingsStorage, type SettingsStorage } from "@/modules/settings/model/settings-storage";
+import { applyTheme } from "@/modules/settings/model/theme";
 
 const SettingsContext = createContext<ReturnType<typeof createSettingsStore> | null>(null);
 

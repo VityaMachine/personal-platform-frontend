@@ -1,5 +1,5 @@
 import type { TaskSection } from "./task-context";
-import { isAreaId } from "../../../lib/area-validation";
+import { isAreaId } from "../../../entities/areas/public";
 import { TASK_PRIORITIES, TASK_STATUSES, type Task, type TaskPriority, type TaskStatus } from "./task-types";
 
 export const TASK_SORTS = ["newest", "oldest", "deadline", "priority"] as const;

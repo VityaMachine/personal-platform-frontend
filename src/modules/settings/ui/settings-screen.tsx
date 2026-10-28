@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSettings } from "../_hooks/use-settings";
-import { useAreas } from "../_hooks/use-areas";
-import { useOpenDialog } from "../_hooks/use-open-dialog";
-import { useHistoryTraversalGuard } from "../_hooks/use-history-traversal-guard";
-import { TasksShell } from "../_components/tasks-shell";
-import { AreasModal } from "../_components/areas-modal";
-import { DiscardChangesDialog } from "../_components/discard-changes-dialog";
-import { isTimeZone, timeZoneOptions, type Settings } from "@/lib/settings";
-import styles from "../page.module.css";
+import { useSettings } from "../model/use-settings";
+import { useAreas } from "../../../entities/areas/ui";
+import { useOpenDialog } from "../../../shared/hooks/use-open-dialog";
+import { useHistoryTraversalGuard } from "../../../shared/navigation/use-history-traversal-guard";
+import { TasksShell } from "../../../app/_components/tasks-shell";
+import { AreasModal } from "../../../entities/areas/ui";
+import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
+import { isTimeZone, timeZoneOptions, type Settings } from "@/modules/settings/model/settings";
+import styles from "../../../app/page.module.css";
 import local from "./settings.module.css";
 
 type Draft = Omit<Settings, "todayOverdueDays"> & { todayOverdueDays: string };

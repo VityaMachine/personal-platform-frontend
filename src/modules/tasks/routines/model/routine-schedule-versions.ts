@@ -2,7 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import type { RoutineScheduleVersion, CreateRoutineScheduleVersionInput } from "./routine-types";
 import { parseRoutineRule, type CreateRoutineFields } from "./create-routine-input";
 import { isRoutineDate } from "./routine-validation";
-import { ApiError } from "../../../../lib/api";
+import { ApiError } from "../../../../shared/api/api";
 
 export const SCHEDULE_CHANGED_EVENT = "routine-schedule-changed";
 export function invalidateRoutineSchedule(id: string) {

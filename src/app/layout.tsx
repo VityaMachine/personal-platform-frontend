@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SettingsProvider } from "./_hooks/use-settings";
-import { AreasProvider } from "./_hooks/use-areas";
-import { themeBootstrap } from "@/lib/theme";
-import { HistoryTraversalProvider } from "./_hooks/use-history-traversal-guard";
-import { AppAccessProvider } from "./_components/app-access";
+import { SettingsProvider } from "../modules/settings/preferences";
+import { AreasProvider } from "../entities/areas/ui";
+import { themeBootstrap } from "@/modules/settings/theme";
+import { HistoryTraversalProvider } from "../shared/navigation/use-history-traversal-guard";
+import { AppAccessProvider } from "../application/access/ui/app-access";
 
 export const metadata: Metadata = {
   title: "Мої задачі",

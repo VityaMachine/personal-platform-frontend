@@ -1,5 +1,5 @@
 import { taskContextQuery, type TaskContext } from "../model/task-context";
-import { jsonRequest, requestDelete, requestDto } from "../../../lib/api";
+import { jsonRequest, requestDelete, requestDto } from "../../../shared/api/api";
 import type { CreateSubtaskInput, CreateTaskInput, UpdateSubtaskInput, UpdateTaskInput, TaskHistoryEvent } from "../model/task-types";
 import { isSubtask, isSubtaskList, isTask, isTaskList, isTaskHistory } from "../model/task-validation";
 

@@ -2,8 +2,8 @@ import { Temporal } from "@js-temporal/polyfill";
 import { TASK_PRIORITIES } from "../../model/task-types";
 import type { CreateRoutineInput, RoutineSchedule, RoutineEndCondition } from "./routine-types";
 import { isRoutineDate } from "./routine-validation";
-import { isTimeZone } from "../../../../lib/settings";
-import { isAreaId } from "../../../../lib/area-validation";
+import { isTimeZone } from "../../../settings/preferences-runtime";
+import { isAreaId } from "../../../../entities/areas/public";
 import { getTitleError, parseDuration, DURATION_ERROR, MAX_DURATION_MINUTES } from "../../model/task-field-input";
 import { getSubtaskDuration, type SubtaskFields, type SubtaskErrors } from "../../model/create-task-input";
 

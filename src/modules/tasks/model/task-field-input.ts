@@ -18,4 +18,4 @@ export function getCancellationNoteError(value: string): string | undefined {
   if (!value.trim()) return "Вкажіть причину скасування.";
 }
 
-export { toZonedDateTime as toLocalDateTime } from "../../../lib/zoned-date";
+export { toZonedDateTime as toLocalDateTime } from "../../../shared/dates/zoned-date";

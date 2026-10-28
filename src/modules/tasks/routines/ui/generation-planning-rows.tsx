@@ -2,7 +2,7 @@ import type { RoutineGenerationPreview } from "@/modules/tasks/routines/model/ro
 import type { GenerationPlanningDrafts } from "@/modules/tasks/routines/model/routine-generation-planning";
 import { planningOutsideOccurrence } from "@/modules/tasks/routines/model/routine-generation-planning";
 import { formatRoutineDate, formatPreviewDiagnostic, formatRoutineBasis } from "@/modules/tasks/routines/model/routine-format";
-import { localDateCandidates } from "@/lib/zoned-date";
+import { localDateCandidates } from "@/shared/dates/zoned-date";
 import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 

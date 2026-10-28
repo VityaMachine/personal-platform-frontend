@@ -1,7 +1,8 @@
+import type { DateOptions } from "./task-date-options";
 import { TASK_PRIORITIES, type CreateTaskInput } from "./task-types";
-import { isAreaId } from "../../../lib/area-validation";
+import { isAreaId } from "../../../entities/areas/public";
 import { DURATION_ERROR, MAX_DURATION_MINUTES, getTitleError, parseDuration } from "./task-field-input";
-import { resolveLocalDate, type DateOptions } from "../../../lib/zoned-date";
+import { resolveLocalDate } from "../../../shared/dates/zoned-date";
 
 export { MAX_DURATION_MINUTES } from "./task-field-input";
 

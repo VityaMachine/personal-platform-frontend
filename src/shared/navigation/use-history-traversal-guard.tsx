@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { createHistoryTraversalGuard, type TraversalAttempt } from "@/lib/history-traversal-guard";
+import { createHistoryTraversalGuard, type TraversalAttempt } from "@/shared/navigation/history-traversal-guard";
 
 const Context = createContext<ReturnType<typeof createHistoryTraversalGuard> | null>(null);
 

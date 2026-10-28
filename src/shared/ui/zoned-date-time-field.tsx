@@ -1,6 +1,6 @@
 import type { Ref } from "react";
-import { localDateCandidates, sameInstant } from "@/lib/zoned-date";
-import styles from "../page.module.css";
+import { localDateCandidates, sameInstant } from "@/shared/dates/zoned-date";
+import styles from "../../app/page.module.css";
 
 export function ZonedDateTimeField({ id, name, label, value, timeZone, choice, original, error, disabled, required, inputRef, hint, onChange, onChoice }: {
   id: string; name: string; label: string; value: string; timeZone: string; choice?: string; original?: string | null;

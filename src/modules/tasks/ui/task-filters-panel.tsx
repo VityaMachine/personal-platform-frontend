@@ -3,7 +3,7 @@
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/modules/tasks/model/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/modules/tasks/model/task-labels";
 import { parseTaskFilters, type TaskFilters } from "@/modules/tasks/model/task-filters";
-import { useAreas } from "../../../app/_hooks/use-areas";
+import { useAreas } from "../../../entities/areas/ui";
 import shared from "../../../app/page.module.css";
 import styles from "./task-filters-panel.module.css";
 import { useId, useState } from "react";

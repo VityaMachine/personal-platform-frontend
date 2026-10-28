@@ -5,7 +5,7 @@ import { getCancellationNoteError } from "@/modules/tasks/model/task-field-input
 import { getPostponeTaskFields, parsePostponeTaskFields, type PostponeTaskErrors, type PostponeTaskFields } from "@/modules/tasks/model/task-status-input";
 import type { Task, TaskStatusChange } from "@/modules/tasks/model/task-types";
 import { useFormDates } from "../hooks/use-form-dates";
-import { ZonedDateTimeField } from "../../../app/_components/zoned-date-time-field";
+import { ZonedDateTimeField } from "../../../shared/ui/zoned-date-time-field";
 import styles from "../../../app/page.module.css";
 
 type Props = {

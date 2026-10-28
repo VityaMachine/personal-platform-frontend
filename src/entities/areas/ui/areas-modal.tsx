@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { createArea, updateArea, deleteArea, type Area } from "@/lib/areas";
-import { areaNameError } from "@/lib/area-validation";
-import { ApiError } from "@/lib/api";
-import { useAreas } from "../_hooks/use-areas";
-import { DiscardChangesDialog } from "./discard-changes-dialog";
+import { createArea, updateArea, deleteArea, type Area } from "@/entities/areas/api/areas";
+import { areaNameError } from "@/entities/areas/model/area-validation";
+import { ApiError } from "@/shared/api/api";
+import { useAreas } from "../model/use-areas";
+import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
 import { DeleteAreaDialog } from "./delete-area-dialog";
-import styles from "../page.module.css";
+import styles from "../../../app/page.module.css";
 import local from "./areas.module.css";
 
 export function AreasModal({ opener, onClose, tasksLoading, tasksError, reloadTasks }: {

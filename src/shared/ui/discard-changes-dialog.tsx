@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import styles from "../page.module.css";
+import styles from "../../app/page.module.css";
 
 type Props = {
   onContinue: () => void;

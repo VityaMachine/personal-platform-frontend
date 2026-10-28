@@ -1,8 +1,8 @@
 import type { Routine } from "@/modules/tasks/routines/model/routine-types";
 import { formatRoutineDate, formatRoutineEnd, formatRoutineSchedule, formatShortMonth } from "@/modules/tasks/routines/model/routine-format";
 import { TASK_PRIORITY_LABELS } from "@/modules/tasks/model/task-labels";
-import { formatDuration } from "@/lib/format-duration";
-import { formatDate } from "@/lib/format-date";
+import { formatDuration } from "@/shared/lib/format-duration";
+import { formatDate } from "@/shared/dates/format-date";
 import styles from "./routines.module.css";
 
 export function RoutineFacts({ routine, detailed = false }: { routine: Routine; detailed?: boolean }) {

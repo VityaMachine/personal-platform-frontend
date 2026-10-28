@@ -2,10 +2,10 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import type { TaskStatusChange } from "@/modules/tasks/model/task-types";
-import type { TraversalAttempt } from "@/lib/history-traversal-guard";
+import type { TraversalAttempt } from "@/shared/navigation/history-traversal-guard";
 import { parseSkipTaskNote } from "@/modules/tasks/model/skip-task-input";
-import { useHistoryTraversalGuard } from "../../../app/_hooks/use-history-traversal-guard";
-import { DiscardChangesDialog } from "../../../app/_components/discard-changes-dialog";
+import { useHistoryTraversalGuard } from "../../../shared/navigation/use-history-traversal-guard";
+import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
 import styles from "../../../app/page.module.css";
 
 export function SkipTaskDialog({ taskTitle, opener, disabled, onConfirm, onClose }: {

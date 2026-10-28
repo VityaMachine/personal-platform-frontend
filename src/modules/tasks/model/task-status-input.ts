@@ -1,6 +1,7 @@
+import type { DateOptions } from "./task-date-options";
 import { toLocalDateTime } from "./task-field-input";
 import type { PostponeTaskChange, Task } from "./task-types";
-import { resolveLocalDate, sameInstant, type DateOptions } from "../../../lib/zoned-date";
+import { resolveLocalDate, sameInstant } from "../../../shared/dates/zoned-date";
 
 export type PostponeTaskFields = { plannedAt: string; dueAt: string };
 export type PostponeTaskErrors = Partial<Record<keyof PostponeTaskFields, string>>;

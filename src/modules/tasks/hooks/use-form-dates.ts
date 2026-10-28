@@ -1,8 +1,9 @@
 "use client";
 
+import type { DateField } from "../model/task-date-options";
+
 import { useState } from "react";
-import { useSettings } from "../../../app/_hooks/use-settings";
-import type { DateField } from "@/lib/zoned-date";
+import { useSettings } from "../../settings/preferences";
 
 export function useFormDates() {
   const { settings } = useSettings();

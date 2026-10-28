@@ -3,9 +3,9 @@
 import { Suspense, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTaskList } from "../hooks/use-task-list";
-import { useAreas } from "../../../app/_hooks/use-areas";
-import { AreasModal } from "../../../app/_components/areas-modal";
-import { useOpenDialog } from "../../../app/_hooks/use-open-dialog";
+import { useAreas } from "../../../entities/areas/ui";
+import { AreasModal } from "../../../entities/areas/ui";
+import { useOpenDialog } from "../../../shared/hooks/use-open-dialog";
 import { useTaskMutations } from "../hooks/use-task-mutations";
 import { useTaskFilters } from "../hooks/use-task-filters";
 import { taskSection, taskInSection } from "@/modules/tasks/model/task-context";

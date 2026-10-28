@@ -5,9 +5,9 @@ import { formatRoutineDate } from "@/modules/tasks/routines/model/routine-format
 import { useRoutineGeneration } from "../hooks/use-routine-generation";
 import { GenerationPlanningRows } from "./generation-planning-rows";
 import { RoutineConflicts } from "./routine-conflicts";
-import type { TraversalAttempt } from "@/lib/history-traversal-guard";
-import { useHistoryTraversalGuard } from "../../../../app/_hooks/use-history-traversal-guard";
-import { DiscardChangesDialog } from "../../../../app/_components/discard-changes-dialog";
+import type { TraversalAttempt } from "@/shared/navigation/history-traversal-guard";
+import { useHistoryTraversalGuard } from "../../../../shared/navigation/use-history-traversal-guard";
+import { DiscardChangesDialog } from "../../../../shared/ui/discard-changes-dialog";
 import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 

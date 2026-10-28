@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { getRoutines, getRoutine, setRoutinePaused, deleteRoutine, routineError } from "@/modules/tasks/routines/api/routines";
-import { ApiError } from "@/lib/api";
+import { ApiError } from "@/shared/api/api";
 import type { Routine } from "@/modules/tasks/routines/model/routine-types";
 
 export type RoutineRemovalOutcome = { status: "deleted" | "missing" } | { status: "error"; message: string; uncertain: boolean };

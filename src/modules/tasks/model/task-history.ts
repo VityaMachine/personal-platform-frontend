@@ -1,5 +1,5 @@
-import { formatDate } from "../../../lib/format-date";
-import { formatDuration } from "../../../lib/format-duration";
+import { formatDate } from "../../../shared/dates/format-date";
+import { formatDuration } from "../../../shared/lib/format-duration";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "./task-labels";
 import { TASK_PRIORITIES, TASK_STATUSES, type TaskHistoryEvent } from "./task-types";
 

@@ -1,9 +1,9 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { isTimeZone } from "../../../lib/settings";
+import { isTimeZone } from "../../settings/preferences-runtime";
 import type { RoutineOccurrence } from "./task-types";
 import { TASK_PRIORITIES, TASK_STATUSES, SUBTASK_STATUSES, TASK_TIME_STATUSES, type Subtask, type Task, type TaskHistoryEvent, type TaskSummary } from "./task-types";
 
-import { isAreaReference } from "../../../lib/area-validation";
+import { isAreaReference } from "../../../entities/areas/public";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

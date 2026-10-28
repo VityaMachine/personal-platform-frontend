@@ -2,15 +2,15 @@
 
 import { useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { createTask, type Task } from "@/modules/tasks/api/tasks";
-import { ApiError } from "@/lib/api";
-import { AreaSelect } from "../../../app/_components/area-select";
+import { ApiError } from "@/shared/api/api";
+import { AreaSelect } from "../../../entities/areas/ui";
 import { TASK_PRIORITIES } from "@/modules/tasks/model/task-types";
 import { TASK_PRIORITY_LABELS } from "@/modules/tasks/model/task-labels";
 import { EMPTY_TASK_FIELDS, MAX_DURATION_MINUTES, getSubtaskDuration, parseCreateTaskFields, type CreateTaskErrors, type CreateTaskFields, type SubtaskErrors, type SubtaskFields } from "@/modules/tasks/model/create-task-input";
 import { SubtasksEditor } from "./subtasks-editor";
 import { useTaskContext } from "../hooks/use-task-context";
 import { useFormDates } from "../hooks/use-form-dates";
-import { ZonedDateTimeField } from "../../../app/_components/zoned-date-time-field";
+import { ZonedDateTimeField } from "../../../shared/ui/zoned-date-time-field";
 import styles from "../../../app/page.module.css";
 
 type Props = {

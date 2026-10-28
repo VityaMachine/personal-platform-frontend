@@ -5,11 +5,11 @@ import type { Routine, RoutineGenerationResult } from "@/modules/tasks/routines/
 import { formatRoutineDate } from "@/modules/tasks/routines/model/routine-format";
 import { getRoutine, routineError } from "@/modules/tasks/routines/api/routines";
 import { TasksShell } from "../../../app/_components/tasks-shell";
-import { AreasModal } from "../../../app/_components/areas-modal";
-import { useAreas } from "../../../app/_hooks/use-areas";
-import { useOpenDialog } from "../../../app/_hooks/use-open-dialog";
+import { AreasModal } from "../../../entities/areas/ui";
+import { useAreas } from "../../../entities/areas/ui";
+import { useOpenDialog } from "../../../shared/hooks/use-open-dialog";
 import { useRoutines } from "./hooks/use-routines";
-import { useSettings } from "../../../app/_hooks/use-settings";
+import { useSettings } from "../../settings/preferences";
 import { CreateRoutineModal } from "./ui/create-routine-modal";
 import { RoutineFormModal } from "./ui/routine-form-modal";
 import { RoutineDetailsModal } from "./ui/routine-details-modal";

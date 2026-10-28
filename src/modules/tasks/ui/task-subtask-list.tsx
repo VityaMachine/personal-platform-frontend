@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SUBTASK_STATUSES, type Subtask, type SubtaskDetailsChange, type SubtaskStatusChange } from "@/modules/tasks/model/task-types";
 import { TASK_STATUS_LABELS } from "@/modules/tasks/model/task-labels";
-import { formatDuration } from "@/lib/format-duration";
+import { formatDuration } from "@/shared/lib/format-duration";
 import { CancelSubtaskDialog } from "./cancel-subtask-dialog";
 import { EditSubtaskDialog } from "./edit-subtask-dialog";
 import styles from "../../../app/page.module.css";

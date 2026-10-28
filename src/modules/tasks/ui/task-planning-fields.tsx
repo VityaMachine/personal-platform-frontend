@@ -1,5 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { localDateCandidates } from "@/lib/zoned-date";
+import { localDateCandidates } from "@/shared/dates/zoned-date";
 import styles from "../../../app/page.module.css";
 
 export function TaskPlanningFields({ id, date, time, timeZone, hint, occurrenceHint, choice, original, dateError, timeError, disabled, canRemove, onDate, onTime, onChoice, onRemove }: {

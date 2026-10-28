@@ -1,8 +1,8 @@
 "use client";
 import type { TaskHistoryEvent } from "@/modules/tasks/model/task-types";
 import { describeTaskHistory, type HistoryChange } from "@/modules/tasks/model/task-history";
-import { useSettings } from "../../../app/_hooks/use-settings";
-import { formatDate } from "@/lib/format-date";
+import { useSettings } from "../../settings/preferences";
+import { formatDate } from "@/shared/dates/format-date";
 import styles from "./task-details.module.css";
 
 function Changes({ changes }: { changes: HistoryChange[] }) {

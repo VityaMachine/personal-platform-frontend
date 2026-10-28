@@ -1,8 +1,9 @@
+import type { DateOptions } from "./task-date-options";
 import type { CreateTaskFields } from "./create-task-input";
-import { isAreaId } from "../../../lib/area-validation";
+import { isAreaId } from "../../../entities/areas/public";
 import { DURATION_ERROR, getTitleError, parseDuration, toLocalDateTime } from "./task-field-input";
 import { TASK_PRIORITIES, type Task, type TaskDetailsChange } from "./task-types";
-import { resolveLocalDate, sameInstant, toMinuteDateTime, type DateOptions } from "../../../lib/zoned-date";
+import { resolveLocalDate, sameInstant, toMinuteDateTime } from "../../../shared/dates/zoned-date";
 
 export type EditTaskFields = Omit<CreateTaskFields, "plannedAt"> & { plannedDate: string; plannedTime: string };
 export type EditTaskErrors = Partial<Record<keyof EditTaskFields, string>>;

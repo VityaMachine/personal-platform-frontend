@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useContext, useRef, useState, useSyncExternalStore, useEffect, type FormEvent, type ReactNode } from "react";
-import { browserAccessStorage, createAppAccessStore } from "@/lib/app-access";
-import { useGuardedLeave } from "../_hooks/use-history-traversal-guard";
-import shared from "../page.module.css";
+import { browserAccessStorage, createAppAccessStore } from "@/application/access/model/app-access";
+import { useGuardedLeave } from "../../../shared/navigation/use-history-traversal-guard";
+import shared from "../../../app/page.module.css";
 import styles from "./app-access.module.css";
 
 const AccessContext = createContext<(() => void) | null>(null);

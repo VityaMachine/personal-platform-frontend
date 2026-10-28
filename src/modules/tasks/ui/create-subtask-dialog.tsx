@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } fr
 import { parseCreateSubtaskFields, type CreateSubtaskErrors, type CreateSubtaskFields } from "@/modules/tasks/model/create-subtask-input";
 import { MAX_DURATION_MINUTES } from "@/modules/tasks/model/task-field-input";
 import type { InitialSubtaskInput } from "@/modules/tasks/model/task-types";
-import { DiscardChangesDialog } from "../../../app/_components/discard-changes-dialog";
+import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
 import styles from "../../../app/page.module.css";
 
 type Props = {

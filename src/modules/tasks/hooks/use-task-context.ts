@@ -1,7 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import { taskContext } from "@/modules/tasks/model/task-context";
-import { useSettings } from "../../../app/_hooks/use-settings";
+import { useSettings } from "../../settings/preferences";
 export function useTaskContext() {
   const { settings, ready } = useSettings();
   const { timeZone, todayOverdueMode, todayOverdueDays } = settings;

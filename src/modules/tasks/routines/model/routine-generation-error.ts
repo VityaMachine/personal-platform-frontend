@@ -1,4 +1,4 @@
-import { ApiError } from "../../../../lib/api";
+import { ApiError } from "../../../../shared/api/api";
 
 export const GENERATION_UNCERTAIN_MESSAGE = "Не вдалося отримати результат. Запит міг виконатися. Повторний запуск за тим самим діапазоном не створить дублікатів";
 const known: Record<string, string> = {

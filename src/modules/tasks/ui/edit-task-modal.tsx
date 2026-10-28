@@ -5,11 +5,11 @@ import { getEditTaskFields, parseEditTaskFields, type EditTaskErrors, type EditT
 import { MAX_DURATION_MINUTES } from "@/modules/tasks/model/task-field-input";
 import { TASK_PRIORITIES, type Task, type TaskDetailsChange } from "@/modules/tasks/model/task-types";
 import { TASK_PRIORITY_LABELS } from "@/modules/tasks/model/task-labels";
-import { sameInstant } from "@/lib/zoned-date";
-import { DiscardChangesDialog } from "../../../app/_components/discard-changes-dialog";
-import { AreaSelect } from "../../../app/_components/area-select";
+import { sameInstant } from "@/shared/dates/zoned-date";
+import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
+import { AreaSelect } from "../../../entities/areas/ui";
 import { useFormDates } from "../hooks/use-form-dates";
-import { ZonedDateTimeField } from "../../../app/_components/zoned-date-time-field";
+import { ZonedDateTimeField } from "../../../shared/ui/zoned-date-time-field";
 import { TaskPlanningFields } from "./task-planning-fields";
 import styles from "../../../app/page.module.css";
 

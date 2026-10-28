@@ -1,8 +1,8 @@
 "use client";
 
-import type { AreaReference } from "@/lib/area-types";
-import { useAreas } from "../_hooks/use-areas";
-import styles from "../page.module.css";
+import type { AreaReference } from "@/entities/areas/model/area-types";
+import { useAreas } from "../model/use-areas";
+import styles from "../../../app/page.module.css";
 
 export function AreaSelect({ id, value, onChange, disabled, currentArea, error }: {
   id: string; value: string; onChange: (value: string) => void; disabled: boolean;

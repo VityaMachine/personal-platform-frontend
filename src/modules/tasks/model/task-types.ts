@@ -1,4 +1,4 @@
-import type { AreaReference } from "../../../lib/area-types";
+import type { AreaReference } from "../../../entities/areas/public";
 
 export const SUBTASK_STATUSES = ["TODO", "IN_PROGRESS", "PAUSED", "POSTPONED", "DONE", "CANCELED"] as const;
 export type SubtaskStatus = (typeof SUBTASK_STATUSES)[number];

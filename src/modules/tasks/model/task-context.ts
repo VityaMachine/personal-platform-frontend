@@ -1,4 +1,4 @@
-import type { Settings } from "../../../lib/settings";
+import type { Settings } from "../../settings/preferences-runtime";
 import type { Task } from "./task-types";
 
 export type TaskContext = { timezone: string; overdueMode: Settings["todayOverdueMode"]; overdueDays: number };

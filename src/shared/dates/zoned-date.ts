@@ -1,7 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
 
-export type DateField = "plannedAt" | "dueAt";
-export type DateOptions = { timeZone: string; choices?: Partial<Record<DateField, string>> };
 export type DateCandidate = { iso: string; offset: string };
 export type LocalDateResult = { candidates: DateCandidate[]; error?: string };
 

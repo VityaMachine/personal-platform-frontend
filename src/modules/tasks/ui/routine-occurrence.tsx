@@ -2,7 +2,7 @@
 
 import type { Task } from "@/modules/tasks/model/task-types";
 import { formatRoutineBasis } from "@/modules/tasks/routines/model/routine-format";
-import { useSettings } from "../../../app/_hooks/use-settings";
+import { useSettings } from "../../settings/preferences";
 import styles from "../../../app/page.module.css";
 
 // These are local calendar dates, not instants. Keep them in their own calendar.

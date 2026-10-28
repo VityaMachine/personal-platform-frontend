@@ -4,12 +4,12 @@ import type { Routine, RoutineScheduleVersion } from "@/modules/tasks/routines/m
 import { createRoutineScheduleVersion, getRoutine } from "@/modules/tasks/routines/api/routines";
 import { routineToFields } from "@/modules/tasks/routines/model/edit-routine-input";
 import { routineApiFieldErrors, type RoutineFormErrors } from "@/modules/tasks/routines/model/create-routine-input";
-import { ApiError } from "@/lib/api";
+import { ApiError } from "@/shared/api/api";
 import { invalidateRoutineSchedule, minimumEffectiveDate, parseScheduleVersionFields, scheduleVersionFailure } from "@/modules/tasks/routines/model/routine-schedule-versions";
 import { formatRoutineDate } from "@/modules/tasks/routines/model/routine-format";
-import { useHistoryTraversalGuard } from "../../../../app/_hooks/use-history-traversal-guard";
-import type { TraversalAttempt } from "@/lib/history-traversal-guard";
-import { DiscardChangesDialog } from "../../../../app/_components/discard-changes-dialog";
+import { useHistoryTraversalGuard } from "../../../../shared/navigation/use-history-traversal-guard";
+import type { TraversalAttempt } from "@/shared/navigation/history-traversal-guard";
+import { DiscardChangesDialog } from "../../../../shared/ui/discard-changes-dialog";
 import { RoutineScheduleEditor, type RoutineFieldChange } from "./routine-schedule-editor";
 import { RoutineResultModal } from "./routine-result-modal";
 import shared from "../../../../app/page.module.css";

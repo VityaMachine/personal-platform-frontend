@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { Task } from "@/modules/tasks/model/task-types";
 import { CreateTaskForm } from "./create-task-form";
-import { DiscardChangesDialog } from "../../../app/_components/discard-changes-dialog";
+import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
 import styles from "../../../app/page.module.css";
 
 type Props = {

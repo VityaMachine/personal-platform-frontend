@@ -1,6 +1,6 @@
 "use client";
 import { useState, type ChangeEvent } from "react";
-import { timeZoneOptions } from "@/lib/settings";
+import { timeZoneOptions } from "@/modules/settings/preferences-runtime";
 import { parseRoutineRule, type CreateRoutineFields, type RoutineFormErrors } from "@/modules/tasks/routines/model/create-routine-input";
 import { formatRoutineSchedule, formatRoutineEnd } from "@/modules/tasks/routines/model/routine-format";
 import { MAX_DURATION_MINUTES } from "@/modules/tasks/model/task-field-input";

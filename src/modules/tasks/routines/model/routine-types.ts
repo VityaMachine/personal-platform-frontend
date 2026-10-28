@@ -1,4 +1,4 @@
-import type { AreaReference } from "../../../../lib/area-types";
+import type { AreaReference } from "../../../../entities/areas/public";
 import type { OccurrenceBasis, TaskPriority } from "../../model/task-types";
 
 export type WeeklySelection = { type: "DAYS"; weekdays: number[] }

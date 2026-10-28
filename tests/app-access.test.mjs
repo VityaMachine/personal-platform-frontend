@@ -7,8 +7,8 @@ const load = createRequire(import.meta.url), ts = load("typescript");
 load.extensions[".ts"] = (module, filename) => module._compile(ts.transpileModule(readFileSync(filename, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText, filename);
-const { createAppAccessStore } = load("../src/lib/app-access.ts");
-const { createHistoryTraversalGuard } = load("../src/lib/history-traversal-guard.ts");
+const { createAppAccessStore } = load("../src/application/access/model/app-access.ts");
+const { createHistoryTraversalGuard } = load("../src/shared/navigation/history-traversal-guard.ts");
 
 function fixture(expected, saved = null, unavailable = false) {
   let raw = saved, notify;

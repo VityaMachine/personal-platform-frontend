@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ApiError } from "@/lib/api";
+import { ApiError } from "@/shared/api/api";
 import { getTask, getTaskHistory } from "@/modules/tasks/api/tasks";
 
 import { useTaskContext } from "./use-task-context";

@@ -1,6 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { isAreaId, isAreaReference } from "../../../../lib/area-validation";
-import { isTimeZone } from "../../../../lib/settings";
+import { isAreaId, isAreaReference } from "../../../../entities/areas/public";
+import { isTimeZone } from "../../../settings/preferences-runtime";
 import { TASK_PRIORITIES } from "../../model/task-types";
 import type { Routine, RoutineSchedule, RoutineEndCondition, RoutinePreview, RoutinePreviewOccurrence, GenerateRoutineInput, RoutineGenerationResult, RoutineGenerationLink, RoutineGenerationPreview } from "./routine-types";
 

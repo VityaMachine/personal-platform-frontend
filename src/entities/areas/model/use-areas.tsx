@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { getAreas, type Area } from "@/lib/areas";
+import { getAreas, type Area } from "@/entities/areas/api/areas";
 
 function useAreaDirectory() {
   const [attempt, setAttempt] = useState(0);

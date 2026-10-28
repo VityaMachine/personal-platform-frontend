@@ -2,7 +2,7 @@ import type { ReactNode, MouseEvent } from "react";
 import Link from "next/link";
 import { taskSectionHref } from "@/modules/tasks/model/task-filters";
 import styles from "../page.module.css";
-import { LogoutButton } from "./app-access";
+import { LogoutButton } from "../../application/access/ui/app-access";
 
 export function TasksShell({ children, archived = false, today = false, backlog = false, query, areasDisabled, onManageAreas, settingsPage = false, routinesPage = false, onNavigate }: {
   children: ReactNode; archived?: boolean; today?: boolean; backlog?: boolean; query: string; areasDisabled: boolean; onManageAreas: (opener: HTMLButtonElement) => void;

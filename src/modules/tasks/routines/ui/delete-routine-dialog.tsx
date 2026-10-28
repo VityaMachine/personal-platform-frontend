@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react";
 import type { RoutineRemovalOutcome, RoutineRemovalCheckOutcome } from "../hooks/use-routines";
-import { useHistoryTraversalGuard } from "../../../../app/_hooks/use-history-traversal-guard";
+import { useHistoryTraversalGuard } from "../../../../shared/navigation/use-history-traversal-guard";
 import shared from "../../../../app/page.module.css";
 import styles from "./routines.module.css";
 

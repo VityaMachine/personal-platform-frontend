@@ -2,9 +2,9 @@
 import type { Task, TaskSummary } from "@/modules/tasks/model/task-types";
 import { TASK_TIME_STATUSES } from "@/modules/tasks/model/task-types";
 import { TASK_STATUS_LABELS } from "@/modules/tasks/model/task-labels";
-import { useSettings } from "../../../app/_hooks/use-settings";
-import { formatDate } from "@/lib/format-date";
-import { formatDuration, formatSeconds } from "@/lib/format-duration";
+import { useSettings } from "../../settings/preferences";
+import { formatDate } from "@/shared/dates/format-date";
+import { formatDuration, formatSeconds } from "@/shared/lib/format-duration";
 import styles from "./task-time-summary.module.css";
 
 function TimeHelp() {

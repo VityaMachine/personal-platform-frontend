@@ -1,5 +1,5 @@
 import type { GenerateRoutineInput, RoutineGenerationOccurrence, RoutineGenerationPreview, RoutinePreviewRange } from "./routine-types";
-import { resolveLocalDate, toMinuteDateTime } from "../../../../lib/zoned-date";
+import { resolveLocalDate, toMinuteDateTime } from "../../../../shared/dates/zoned-date";
 import { isRoutineDate } from "./routine-validation";
 
 export type GenerationPlanningDraft = { value: string; choice?: string; date?: string };

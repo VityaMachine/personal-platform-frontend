@@ -3,9 +3,9 @@ import { RoutineOccurrence } from "./routine-occurrence";
 
 import type { Task } from "@/modules/tasks/model/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/modules/tasks/model/task-labels";
-import { useSettings } from "../../../app/_hooks/use-settings";
-import { formatDate } from "@/lib/format-date";
-import { formatDuration } from "@/lib/format-duration";
+import { useSettings } from "../../settings/preferences";
+import { formatDate } from "@/shared/dates/format-date";
+import { formatDuration } from "@/shared/lib/format-duration";
 import { TaskTimeSummary } from "./task-time-summary";
 import styles from "./task-details.module.css";
 import shared from "../../../app/page.module.css";
