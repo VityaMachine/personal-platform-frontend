@@ -7,10 +7,10 @@ import type { Routine } from "@/modules/tasks/routines/model/routine-types";
 export type RoutineRemovalOutcome = { status: "deleted" | "missing" } | { status: "error"; message: string; uncertain: boolean };
 export type RoutineRemovalCheckOutcome = { status: "missing" | "present" } | { status: "error"; message: string };
 
-export function useRoutines(onUpdated: (routine: Routine) => void) {
+export function useRoutines(onUpdated: (routine: Routine) => void, areaRevision = 0) {
   const [attempt, setAttempt] = useState(0);
   const attemptRef = useRef(0);
-  const [result, setResult] = useState<{ attempt: number; data: Routine[]; error: string | null } | null>(null);
+  const [result, setResult] = useState<{ attempt: number; areaRevision: number; data: Routine[]; error: string | null } | null>(null);
   const [states, setStates] = useState<Record<string, { pending?: boolean; error?: string; notice?: string }>>({});
   const locks = useRef(new Map<string, AbortController>());
   const request = useRef<AbortController | null>(null);
@@ -19,12 +19,12 @@ export function useRoutines(onUpdated: (routine: Routine) => void) {
     const controller = new AbortController(); request.current = controller;
     const startedAt = revision.current;
     void getRoutines(controller.signal).then((data) => {
-      if (!controller.signal.aborted && request.current === controller && revision.current === startedAt) setResult({ attempt, data, error: null });
+      if (!controller.signal.aborted && request.current === controller && revision.current === startedAt) setResult({ attempt, areaRevision, data, error: null });
     }, (error: unknown) => {
-      if (!controller.signal.aborted && request.current === controller && revision.current === startedAt) setResult({ attempt, data: [], error: routineError(error) });
+      if (!controller.signal.aborted && request.current === controller && revision.current === startedAt) setResult({ attempt, areaRevision, data: [], error: routineError(error) });
     });
     return () => controller.abort();
-  }, [attempt]);
+  }, [attempt, areaRevision]);
   useEffect(() => {
     const active = locks.current;
     return () => { active.forEach((controller) => controller.abort()); active.clear(); };
@@ -32,7 +32,7 @@ export function useRoutines(onUpdated: (routine: Routine) => void) {
   function cancelList() { revision.current++; request.current?.abort(); }
   function commitList(update: (data: Routine[]) => Routine[]) {
     cancelList();
-    setResult((previous) => ({ attempt: attemptRef.current, error: null, data: update(previous?.data ?? []) }));
+    setResult((previous) => ({ attempt: attemptRef.current, areaRevision, error: null, data: update(previous?.data ?? []) }));
   }
   function commitRemoved(id: string) {
     commitList((data) => data.filter((routine) => routine.id !== id));
@@ -93,7 +93,7 @@ export function useRoutines(onUpdated: (routine: Routine) => void) {
       return null;
     } finally { locks.current.delete(routine.id); }
   }
-  const current = result?.attempt === attempt;
+  const current = result?.attempt === attempt && result.areaRevision === areaRevision;
   return { routines: current ? result.data : [], error: current ? result.error : null, loading: !current,
     addCreated: (routine: Routine) => {
       commitList((data) => [routine, ...data.filter((item) => item.id !== routine.id)]);

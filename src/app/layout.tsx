@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SettingsProvider } from "../modules/settings/preferences";
-import { AreasProvider } from "../entities/areas/ui";
+import { ApplicationProviders } from "../application/providers";
 import { themeBootstrap } from "@/modules/settings/theme";
-import { HistoryTraversalProvider } from "../shared/navigation/use-history-traversal-guard";
-import { AppAccessProvider } from "../application/access/ui/app-access";
 
 export const metadata: Metadata = {
   title: "Мої задачі",
@@ -22,7 +19,7 @@ export default function RootLayout({
         <style id="personal-theme-override" />
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
-      <body><HistoryTraversalProvider><SettingsProvider><AppAccessProvider><AreasProvider>{children}</AreasProvider></AppAccessProvider></SettingsProvider></HistoryTraversalProvider></body>
+      <body><ApplicationProviders>{children}</ApplicationProviders></body>
     </html>
   );
 }

@@ -1,10 +1,9 @@
 "use client";
 
 import { Suspense, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTaskList } from "../hooks/use-task-list";
 import { useAreas } from "../../../entities/areas/ui";
-import { AreasModal } from "../../../entities/areas/ui";
 import { useOpenDialog } from "../../../shared/hooks/use-open-dialog";
 import { useTaskMutations } from "../hooks/use-task-mutations";
 import { useTaskFilters } from "../hooks/use-task-filters";
@@ -14,7 +13,7 @@ import { TaskStatusSummary } from "../ui/task-status-summary";
 import { TaskFiltersPanel } from "../ui/task-filters-panel";
 import { CreateTaskModal } from "../ui/create-task-modal";
 import { TaskCard } from "../ui/task-card";
-import { TasksShell } from "../../../app/_components/tasks-shell";
+import { AppShell } from "../../../application/shell/app-shell";
 import styles from "../../../app/page.module.css";
 
 export default function Home() {
@@ -23,14 +22,14 @@ export default function Home() {
 
 function TasksPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const requestedSection = taskSection(searchParams);
   const [section, setSection] = useState(requestedSection);
   const archived = section === "archive";
   const today = section === "today";
   const backlog = section === "backlog";
   const areas = useAreas();
-  const { tasks, setTasks, loading, error: loadError, reload, context, scopeKey, inventoryWarning, observeTask } = useTaskList(section, areas.taskRevision);
-  const [areasOpener, setAreasOpener] = useState<HTMLButtonElement | null>(null);
+  const { tasks, setTasks, loading, error: loadError, reload, context, scopeKey, inventoryWarning, observeTask } = useTaskList(section, areas.changeRevision);
   const dialogOpen = useOpenDialog();
   // Keep disclosure state separate from refreshed DTOs and keyed by task ID.
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(() => new Set());
@@ -63,12 +62,14 @@ function TasksPage() {
   }
 
   return (
-    <TasksShell archived={archived} today={today} backlog={backlog} query={searchParams.toString()} areasDisabled={busy || dialogOpen || mutations.hasLockedTasks} onManageAreas={(opener) => {
-      if (!busy && !mutations.hasLockedTasks && !document.querySelector("dialog[open]")) {
-        areas.reload(); setAreasOpener(opener);
-      }
+    <AppShell activeItem={section} query={searchParams.toString()} areasDisabled={busy || creating || dialogOpen || mutations.hasLockedTasks} onNavigate={(href, destination) => {
+      if (creating || dialogOpen || document.querySelector("dialog[open]")) return;
+      // Task section changes keep their existing deferred application in this screen.
+      if ((destination === "settings" || destination === "routines") && (busy || mutations.hasLockedTasks)) return;
+      router.push(href, { scroll: false });
+    }} onManageAreas={(open) => {
+      if (!busy && !creating && !mutations.hasLockedTasks && !document.querySelector("dialog[open]")) open();
     }}>
-      {areasOpener && <AreasModal opener={areasOpener} onClose={() => setAreasOpener(null)} tasksLoading={loading} tasksError={loadError} reloadTasks={reload} />}
       <div className={styles.tasksToolbar}>
         <header className={styles.header}>
           <div>
@@ -181,6 +182,6 @@ function TasksPage() {
           </ul>
         )}
       </section>
-    </TasksShell>
+    </AppShell>
   );
 }

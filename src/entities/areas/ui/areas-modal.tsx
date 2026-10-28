@@ -10,8 +10,8 @@ import { DeleteAreaDialog } from "./delete-area-dialog";
 import styles from "../../../app/page.module.css";
 import local from "./areas.module.css";
 
-export function AreasModal({ opener, onClose, tasksLoading, tasksError, reloadTasks }: {
-  opener: HTMLButtonElement; onClose: () => void; tasksLoading: boolean; tasksError: string | null; reloadTasks: () => void;
+export function AreasModal({ opener, onClose }: {
+  opener: HTMLButtonElement; onClose: () => void;
 }) {
   const directory = useAreas();
   const id = useId();
@@ -106,7 +106,6 @@ export function AreasModal({ opener, onClose, tasksLoading, tasksError, reloadTa
         </form>
         {notice && <p role="status" className={styles.notice}>{notice}</p>}
         {error && !deleting && <p role="alert" className={styles.error}>{error}</p>}
-        {tasksError && <div role="alert" className={styles.error}><p>Не вдалося оновити задачі. {tasksError}</p><button type="button" className={styles.secondaryButton} disabled={pending || tasksLoading} onClick={reloadTasks}>Повторити завантаження задач</button></div>}
         {directory.error && <p role="alert" className={styles.error}>{directory.error}</p>}
         <button type="button" className={styles.addSubtaskButton} disabled={locked} onClick={directory.reload}>Оновити список сфер</button>
         {directory.loading && <p role="status">Завантаження сфер…</p>}

@@ -50,6 +50,13 @@ export function CreateTaskModal({ returnFocusRef, onClose, onCreated, onSubmitti
       ref={dialogRef}
       className={styles.modal}
       aria-labelledby="create-heading"
+      onKeyDown={(event) => {
+        // Keep dirty/pending close checks synchronous across history traversals.
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        event.stopPropagation();
+        requestClose();
+      }}
       onCancel={(event) => {
         event.preventDefault();
         requestClose();

@@ -3,11 +3,9 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSettings } from "../model/use-settings";
-import { useAreas } from "../../../entities/areas/ui";
 import { useOpenDialog } from "../../../shared/hooks/use-open-dialog";
 import { useHistoryTraversalGuard } from "../../../shared/navigation/use-history-traversal-guard";
-import { TasksShell } from "../../../app/_components/tasks-shell";
-import { AreasModal } from "../../../entities/areas/ui";
+import { AppShell } from "../../../application/shell/app-shell";
 import { DiscardChangesDialog } from "../../../shared/ui/discard-changes-dialog";
 import { isTimeZone, timeZoneOptions, type Settings } from "@/modules/settings/model/settings";
 import styles from "../../../app/page.module.css";
@@ -25,7 +23,6 @@ function SettingsForm() {
   const preferences = useSettings();
   const router = useRouter();
   const query = useSearchParams().toString();
-  const areas = useAreas();
   const dialogOpen = useOpenDialog();
   const [baseline, setBaseline] = useState(() => draftOf(preferences.settings));
   const [draft, setDraft] = useState(baseline);
@@ -34,7 +31,6 @@ function SettingsForm() {
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [areasOpener, setAreasOpener] = useState<HTMLButtonElement | null>(null);
   const pendingAction = useRef<(() => void) | null>(null);
   const cancelAction = useRef<(() => void) | null>(null);
   const [returnFocus, setReturnFocus] = useState<HTMLElement | null>(null);
@@ -104,9 +100,9 @@ function SettingsForm() {
     setNotice(persisted ? "Налаштування збережено в цьому браузері." : "Налаштування застосовано лише в поточній вкладці: сховище браузера недоступне.");
   }
 
-  return <TasksShell settingsPage query={query} areasDisabled={dialogOpen || saving} onNavigate={(href) => {
+  return <AppShell activeItem="settings" query={query} areasDisabled={dialogOpen || saving} logoutDisabled={dialogOpen || saving || confirming} onNavigate={(href) => {
     if (!href.startsWith("/settings")) request(() => router.push(href, { scroll: false }));
-  }} onManageAreas={(opener) => request(() => { areas.reload(); setAreasOpener(opener); })}>
+  }} onManageAreas={(open) => { request(open); }}>
     <header className={styles.header}><h1 className={styles.title}>Налаштування</h1></header>
     <div className={local.panel}>
       <p>Налаштування зберігаються в цьому браузері й поки не синхронізуються між пристроями.</p>
@@ -158,6 +154,5 @@ function SettingsForm() {
       cancelAction.current = null;
       setConfirming(false); setDraft(baseline); action?.();
     }} />}
-    {areasOpener && <AreasModal opener={areasOpener} onClose={() => setAreasOpener(null)} tasksLoading={false} tasksError={null} reloadTasks={() => {}} />}
-  </TasksShell>;
+  </AppShell>;
 }

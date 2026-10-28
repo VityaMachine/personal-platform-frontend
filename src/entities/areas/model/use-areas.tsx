@@ -5,7 +5,7 @@ import { getAreas, type Area } from "@/entities/areas/api/areas";
 
 function useAreaDirectory() {
   const [attempt, setAttempt] = useState(0);
-  const [taskRevision, setTaskRevision] = useState(0);
+  const [changeRevision, setChangeRevision] = useState(0);
   const [result, setResult] = useState<{ attempt: number; areas: Area[]; error: string | null } | null>(null);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => {
@@ -29,11 +29,11 @@ function useAreaDirectory() {
         : (previous?.areas ?? []).filter((item) => item.id !== id),
     }));
     setAttempt((value) => value + 1);
-    if (id) setTaskRevision((value) => value + 1);
+    setChangeRevision((value) => value + 1);
   }
   return { areas: result?.areas ?? [], loading: result?.attempt !== attempt,
     error: result?.attempt === attempt ? result.error : null,
-    reload: () => setAttempt((value) => value + 1), commit, taskRevision };
+    reload: () => setAttempt((value) => value + 1), commit, changeRevision };
 }
 
 const AreasContext = createContext<ReturnType<typeof useAreaDirectory> | null>(null);

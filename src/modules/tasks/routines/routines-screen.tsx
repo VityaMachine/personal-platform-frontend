@@ -4,8 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { Routine, RoutineGenerationResult } from "@/modules/tasks/routines/model/routine-types";
 import { formatRoutineDate } from "@/modules/tasks/routines/model/routine-format";
 import { getRoutine, routineError } from "@/modules/tasks/routines/api/routines";
-import { TasksShell } from "../../../app/_components/tasks-shell";
-import { AreasModal } from "../../../entities/areas/ui";
+import { AppShell } from "../../../application/shell/app-shell";
 import { useAreas } from "../../../entities/areas/ui";
 import { useOpenDialog } from "../../../shared/hooks/use-open-dialog";
 import { useRoutines } from "./hooks/use-routines";
@@ -34,7 +33,6 @@ function RoutinesScreen() {
   const editRequest = useRef<AbortController | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [selected, setSelected] = useState<{ id: string; opener: HTMLButtonElement; replacement?: Routine } | null>(null);
-  const [areasOpener, setAreasOpener] = useState<HTMLButtonElement | null>(null);
   const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<{ routine: Routine; opener: HTMLButtonElement } | null>(null);
@@ -44,7 +42,7 @@ function RoutinesScreen() {
   const [notice, setNotice] = useState("");
   const [generationResult, setGenerationResult] = useState<{ title: string; data: RoutineGenerationResult } | null>(null);
   const [generationOutcome, setGenerationOutcome] = useState<{ data: RoutineGenerationResult; opener: HTMLButtonElement } | null>(null);
-  const directory = useRoutines((routine) => setSelected((previous) => previous?.id === routine.id ? { ...previous, replacement: routine } : previous));
+  const directory = useRoutines((routine) => setSelected((previous) => previous?.id === routine.id ? { ...previous, replacement: routine } : previous), areas.changeRevision);
   useEffect(() => () => editRequest.current?.abort(), []);
   async function beginEdit(routine: Routine, opener: HTMLButtonElement) {
     if (directory.isLocked(routine.id) || modalLock.current || document.querySelector("dialog[open]")) return;
@@ -63,11 +61,11 @@ function RoutinesScreen() {
       }
     } finally { if (editRequest.current === controller) editRequest.current = null; }
   }
-  return <TasksShell routinesPage query={params.toString()} areasDisabled={directory.pending || creating || dialogOpen || Boolean(editLoad?.pending)} onNavigate={(href) => {
+  return <AppShell activeItem="routines" query={params.toString()} areasDisabled={directory.pending || creating || dialogOpen || Boolean(editLoad?.pending)} onNavigate={(href) => {
     if (!directory.pending && !creating && !modalLock.current && !document.querySelector("dialog[open]")) router.push(href, { scroll: false });
-  }} onManageAreas={(opener) => {
-    if (!directory.pending && !modalLock.current && !document.querySelector("dialog[open]")) { modalLock.current = true; areas.reload(); setAreasOpener(opener); }
-  }}>
+  }} onManageAreas={(open) => {
+    if (!directory.pending && !modalLock.current && !document.querySelector("dialog[open]")) { modalLock.current = true; open(); }
+  }} onAreasClose={() => { modalLock.current = false; }}>
     <div className={shared.tasksToolbar}>
       <header className={shared.header}>
         <h1 ref={headingRef} tabIndex={-1} id="routines-heading" className={shared.title}>Повторювані задачі</h1>
@@ -132,7 +130,6 @@ function RoutinesScreen() {
     {selected && <RoutineDetailsModal key={selected.id} routineId={selected.id} replacement={selected.replacement} opener={selected.opener}
       pending={Boolean(directory.states[selected.id]?.pending)} error={directory.states[selected.id]?.error} notice={directory.states[selected.id]?.notice}
       onRoutine={directory.commitUpdated} onToggle={(routine) => void directory.toggle(routine)} onClose={() => { modalLock.current = false; setSelected(null); }} />}
-    {areasOpener && <AreasModal opener={areasOpener} onClose={() => { modalLock.current = false; setAreasOpener(null); directory.reload(); }} tasksLoading={false} tasksError={null} reloadTasks={directory.reload} />}
     {createOpener && <CreateRoutineModal opener={createOpener} timezone={preferences.settings.timeZone} onSubmittingChange={setCreating}
       onClose={() => { modalLock.current = false; setCreateOpener(null); }}
       onCreated={(routine) => { directory.addCreated(routine); setNotice("Шаблон повторення створено"); modalLock.current = false; setCreateOpener(null); }} />}
@@ -153,5 +150,5 @@ function RoutinesScreen() {
       onConfirm={() => directory.remove(deleting.routine.id)} onCheck={() => directory.checkRemoval(deleting.routine.id)}
       onClose={() => { modalLock.current = false; setDeleting(null); }}
       onDeleted={() => { modalLock.current = false; setDeleting(null); setNotice("Шаблон повторення видалено"); }} />}
-  </TasksShell>;
+  </AppShell>;
 }
