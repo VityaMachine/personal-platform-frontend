@@ -14,11 +14,6 @@
 .group dt { color: var(--secondary); overflow-wrap: anywhere; }
 .group dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
 .bar {
-  --status-todo: light-dark(#64748b, #94a3b8);
-  --status-in-progress: light-dark(#2563eb, #60a5fa);
-  --status-inactive: light-dark(#fbbf24, #fbbf24);
-  --status-done: light-dark(#15803d, #4ade80);
-  --status-label: light-dark(#ffffff, #10251a);
   --status-amber-label: #10251a;
   --status-divider: var(--surface);
   display: flex;
@@ -65,10 +60,6 @@
 .pending { margin: 0; color: var(--secondary); }
 .legendPercent { font-size: .75rem; color: var(--secondary); font-weight: 400; }
 .today {
-  --summary-todo: light-dark(#4775bd, #779ce3);
-  --summary-progress: light-dark(#efa62e, #eeb34a);
-  --summary-inactive: light-dark(#80647f, #c09dbc);
-  --summary-done: light-dark(#397b5c, #85b99e);
   padding: 16px 18px 10px;
   border-radius: 9px;
 }
@@ -88,8 +79,8 @@
   --status-in-progress: var(--summary-progress);
   --status-inactive: var(--summary-inactive);
   --status-done: var(--summary-done);
-  --status-label: light-dark(#ffffff, #101a22);
-  --status-amber-label: light-dark(#352307, #101a22);
+  --status-label: var(--summary-label);
+  --status-amber-label: var(--summary-amber-label);
   margin-top: 14px; width: 92%; max-width: 900px; height: 32px; border-radius: 7px;
 }
 .today .inProgress { color: var(--status-amber-label); }

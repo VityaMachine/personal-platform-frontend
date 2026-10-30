@@ -489,8 +489,8 @@
 .todayCard .taskMetadata > .taskPriority { border-radius: 16px; font-size: .75rem; padding: 4px 10px; }
 .todayCard .taskMetadata > .taskPriority[data-priority] { order: -1; }
 .todayCard .taskStatusSelect { min-height: 34px; width: 10rem; border-radius: 6px; font-size: .8125rem; background-color: var(--input); }
-.todayCard .taskStatus[data-status="TODO"] { color: light-dark(#315e9e, #a4c4ff); }
-.todayCard .taskStatus[data-status="IN_PROGRESS"] { color: light-dark(#805316, #f3c976); }
+.todayCard .taskStatus[data-status="TODO"] { color: var(--today-status-todo); }
+.todayCard .taskStatus[data-status="IN_PROGRESS"] { color: var(--today-status-progress); }
 .todayCard .taskDetails { flex-basis: 100%; font-size: .75rem; gap: 3px 12px; }
 .todayCard .taskDetails dt { font-weight: 400; }
 .todayCard .taskActions { grid-column: 3; justify-content: flex-end; gap: 4px; border-top: 1px solid var(--card-border); margin-top: 4px; padding-top: 4px; }

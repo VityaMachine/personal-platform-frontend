@@ -99,9 +99,11 @@ const logoutButton = "[...document.querySelectorAll('nav button')].find(e=>e.tex
 const mutationCount = () => calls.filter(call => ["POST", "PATCH", "DELETE"].includes(call.method)).length;
 async function menu() {
   if (await evaluate("matchMedia('(max-width:760px)').matches&&!document.querySelector('#mobile-navigation')")) {
+    await wait("document.querySelector('button[aria-label=\"Відкрити меню\"]')!==null");
     await evaluate("document.querySelector('button[aria-label=\"Відкрити меню\"]').click()");
     await wait("document.querySelector('#mobile-navigation')!==null");
   }
+  await wait("document.querySelector('nav')!==null");
 }
 async function link(label) {
   await menu();

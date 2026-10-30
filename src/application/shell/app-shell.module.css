@@ -1,12 +1,6 @@
 /* Shell and screen layout. The desktop list viewport falls back to document
    scrolling at the original narrow-width and low-height breakpoints. */
 .shell {
-  --shell-surface: light-dark(#fafbfa, #151d20);
-  --shell-page: light-dark(#f7f8f9, #11181c);
-  --shell-text: light-dark(#18212d, #e3e9ee);
-  --shell-accent: light-dark(#126343, #91cdb1);
-  --shell-nav: light-dark(#e2eee8, #233d34);
-  --shell-border: light-dark(#e2e5e8, #303d44);
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   min-height: 100svh;

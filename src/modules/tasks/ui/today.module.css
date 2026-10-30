@@ -1,17 +1,17 @@
 .main {
-  --text: light-dark(#151c25, #e8edf1);
-  --surface: light-dark(#ffffff, #1a242b);
-  --secondary: light-dark(#596170, #b7c2ce);
-  --muted: light-dark(#69717e, #aab8c6);
-  --card-border: light-dark(#e2e5e9, #34414b);
+  --text: var(--today-text);
+  --surface: var(--today-surface);
+  --secondary: var(--today-secondary);
+  --muted: var(--today-muted);
+  --card-border: var(--today-card-border);
   --border: var(--card-border);
-  --accent: light-dark(#126343, #99d5b5);
-  --accent-hover: light-dark(#0c5035, #b4e6cb);
-  --nav: light-dark(#e4eee8, #294338);
-  --input: light-dark(#ffffff, #162129);
-  --input-border: light-dark(#d4dae1, #4b5c68);
+  --accent: var(--today-accent);
+  --accent-hover: var(--today-accent-hover);
+  --nav: var(--today-nav);
+  --input: var(--today-input);
+  --input-border: var(--today-input-border);
   --select-border: var(--input-border);
-  --on-accent: light-dark(#ffffff, #10251a);
+  --on-accent: var(--today-on-accent);
   --notice: var(--accent);
   color: var(--text);
 }

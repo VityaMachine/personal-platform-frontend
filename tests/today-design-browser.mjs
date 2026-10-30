@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { futureTask, routine } from "./routine-fixtures.mjs";
+import { assertThemeColor, runThemeMatrix } from "./theme-browser-checks.mjs";
 
 const app = process.env.APP_URL ?? "http://127.0.0.1:3100";
 const password = process.env.APP_ACCESS_TEST_PASSWORD;
@@ -14,7 +15,8 @@ const target = await (await fetch(`${process.env.CDP_URL ?? "http://127.0.0.1:92
 const socket = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise(resolve => socket.addEventListener("open", resolve, { once: true }));
 let sequence = 0;
-const pending = new Map(), calls = [], errors = [], passed = [];
+const pending = new Map(), calls = [], errors = [], passed = [], intercepting = new Set();
+const cancelledNetworkRequests = new Set(), cancelledInterceptions = [];
 const cdp = (method, params = {}) => new Promise((resolve, reject) => {
   const id = ++sequence; pending.set(id, { resolve, reject }); socket.send(JSON.stringify({ id, method, params }));
 });
@@ -24,7 +26,22 @@ socket.addEventListener("message", ({ data }) => {
     const request = pending.get(message.id); pending.delete(message.id);
     if (message.error) request.reject(Error(JSON.stringify(message.error))); else request.resolve(message.result);
   } else if (message.method === "Runtime.exceptionThrown") errors.push(message.params.exceptionDetails.exception?.description ?? "Runtime exception");
-  else if (message.method === "Fetch.requestPaused") void intercept(message.params).catch(error => errors.push(error.message));
+  else if (message.method === "Runtime.consoleAPICalled" && message.params.type === "error") errors.push(message.params.args.map(arg => arg.value ?? arg.description ?? "").join(" "));
+  else if (message.method === "Network.loadingFailed" && message.params.canceled) cancelledNetworkRequests.add(message.params.requestId);
+  else if (message.method === "Fetch.requestPaused") {
+    const request = intercept(message.params).catch(async error => {
+      // React legitimately aborts obsolete list/Areas requests. Accept a CDP
+      // fulfillment race only when Network independently confirms cancellation.
+      if (error.message.includes("Invalid InterceptionId")) {
+        await delay(50);
+        if (cancelledNetworkRequests.has(message.params.networkId)) {
+          cancelledInterceptions.push(message.params.request.url); return;
+        }
+      }
+      errors.push(error.message);
+    }).finally(() => intercepting.delete(request));
+    intercepting.add(request);
+  }
 });
 const now = "2026-10-30T09:00:00.000Z";
 const area = { id: "11111111-1111-4111-8111-111111111111", name: "Особисте", createdAt: now, updatedAt: now };
@@ -96,6 +113,13 @@ async function evaluate(expression) {
   return result.result.value;
 }
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function settleApi() {
+  for (let i = 0; i < 200; i++) {
+    if (!intercepting.size) { await delay(100); if (!intercepting.size) return; }
+    await delay(50);
+  }
+  throw Error("Mock API interception did not settle");
+}
 async function wait(expression) {
   for (let i = 0; i < 200; i++) { if (await evaluate(expression)) return; await delay(50); }
   throw Error("Timed out: " + expression);
@@ -135,7 +159,15 @@ async function screenshot(name, full = false) {
 }
 try {
   await cdp("Runtime.enable"); await cdp("Page.enable"); await viewport(1440);
-  await cdp("Fetch.enable", { patterns: [{ urlPattern: "*", requestStage: "Request" }] });
+  await cdp("Network.enable");
+  await cdp("Network.setBlockedURLs", { urlPatterns: [
+    { urlPattern: app + "/*", block: false }, { urlPattern: app.replace(/^http/, "ws") + "/*", block: false },
+    { urlPattern: "http://mock.invalid/*", block: false }, { urlPattern: "*://*:*/*", block: true },
+  ] });
+  await cdp("Fetch.enable", { patterns: [{ urlPattern: "http://mock.invalid/*", requestStage: "Request" }] });
+  if (process.env.THEME_MATRIX_ONLY) {
+    await runThemeMatrix({ app, password, cdp, evaluate, wait, click, fill, viewport, screenshot, calls, settle: settleApi });
+  } else {
   const gate = await cdp("Page.addScriptToEvaluateOnNewDocument", { source: "localStorage.clear()" });
   await cdp("Page.navigate", { url: app + "/tasks/today?keep=design" });
   await wait("document.querySelector('#access-password')!==null"); assert.equal(calls.length, 0);
@@ -265,10 +297,15 @@ try {
     await fill("#settings-theme", theme); await click("Зберегти");
     await cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: theme === "dark" ? "light" : "dark" }] });
     await wait(`getComputedStyle(document.documentElement).colorScheme===${JSON.stringify(theme === "system" ? "dark" : theme)}`);
+    const effectiveTheme = theme === "system" ? "dark" : theme;
+    await assertThemeColor(evaluate, effectiveTheme, "div:has(> main)", "backgroundColor", "shell-page");
+    await assertThemeColor(evaluate, effectiveTheme, "h1", "color", "text");
+    await assertThemeColor(evaluate, effectiveTheme, "#settings-theme", "backgroundColor", "input");
   }
   passed.push("Explicit light/dark overrides opposite system preference; system theme follows emulated OS");
-  assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ passed, apiCalls: calls.length, errors, screenshots, zoom: "Native 200% browser zoom is not exposed by this CDP harness; viewport resizing is not a zoom test." }, null, 2));
+  }
+  await settleApi(); assert.deepEqual(errors, []);
+  console.log(JSON.stringify({ passed, apiCalls: calls.length, errors, confirmedCancelledInterceptions: cancelledInterceptions.length, screenshots, zoom: "Native 200% browser zoom is not exposed by this CDP harness; viewport resizing is not a zoom test." }, null, 2));
 } catch (error) {
   console.error(JSON.stringify({ passed, errors, calls: calls.slice(-6), state: await evaluate("({url:location.href,text:document.querySelector('main')?.innerText.slice(0,700),dialogs:[...document.querySelectorAll('dialog[open]')].map(e=>e.innerText)})") }, null, 2));
   throw error;
