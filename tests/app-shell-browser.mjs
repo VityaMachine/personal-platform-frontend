@@ -84,8 +84,8 @@ async function fill(selector, value) {
   await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});const p=e.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(p,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
 }
 async function click(label) {
-  await wait(`(()=>{const root=[...document.querySelectorAll('dialog[open]')].at(-1)||document;const e=[...root.querySelectorAll('button')].find(e=>e.textContent.trim()===${JSON.stringify(label)});return !!e&&!e.disabled})()`);
-  await evaluate(`(()=>{const root=[...document.querySelectorAll('dialog[open]')].at(-1)||document;const e=[...root.querySelectorAll('button')].find(e=>e.textContent.trim()===${JSON.stringify(label)});if(!e||e.disabled)throw Error('Unavailable button');e.click();})()`);
+  await wait(`(()=>{const root=[...document.querySelectorAll('dialog[open]')].at(-1)||document;const e=[...root.querySelectorAll('button')].find(e=>(e.getAttribute('aria-label')===${JSON.stringify(label)}||e.textContent.trim()===${JSON.stringify(label)}));return !!e&&!e.disabled})()`);
+  await evaluate(`(()=>{const root=[...document.querySelectorAll('dialog[open]')].at(-1)||document;const e=[...root.querySelectorAll('button')].find(e=>(e.getAttribute('aria-label')===${JSON.stringify(label)}||e.textContent.trim()===${JSON.stringify(label)}));if(!e||e.disabled)throw Error('Unavailable button');e.click();})()`);
 }
 async function escape() {
   await cdp("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
@@ -97,15 +97,27 @@ const taskCard = `[data-task-id="${futureTask.id}"]`;
 const areasButton = "[...document.querySelectorAll('nav button')].find(e=>e.textContent.trim()==='Сфери')";
 const logoutButton = "[...document.querySelectorAll('nav button')].find(e=>e.textContent.trim()==='Вийти')";
 const mutationCount = () => calls.filter(call => ["POST", "PATCH", "DELETE"].includes(call.method)).length;
+async function menu() {
+  if (await evaluate("matchMedia('(max-width:760px)').matches&&!document.querySelector('#mobile-navigation')")) {
+    await evaluate("document.querySelector('button[aria-label=\"Відкрити меню\"]').click()");
+    await wait("document.querySelector('#mobile-navigation')!==null");
+  }
+}
 async function link(label) {
+  await menu();
   await evaluate(`(()=>{const e=[...document.querySelectorAll('nav a')].find(e=>e.textContent.trim().endsWith(${JSON.stringify(label)}));if(!e)throw Error('Missing link');e.click();})()`);
 }
 async function active(label) {
+  await menu();
   await wait(`document.querySelector('nav a[aria-current="page"]')?.textContent.trim().endsWith(${JSON.stringify(label)})`);
   assert.equal(await evaluate("document.querySelectorAll('nav a[aria-current=page]').length"), 1);
   assert.equal(await evaluate("document.querySelectorAll('nav').length"), 1);
+  if (await evaluate("!!document.querySelector('#mobile-navigation')")) {
+    await escape(); await wait("!document.querySelector('#mobile-navigation')");
+  }
 }
 async function openAreas() {
+  await menu();
   await wait(`${areasButton}?.getAttribute('aria-disabled')==='false'`);
   await click("Сфери");
   await wait("document.querySelector('dialog[open]')?.innerText.includes('Mock Area')");
@@ -114,7 +126,7 @@ async function openAreas() {
 async function closeAreas() {
   await evaluate("document.querySelector('button[aria-label=\"Закрити керування сферами\"]').click()");
   await wait("!document.querySelector('dialog[open]')");
-  await wait(`document.activeElement===${areasButton}`);
+  await wait(`document.activeElement===(matchMedia('(max-width:760px)').matches?document.querySelector('button[aria-label="Відкрити меню"]'):${areasButton})`);
 }
 async function retryList(route, expected) {
   await closeAreas();
@@ -140,6 +152,7 @@ async function removeArea() {
 }
 try {
   await cdp("Runtime.enable"); await cdp("Page.enable");
+  await cdp("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
   await cdp("Fetch.enable", { patterns: [{ urlPattern: "*", requestStage: "Request" }] });
   const initial = await cdp("Page.addScriptToEvaluateOnNewDocument", {
     source: "localStorage.removeItem('personal-platform.access-password');localStorage.removeItem('personal-platform.settings')",
@@ -156,6 +169,16 @@ try {
   await wait(`document.querySelector('${taskCard}')!==null`);
   await active("Поточні задачі");
   passed.push("Access gate: no shell, screen or Areas API before login");
+
+  assert.deepEqual(await evaluate("[...document.querySelectorAll('#tasks-navigation a')].map(e=>e.textContent)"),
+    ["Сьогодні", "Поточні задачі", "Беклог", "Архів", "Повторювані задачі"]);
+  await evaluate("document.querySelector('[aria-controls=tasks-navigation]').click()");
+  await click("Оновити список");
+  await wait("document.querySelector('section[aria-labelledby=tasks-heading]')?.getAttribute('aria-busy')==='false'");
+  assert.equal(await evaluate("document.querySelector('#tasks-navigation').hidden"), true);
+  assert.equal(await evaluate("[...document.querySelectorAll('#tasks-navigation a')].every(e=>e.getClientRects().length===0)"), true);
+  await evaluate("document.querySelector('[aria-controls=tasks-navigation]').click()");
+  passed.push("Canonical menu order; Tasks collapse hides links and survives rerender");
 
   await openAreas(); await click("Перейменувати"); await fill("dialog[open] input", "Renamed Area");
   holdMutation = true; failList = "/tasks";
@@ -310,6 +333,76 @@ try {
     assert.equal(await evaluate("document.body.style.overflow"), "");
   }
   passed.push("1440/390 light/dark: three shell screens fit, Task scrolling works, Areas traps focus and restores opener/body overflow");
+
+  await menu();
+  assert.equal(await evaluate("document.body.style.overflow"), "hidden");
+  for (let i = 0; i < 24; i++) {
+    await cdp("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9, modifiers: i < 12 ? 0 : 8 });
+    await cdp("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+    assert.equal(await evaluate("document.querySelector('#mobile-navigation').contains(document.activeElement)"), true);
+  }
+  await escape(); await wait("!document.querySelector('#mobile-navigation')");
+  assert.equal(await evaluate("document.activeElement.getAttribute('aria-label')"), "Відкрити меню");
+  await menu();
+  await cdp("Input.dispatchMouseEvent", { type: "mousePressed", x: 380, y: 200, button: "left", clickCount: 1 });
+  await cdp("Input.dispatchMouseEvent", { type: "mouseReleased", x: 380, y: 200, button: "left", clickCount: 1 });
+  await wait("!document.querySelector('#mobile-navigation')");
+  await menu(); await click("Закрити меню");
+  await wait("!document.querySelector('#mobile-navigation')");
+  await menu();
+  await cdp("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await wait("!document.querySelector('#mobile-navigation')");
+  assert.equal(await evaluate("document.body.style.overflow"), "");
+  await cdp("Emulation.setDeviceMetricsOverride", { width: 390, height: 900, deviceScaleFactor: 1, mobile: false });
+  assert.equal(await evaluate("document.querySelector('#mobile-navigation')===null"), true);
+  await openAreas();
+  await cdp("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await closeAreas();
+  await openAreas();
+  await cdp("Emulation.setDeviceMetricsOverride", { width: 390, height: 900, deviceScaleFactor: 1, mobile: false });
+  await closeAreas();
+  passed.push("Mobile menu: Tab/Shift+Tab, Escape, backdrop, close button, focus return; resize with menu and Areas open");
+
+  await link("Налаштування"); await active("Налаштування");
+  await fill("#settings-zone", "Pacific/Honolulu");
+  await link("Поточні задачі");
+  await wait("document.querySelector('dialog[open]')!==null");
+  await click("Залишитися"); await wait("!document.querySelector('dialog[open]')");
+  assert.equal(await evaluate("document.querySelector('#settings-zone').value"), "Pacific/Honolulu");
+  await link("Поточні задачі"); await click("Вийти без збереження");
+  await wait("!document.querySelector('#mobile-navigation')");
+  await active("Поточні задачі");
+  passed.push("Mobile dirty Settings: stay retains menu/draft; confirmed navigation closes menu");
+
+  await wait(`${areasButton}===undefined || ${areasButton}?.getAttribute('aria-disabled')==='false'`);
+  await wait(`document.querySelector('${taskCard}')!==null`);
+  if (await evaluate(`document.querySelector('${taskCard} button[aria-expanded]').getAttribute('aria-expanded')==='false'`)) {
+    await evaluate(`document.querySelector('${taskCard} button[aria-expanded]').click()`);
+  }
+  holdMutation = true; releaseMutation = undefined;
+  await evaluate(`document.querySelector('${taskCard} input[aria-label$="підзадачу: Mock Child"]').click()`);
+  await wait(`document.querySelector('${taskCard}').getAttribute('aria-busy')==='true'`);
+  await link("Налаштування");
+  assert.equal(await evaluate("!!document.querySelector('#mobile-navigation')"), true);
+  assert.equal(await evaluate("location.pathname"), "/tasks");
+  for (let i = 0; i < 100 && !releaseMutation; i++) await delay(50);
+  assert(releaseMutation); holdMutation = false; releaseMutation();
+  await escape(); await wait("!document.querySelector('#mobile-navigation')");
+  await wait(`document.querySelector('${taskCard}').getAttribute('aria-busy')==='false'`);
+  passed.push("Mobile pending mutation keeps blocked navigation/menu and Task workspace intact");
+
+  for (const width of [1440, 390, 720]) {
+    await cdp("Emulation.setDeviceMetricsOverride", { width, height: 400, deviceScaleFactor: 1, mobile: false });
+    await menu();
+    assert.equal(await evaluate("document.documentElement.scrollWidth<=innerWidth"), true);
+    assert.equal(await evaluate("(()=>{const n=document.querySelector('nav');const f=n.lastElementChild;const m=n.firstElementChild;return f.getBoundingClientRect().top>=m.getBoundingClientRect().bottom})()"), true);
+    await active("Поточні задачі");
+  }
+  passed.push("Low 1440/390/720 × 400 viewports: footer never overlaps modules, no horizontal overflow (720 models 200% layout)");
+  await menu(); await click("Вийти");
+  await wait("document.querySelector('#access-password')!==null");
+  assert.equal(await evaluate("document.querySelector('nav')===null"), true);
+  passed.push("Mobile logout returns to access gate");
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ passed, apiCalls: calls.length, errors }, null, 2));
 } catch (error) {

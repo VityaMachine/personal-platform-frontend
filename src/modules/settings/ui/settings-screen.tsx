@@ -102,8 +102,8 @@ function SettingsForm() {
     setNotice(persisted ? "Налаштування збережено в цьому браузері." : "Налаштування застосовано лише в поточній вкладці: сховище браузера недоступне.");
   }
 
-  return <AppShell activeItem="settings" query={query} areasDisabled={dialogOpen || saving} logoutDisabled={dialogOpen || saving || confirming} onNavigate={(href) => {
-    if (!href.startsWith("/settings")) request(() => router.push(href, { scroll: false }));
+  return <AppShell activeItem="settings" query={query} areasDisabled={dialogOpen || saving} logoutDisabled={dialogOpen || saving || confirming} onNavigate={(href, _destination, accepted) => {
+    if (!href.startsWith("/settings")) request(() => { accepted(); router.push(href, { scroll: false }); });
   }} onManageAreas={(open) => { request(open); }}>
     <header className={shellStyles.header}><h1 className={shellStyles.title}>Налаштування</h1></header>
     <div className={local.panel}>

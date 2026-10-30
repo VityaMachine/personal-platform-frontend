@@ -7,10 +7,12 @@
 }
 
 .sidebar {
+  display: flex;
+  flex-direction: column;
   position: sticky;
   top: 0;
   align-self: start;
-  height: 100svh;
+  height: 100dvh;
   padding: 32px 16px;
   border-right: 1px solid var(--border);
   background: var(--surface);
@@ -24,7 +26,7 @@
   color: var(--text);
   font-size: 1.125rem;
   font-weight: 700;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
   text-decoration: none;
   overflow-wrap: anywhere;
 }
@@ -45,6 +47,21 @@
 .navItem[aria-current="page"], .navItem:hover {
   background: var(--nav);
 }
+
+.navItem[aria-current="page"] { box-shadow: inset 3px 0 var(--accent); }
+.navigation { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 24px; }
+.modules { flex-shrink: 0; }
+.moduleHeading { justify-content: space-between; color: var(--text); }
+.submenu { margin-left: 12px; border-left: 1px solid var(--border); padding-left: 4px; }
+.submenu[hidden] { display: none; }
+.navFooter { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.menuToggle { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 1.5rem; cursor: pointer; }
+.menuToggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.mobileHeader { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.mobileHeader .brand { margin: 0; }
+.backdrop { position: fixed; inset: 0; z-index: 50; background: rgb(0 0 0 / 45%); }
+.drawer { display: flex; flex-direction: column; gap: 24px; width: min(320px, calc(100% - 40px)); height: 100dvh; overflow-y: auto; padding: 16px; background: var(--surface); box-shadow: 8px 0 32px rgb(0 0 0 / 20%); }
+.drawerHeader { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 
 .navButton {
   width: 100%;
@@ -135,19 +152,6 @@
 @media (max-width: 760px) {
   .shell {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .sidebar {
-    position: static;
-    height: auto;
-    padding: 20px;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .brand {
-    margin: 0 0 16px;
-  }
-  .navItem {
-    width: fit-content;
   }
   .main {
     padding: 28px 20px;

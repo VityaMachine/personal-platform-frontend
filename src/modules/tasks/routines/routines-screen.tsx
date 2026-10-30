@@ -64,8 +64,8 @@ function RoutinesScreen() {
       }
     } finally { if (editRequest.current === controller) editRequest.current = null; }
   }
-  return <AppShell activeItem="routines" query={params.toString()} areasDisabled={directory.pending || creating || dialogOpen || Boolean(editLoad?.pending)} onNavigate={(href) => {
-    if (!directory.pending && !creating && !modalLock.current && !document.querySelector("dialog[open]")) router.push(href, { scroll: false });
+  return <AppShell activeItem="routines" query={params.toString()} areasDisabled={directory.pending || creating || dialogOpen || Boolean(editLoad?.pending)} onNavigate={(href, _destination, accepted) => {
+    if (!directory.pending && !creating && !modalLock.current && !document.querySelector("dialog[open]")) { accepted(); router.push(href, { scroll: false }); }
   }} onManageAreas={(open) => {
     if (!directory.pending && !modalLock.current && !document.querySelector("dialog[open]")) { modalLock.current = true; open(); }
   }} onAreasClose={() => { modalLock.current = false; }}>

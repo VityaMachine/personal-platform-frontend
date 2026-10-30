@@ -67,10 +67,11 @@ function TasksPage() {
   }
 
   return (
-    <AppShell activeItem={section} query={searchParams.toString()} areasDisabled={busy || creating || dialogOpen || mutations.hasLockedTasks} onNavigate={(href, destination) => {
+    <AppShell activeItem={section} query={searchParams.toString()} areasDisabled={busy || creating || dialogOpen || mutations.hasLockedTasks} onNavigate={(href, destination, accepted) => {
       if (creating || dialogOpen || document.querySelector("dialog[open]")) return;
       // Task section changes keep their existing deferred application in this screen.
       if ((destination === "settings" || destination === "routines") && (busy || mutations.hasLockedTasks)) return;
+      accepted();
       router.push(href, { scroll: false });
     }} onManageAreas={(open) => {
       if (!busy && !creating && !mutations.hasLockedTasks && !document.querySelector("dialog[open]")) open();
