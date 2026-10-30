@@ -88,8 +88,15 @@ async function ready(section) {
   await wait("document.querySelector('section[aria-labelledby=tasks-heading]')?.getAttribute('aria-busy')==='false'");
 }
 async function go(section) {
+  if (await evaluate("matchMedia('(max-width:760px)').matches&&!document.querySelector('#mobile-navigation')")) {
+    await wait("document.querySelector('button[aria-label=\"Відкрити меню\"]')!==null");
+    await evaluate("document.querySelector('button[aria-label=\"Відкрити меню\"]').click()");
+    await wait("document.querySelector('#mobile-navigation')!==null");
+  }
+  await wait("document.querySelector('nav')!==null");
   await evaluate(`document.querySelector('nav a[href^="${sections[section]}?"]')?.click() || document.querySelector('nav a[href="${sections[section]}"]')?.click()`);
   await ready(section);
+  await wait("!document.querySelector('#mobile-navigation')");
 }
 async function navigate(url) { await cdp("Page.navigate", { url: app + url }); }
 
@@ -115,7 +122,8 @@ try {
   }
   passed.push("HTTP: 11 legacy URL cases return temporary 307 directly to a nonredirecting canonical target");
 
-  await cdp("Runtime.enable"); await cdp("Page.enable");
+  await cdp("Runtime.enable"); await cdp("Page.enable"); await cdp("Page.bringToFront");
+  await cdp("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
   await cdp("Network.enable");
   await cdp("Network.setBlockedURLs", { urlPatterns: [
     { urlPattern: `${app}/*`, block: false }, { urlPattern: "http://mock.invalid/*", block: false },

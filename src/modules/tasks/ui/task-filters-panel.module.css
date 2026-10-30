@@ -30,6 +30,12 @@
   color: var(--muted);
   font-size: 0.875rem;
 }
+.today { padding: 12px 14px; border-radius: 9px; }
+.today .controls { grid-template-columns: minmax(160px, 1.8fr) repeat(3, minmax(110px, 1fr)) minmax(150px, 1.2fr) auto; gap: 8px; }
+.today .controls > label { font-size: 0; gap: 0; }
+.today .controls input, .today .controls select { min-width: 0; width: 100%; min-height: 40px; margin-top: 0; padding: 8px 10px; border-radius: 6px; font-size: .8125rem; background: var(--input); }
+.today .reset { min-height: 40px; padding: 8px 10px; font-size: .8125rem; }
+.today .count { margin-top: 8px; font-size: .75rem; }
 
 @media (max-width: 1300px) {
   .controls {
@@ -41,6 +47,8 @@
   .reset {
     justify-self: start;
   }
+  .today .controls { grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); }
+  .today .search { grid-column: auto; }
 }
 
 @media (max-width: 540px) {
@@ -57,4 +65,7 @@
   .filterBody { display: none; }
   .filterBody.expanded { display: block; margin-top: 12px; }
   .count { margin-top: 8px; }
+  .today .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .today .search, .today .area, .today .sort { grid-column: 1 / -1; }
+  .today .controls input, .today .controls select, .today .reset { min-height: 44px; font-size: .875rem; }
 }

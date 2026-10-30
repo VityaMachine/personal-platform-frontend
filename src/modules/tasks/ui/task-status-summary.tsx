@@ -3,10 +3,12 @@ import { summarizeTaskStatuses } from "@/modules/tasks/model/task-status-summary
 import { statusBarPercentages } from "@/modules/tasks/model/status-bar-percentages";
 import styles from "./task-status-summary.module.css";
 
-export function TaskStatusSummary({ tasks, loading, error }: {
+export function TaskStatusSummary({ tasks, loading, error, layout }: {
+  layout?: "today";
   tasks: readonly Task[]; loading: boolean; error: boolean;
 }) {
-  if (loading || (error && tasks.length === 0)) return <section className={styles.summary} aria-label="Підсумок статусів">
+  const className = `${styles.summary} ${layout === "today" ? styles.today : ""}`;
+  if (loading || (error && tasks.length === 0)) return <section className={className} aria-label="Підсумок статусів">
     <p role="status" className={styles.pending}>{loading ? "Завантаження підсумку…" : "Підсумок недоступний: список не завантажено."}</p>
   </section>;
 
@@ -18,12 +20,12 @@ export function TaskStatusSummary({ tasks, loading, error }: {
     { id: "done", label: "Виконано", count: counts.done },
   ];
   const percentages = statusBarPercentages(groups.map((group) => group.count));
-  return <section className={styles.summary} aria-label="Підсумок статусів">
+  return <section className={className} aria-label="Підсумок статусів">
     <div className={styles.counters}>
       <p className={styles.total}>Усього задач <strong>{counts.total}</strong></p>
       <dl className={styles.groups}>
-        {groups.map((group) => <div key={group.id} className={styles.group}>
-          <dt>{group.label}</dt><dd>{group.count}</dd>
+        {groups.map((group, index) => <div key={group.id} className={styles.group} data-category={group.id}>
+          <dt>{group.label}</dt><dd>{group.count}{layout === "today" && <span className={styles.legendPercent}> · {percentages[index]}%</span>}</dd>
         </div>)}
       </dl>
     </div>

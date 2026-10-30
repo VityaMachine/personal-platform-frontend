@@ -9,7 +9,8 @@ import { useAreas } from "../../../entities/areas/ui";
 import styles from "./task-filters-panel.module.css";
 import { useId, useState } from "react";
 
-export function TaskFiltersPanel({ filters, onChange, onReset, disabled, total, found, loading, error }: {
+export function TaskFiltersPanel({ filters, onChange, onReset, disabled, total, found, loading, error, layout }: {
+  layout?: "today";
   filters: TaskFilters; onChange: (change: Partial<TaskFilters>) => void; onReset: () => void;
   disabled: boolean; total: number; found: number; loading: boolean; error: boolean;
 }) {
@@ -22,7 +23,7 @@ export function TaskFiltersPanel({ filters, onChange, onReset, disabled, total, 
     const normalized = parseTaskFilters(new URLSearchParams({ [key]: value }));
     onChange({ [key]: normalized[key] });
   }
-  return <section className={styles.panel} aria-label="Пошук, фільтри й сортування задач">
+  return <section className={`${styles.panel} ${layout === "today" ? styles.today : ""}`} aria-label="Пошук, фільтри й сортування задач">
     <button type="button" className={`${uiStyles.secondaryButton} ${styles.disclosure}`} aria-expanded={expanded}
       aria-controls={controlsId} onClick={() => setExpanded((value) => !value)}>
       {expanded ? "Згорнути фільтри" : `Пошук і фільтри · активних умов: ${activeCount}`}

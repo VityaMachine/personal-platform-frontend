@@ -7,6 +7,7 @@ import { createContext, useContext, useRef, useState, useSyncExternalStore, useE
 import { browserAccessStorage, createAppAccessStore } from "@/application/access/model/app-access";
 import { useGuardedLeave } from "../../../shared/navigation/use-history-traversal-guard";
 import styles from "./app-access.module.css";
+import { ShellIcon } from "../../shell/shell-icon";
 
 const AccessContext = createContext<(() => void) | null>(null);
 
@@ -54,5 +55,5 @@ export function LogoutButton({ disabled = false }: { disabled?: boolean }) {
   return <button type="button" className={`${shellStyles.navItem} ${shellStyles.navButton}`} disabled={disabled} onClick={(event) => {
     if (!logout || document.querySelector("dialog[open]")) return;
     leave(logout, event.currentTarget);
-  }}>Вийти</button>;
+  }}><ShellIcon name="logout" />Вийти</button>;
 }

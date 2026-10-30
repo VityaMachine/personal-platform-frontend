@@ -7,6 +7,7 @@ import { taskNavigationHrefs, taskHref, cleanTaskQuery } from "@/modules/tasks/r
 import { AreasModal, useAreas } from "../../entities/areas/ui";
 import { LogoutButton } from "../access/ui/app-access";
 import styles from "./app-shell.module.css";
+import { PlatformMark, ShellIcon } from "./shell-icon";
 
 export type AppNavigationItem = "current" | "today" | "backlog" | "archive" | "routines" | "settings";
 const mobileQuery = "(max-width: 760px)";
@@ -16,7 +17,8 @@ const subscribeMobile = (notify: () => void) => {
   return () => media.removeEventListener("change", notify);
 };
 
-export function AppShell({ children, activeItem, query, areasDisabled, logoutDisabled = areasDisabled, onManageAreas, onAreasClose, onNavigate }: {
+export function AppShell({ children, contentClassName = "", activeItem, query, areasDisabled, logoutDisabled = areasDisabled, onManageAreas, onAreasClose, onNavigate }: {
+  contentClassName?: string;
   children: ReactNode; activeItem: AppNavigationItem; query: string; areasDisabled: boolean; logoutDisabled?: boolean;
   onManageAreas: (open: () => void) => void; onAreasClose?: () => void;
   onNavigate: (href: string, destination: AppNavigationItem, accepted: () => void) => void;
@@ -55,7 +57,8 @@ export function AppShell({ children, activeItem, query, areasDisabled, logoutDis
     <div className={styles.modules}>
       <button type="button" className={`${styles.navItem} ${styles.navButton} ${styles.moduleHeading}`}
         aria-expanded={expanded} aria-controls="tasks-navigation" onClick={() => setExpanded(!expanded)}>
-        Задачі <span aria-hidden="true">{expanded ? "⌃" : "⌄"}</span>
+        <ShellIcon name="tasks" className={styles.moduleIcon} /><span>Задачі</span>
+        <ShellIcon name="chevron" className={styles.moduleChevron} />
       </button>
       <div id="tasks-navigation" className={styles.submenu} hidden={!expanded}>
         {items.map(({ key, label, href }) => <Link key={key} className={styles.navItem} href={href} scroll={false}
@@ -70,19 +73,19 @@ export function AppShell({ children, activeItem, query, areasDisabled, logoutDis
             areas.reload();
             setAreasOpener(opener);
           });
-        }}>Сфери</button>
+        }}><ShellIcon name="areas" />Сфери</button>
     </div>
     <div className={styles.navFooter}>
       <Link className={styles.navItem} href={settingsHref} scroll={false} aria-current={settingsPage ? "page" : undefined}
         aria-disabled={!settingsPage && areasDisabled} onClick={(event) => {
           if (settingsPage) { event.preventDefault(); closeMenu(); }
           else navigate(event, settingsHref, "settings");
-        }}>Налаштування</Link>
+        }}><ShellIcon name="settings" />Налаштування</Link>
       <LogoutButton disabled={logoutDisabled || areasOpener !== null} />
     </div>
   </nav>;
   const brand = <Link className={styles.brand} href={hrefs.current} scroll={false}
-    onClick={(event) => navigate(event, hrefs.current, "current")}>Personal Platform</Link>;
+    onClick={(event) => navigate(event, hrefs.current, "current")}><PlatformMark /><span>Personal Platform</span></Link>;
 
   return <div className={`${styles.shell} ${settingsPage ? "" : styles.tasksShell}`}>
     {mobile ? <header className={styles.mobileHeader} inert={menuOpen}>
@@ -91,7 +94,7 @@ export function AppShell({ children, activeItem, query, areasDisabled, logoutDis
         onClick={() => setMenuOpen(true)}>☰</button>
     </header> : <aside className={styles.sidebar}>{brand}{navigation}</aside>}
     {mobile && menuOpen && <MobileMenu onClose={closeMenu} opener={menuButton}>{navigation}</MobileMenu>}
-    <main inert={mobile && menuOpen} className={`${styles.main} ${settingsPage ? "" : styles.tasksMain}`}>{children}</main>
+    <main inert={mobile && menuOpen} className={`${styles.main} ${settingsPage ? "" : styles.tasksMain} ${contentClassName}`}>{children}</main>
     {areasOpener && <AreasModal opener={areasOpener} onClose={() => {
       setAreasOpener(null); onAreasClose?.();
       requestAnimationFrame(() => (window.matchMedia(mobileQuery).matches ? menuButton.current : desktopAreas.current)?.focus());

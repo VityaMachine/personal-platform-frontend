@@ -21,6 +21,7 @@ import { SkipTaskDialog } from "./skip-task-dialog";
 import type { TaskMutationState } from "../hooks/use-task-mutations";
 
 type Props = {
+  layout?: "today";
   task: Task;
   disabled: boolean;
   mutation?: TaskMutationState;
@@ -57,7 +58,7 @@ function TaskDate({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, onBeginEdit, onEndEdit, onEdit, onBeginStatusDialog, onEndStatusDialog, onStatusChange, expanded, onToggleSubtasks, onToggle, onDelete, onArchive }: Props) {
+export function TaskCard({ layout, task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, onBeginEdit, onEndEdit, onEdit, onBeginStatusDialog, onEndStatusDialog, onStatusChange, expanded, onToggleSubtasks, onToggle, onDelete, onArchive }: Props) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [detailsOpener, setDetailsOpener] = useState<HTMLButtonElement | null>(null);
   const [deleting, setDeleting] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
@@ -94,7 +95,7 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
   );
 
   return (
-    <li className={`${taskStyles.task} ${completed ? taskStyles.completed : ""}`} data-task-id={task.id} data-has-subtasks={task.subtasks.length > 0} aria-busy={Boolean(mutation?.pending)}>
+    <li className={`${taskStyles.task} ${completed ? taskStyles.completed : ""} ${layout === "today" ? taskStyles.todayCard : ""}`} data-task-id={task.id} data-has-subtasks={task.subtasks.length > 0} aria-busy={Boolean(mutation?.pending)}>
       <div className={taskStyles.taskHeader}>
         {task.subtasks.length > 0 && (
           <button
@@ -157,13 +158,14 @@ export function TaskCard({ task, disabled, mutation, retryDisabled, onRetryRefre
               {mutation.refreshRequired && <button type="button" className={uiStyles.secondaryButton} disabled={retryDisabled || Boolean(mutation.pending)} onClick={onRetryRefresh}>Повторити завантаження</button>}
             </div>
           )}
-          <TaskTimeMetrics summary={task.summary} />
+          {layout === "today" ? <details className={taskStyles.todayTime}><summary>Показники часу</summary><TaskTimeMetrics summary={task.summary} /></details> : <TaskTimeMetrics summary={task.summary} />}
           {canceled && task.cancellationNote && (
             <p className={taskStyles.cancellationNote}>Причина скасування: {task.cancellationNote}</p>
           )}
-          {task.subtasks.length === 0 && addSubtaskButton}
+          {layout !== "today" && task.subtasks.length === 0 && addSubtaskButton}
         </div>
         <div className={taskStyles.taskActions}>
+          {layout === "today" && task.subtasks.length === 0 && addSubtaskButton}
           {!archived && task.routineOccurrence && !skipped && <button className={uiStyles.secondaryButton} type="button" aria-disabled={disabled}
             onClick={(event) => { if (!disabled && onBeginStatusDialog()) setSkipDialog({ task, opener: event.currentTarget }); }}>Пропустити</button>}
           <button className={uiStyles.secondaryButton} type="button" disabled={disabled} onClick={(event) => {

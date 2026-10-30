@@ -398,7 +398,7 @@ try {
     assert.equal(await evaluate("(()=>{const n=document.querySelector('nav');const f=n.lastElementChild;const m=n.firstElementChild;return f.getBoundingClientRect().top>=m.getBoundingClientRect().bottom})()"), true);
     await active("Поточні задачі");
   }
-  passed.push("Low 1440/390/720 × 400 viewports: footer never overlaps modules, no horizontal overflow (720 models 200% layout)");
+  passed.push("Low 1440/390/720 × 400 viewports: footer never overlaps modules, no horizontal overflow (layout checks only, not native browser zoom)");
   await menu(); await click("Вийти");
   await wait("document.querySelector('#access-password')!==null");
   assert.equal(await evaluate("document.querySelector('nav')===null"), true);

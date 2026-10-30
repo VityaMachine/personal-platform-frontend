@@ -19,6 +19,8 @@ import { TaskFiltersPanel } from "../ui/task-filters-panel";
 import { CreateTaskModal } from "../ui/create-task-modal";
 import { TaskCard } from "../ui/task-card";
 import { AppShell } from "../../../application/shell/app-shell";
+import todayStyles from "../ui/today.module.css";
+import { TodayDate } from "../ui/today-date";
 
 export default function Home() {
   return <Suspense fallback={<p role="status" className={uiStyles.loading}>Завантаження задач…</p>}><TasksPage /></Suspense>;
@@ -67,7 +69,7 @@ function TasksPage() {
   }
 
   return (
-    <AppShell activeItem={section} query={searchParams.toString()} areasDisabled={busy || creating || dialogOpen || mutations.hasLockedTasks} onNavigate={(href, destination, accepted) => {
+    <AppShell contentClassName={today ? todayStyles.main : ""} activeItem={section} query={searchParams.toString()} areasDisabled={busy || creating || dialogOpen || mutations.hasLockedTasks} onNavigate={(href, destination, accepted) => {
       if (creating || dialogOpen || document.querySelector("dialog[open]")) return;
       // Task section changes keep their existing deferred application in this screen.
       if ((destination === "settings" || destination === "routines") && (busy || mutations.hasLockedTasks)) return;
@@ -76,14 +78,18 @@ function TasksPage() {
     }} onManageAreas={(open) => {
       if (!busy && !creating && !mutations.hasLockedTasks && !document.querySelector("dialog[open]")) open();
     }}>
-      <div className={shellStyles.tasksToolbar}>
-        <header className={shellStyles.header}>
+      <div className={`${shellStyles.tasksToolbar} ${today ? todayStyles.toolbar : ""}`}>
+        <header className={`${shellStyles.header} ${today ? todayStyles.header : ""}`}>
           <div>
             <h1 id="tasks-heading" className={shellStyles.title}>{archived ? "Архів" : today ? "Сьогодні" : backlog ? "Беклог" : "Поточні задачі"}</h1>
+            {today && <TodayDate timeZone={context.timezone} />}
             {backlog && <p className={shellStyles.counter}>Задачі, які потребують нового плану: без актуального планування чи майбутнього дедлайну</p>}
           </div>
-          <div className={shellStyles.taskHeaderActions}>
-            <button type="button" className={uiStyles.secondaryButton} disabled={busy || filtersBlocked} onClick={reload}>Оновити список</button>
+          <div className={`${shellStyles.taskHeaderActions} ${today ? todayStyles.actions : ""}`}>
+            <button type="button" className={uiStyles.secondaryButton} disabled={busy || filtersBlocked} onClick={reload}>
+              {today && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 7v5h-5M20 12a8 8 0 1 0-2 5M20 7l-2-2" /></svg>}
+              Оновити список
+            </button>
             {!archived && <button ref={createButtonRef} className={uiStyles.primaryButton} type="button" disabled={busy} onClick={() => setCreating(true)}>+ Нова задача</button>}
           </div>
         </header>
@@ -116,9 +122,9 @@ function TasksPage() {
           {(navigationDeferred || view.deferred) && <p role="status" className={uiStyles.notice}>Перехід та зміну умов списку буде застосовано після закриття форми та завершення поточних змін.</p>}
         </div>
 
-        <TaskStatusSummary tasks={tasks} loading={loading} error={Boolean(loadError)} />
+        <TaskStatusSummary layout={today ? "today" : undefined} tasks={tasks} loading={loading} error={Boolean(loadError)} />
 
-        <TaskFiltersPanel filters={view.filters} onChange={view.change} onReset={view.reset} disabled={filtersBlocked}
+        <TaskFiltersPanel layout={today ? "today" : undefined} filters={view.filters} onChange={view.change} onReset={view.reset} disabled={filtersBlocked}
           total={tasks.length} found={selectedTasks.length} loading={loading} error={Boolean(loadError)} />
       </div>
 
@@ -143,15 +149,16 @@ function TasksPage() {
           <button type="button" className={uiStyles.secondaryButton} disabled={filtersBlocked} onClick={view.reset}>Скинути</button>
         </div>}
         {shownTasks.length > 0 && (
-          <ul className={taskStyles.taskList}>
+          <ul className={`${taskStyles.taskList} ${today ? todayStyles.list : ""}`}>
             {/* Keep every keyed card under the same parent across group moves. */}
             {groupTaskList(shownTasks, section).flatMap((group) => [
-              ...(group.title ? [<li key={`group-${group.id}`} className={taskStyles.taskGroupHeading} role="presentation">
+              ...(group.title ? [<li key={`group-${group.id}`} className={`${taskStyles.taskGroupHeading} ${today ? todayStyles.group : ""}`} role="presentation">
                 <h2>{group.title} <span>({group.tasks.length})</span></h2>
               </li>] : []),
               ...group.tasks.map((task) => (
                 <TaskCard
                   key={task.id}
+                  layout={today ? "today" : undefined}
                   task={task}
                   disabled={busy || Boolean(mutations.states[task.id]?.pending || mutations.states[task.id]?.refreshRequired || mutations.states[task.id]?.editing || mutations.states[task.id]?.statusDialog)}
                   mutation={mutations.states[task.id]}
