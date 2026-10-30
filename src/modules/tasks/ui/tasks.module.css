@@ -170,9 +170,7 @@
   padding: 16px 20px;
 }
 
-.task[data-has-subtasks="true"] .taskHeader {
-  grid-template-columns: 44px 24px minmax(0, 1fr) auto;
-}
+
 
 .checkbox, .checkboxSpace {
   width: 24px;
@@ -476,123 +474,64 @@
   text-decoration: line-through;
 }
 
-/* Today changes presentation only; the same keyed card owns every action/dialog. */
-.todayCard { border-radius: 9px; background: var(--surface); }
-.todayCard .taskHeader, .todayCard[data-has-subtasks="true"] .taskHeader {
-  grid-template-columns: 28px 22px minmax(0, 1fr);
-  gap: 4px 10px; padding: 12px 16px 8px; align-items: start;
-}
-.todayCard .taskHeader > .checkbox, .todayCard .taskHeader > .checkboxSpace { grid-column: 2; grid-row: 1; margin-top: 5px; width: 20px; height: 20px; }
-.todayCard .subtaskDisclosure { grid-column: 1; grid-row: 1; width: 28px; height: 32px; }
-.todayCard .taskContent { grid-column: 3; grid-row: 1; display: grid; grid-template-columns: minmax(180px, 1.1fr) minmax(260px, 1.4fr); gap: 4px 18px; align-items: start; }
-.todayCard .taskTitleRow { grid-column: 1; min-height: 30px; gap: 8px; }
-.todayCard .taskTitle { font-size: 1rem; line-height: 1.4; }
-.todayCard .taskDescription { grid-column: 1; margin: 0; font-size: .8125rem; }
-.todayCard .taskContent > p.taskPriority { grid-column: 1; margin: 0; font-size: .75rem; background: transparent; padding: 0; color: var(--muted); }
-.todayCard .taskMetadata { grid-column: 2; grid-row: 1 / span 3; margin: 0; gap: 6px 8px; }
-.todayCard .taskMetadata > .taskPriority { border-radius: 16px; font-size: .75rem; padding: 4px 10px; }
-.todayCard .taskMetadata > .taskPriority[data-priority] { order: -1; }
-.todayCard .taskStatusSelect { min-height: 34px; width: 10rem; border-radius: 6px; font-size: .8125rem; background-color: var(--input); }
-.todayCard .taskStatus[data-status="TODO"] { color: var(--today-status-todo); }
-.todayCard .taskStatus[data-status="IN_PROGRESS"] { color: var(--today-status-progress); }
-.todayCard .taskDetails { flex-basis: 100%; font-size: .75rem; gap: 3px 12px; }
-.todayCard .taskDetails dt { font-weight: 400; }
-.todayCard .taskActions { grid-column: 3; max-width: none; justify-content: flex-end; gap: 4px; border-top: 1px solid var(--card-border); margin-top: 4px; padding-top: 4px; }
-.todayCard .taskActions > button:not([data-task-action]) { min-height: 32px; padding: 4px 8px; font-size: .75rem; border-color: transparent; background: transparent; }
-.todayCard .taskActions > button:not([data-task-action]):hover:not(:disabled):not([aria-disabled="true"]) { background: var(--nav); }
-.todayCard .taskActions > button[aria-label^="Додати підзадачу"] { margin-right: auto; color: var(--accent); }
-.todayCard .subtaskGroup { margin: 0 16px 0 76px; padding: 4px 0 8px; border-radius: 0; background: transparent; }
-.todayCard .nestedSubtaskContainer { grid-template-columns: 22px minmax(0, 1fr) 10rem 5rem 36px 36px; column-gap: 10px; border-left-style: dashed; padding-left: 20px; }
-.todayCard .nestedSubtaskColumns { font-size: .6875rem; padding: 6px 0; }
-.todayCard .nestedSubtaskTitle { font-size: .875rem; }
-.todayCard .nestedSubtaskStatus { min-height: 34px; border-radius: 6px; background: var(--input); font-size: .8125rem; }
-.todayCard .nestedSubtaskDuration { font-size: .8125rem; }
-.todayCard .nestedSubtask .iconButton { width: 36px; height: 36px; }
-.todayCard .nestedSubtask .checkbox { width: 20px; height: 20px; }
-.todayTime { grid-column: 1 / -1; color: var(--muted); font-size: .75rem; }
+.todayCard { background: var(--surface); }
+.todayTime { color: var(--muted); font-size: .75rem; }
 .todayTime > summary { width: fit-content; padding: 4px 0; cursor: pointer; }
 .todayTime > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.todayCard .taskContent > .taskStatus, .todayCard .taskContent > [role="alert"], .todayCard .taskContent > [role="status"], .todayCard .cancellationNote { grid-column: 1 / -1; }
-@container task-card (max-width: 850px) {
-  .todayCard .taskContent { grid-template-columns: minmax(0, 1fr); }
-  .todayCard .taskMetadata { grid-column: 1; grid-row: auto; margin-top: 4px; }
-}
-
+.areaBadge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 12px; background: var(--subtask-bg); color: var(--accent); font-size: .8125rem; max-width: 100%; overflow-wrap: anywhere; }
+.areaBadge svg { width: 16px; height: 16px; flex-shrink: 0; }
+.task .taskHeader { grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px 16px; padding: 10px 18px 6px; }
+.task .taskHeader > .checkbox, .task .taskHeader > .checkboxSpace { margin-top: 7px; width: 22px; height: 22px; }
+.task .taskContent { display: block; }
+.task .taskTitleRow { min-height: 34px; gap: 8px 16px; }
+.task .taskTitle { font-size: 1.125rem; line-height: 1.35; }
+.task .taskActions { grid-column: 3; grid-row: 1; flex-wrap: nowrap; align-items: flex-start; gap: 10px; padding: 0; margin: 0; border: 0; }
+.task .taskStatusSelect { margin-top: 4px; min-height: 30px; width: 9rem; border: 0; border-radius: 7px; font-weight: 600; }
+.task .taskMetadata { margin-top: 2px; }
+.task .taskDetails { gap: 3px 12px; }
+.task .taskDetails dt { font-weight: 400; }
+.task .subtaskDisclosure { display: flex; align-items: center; gap: 12px; width: calc(100% - 28px); min-height: 38px; margin: 2px 14px 0; padding: 8px 18px; border: 0; border-radius: 8px; background: var(--subtask-bg); color: var(--text); font-size: .875rem; font-weight: 600; text-align: left; cursor: pointer; }
+.subtaskDisclosure:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.task .disclosureArrow { transform: rotate(-90deg); }
+.task .subtaskDisclosure[aria-expanded="true"] .disclosureArrow { transform: rotate(0); }
+.task .subtaskDisclosure[aria-expanded="true"] { border-radius: 8px 8px 0 0; }
+.task .subtaskGroup { margin: 0 14px; padding: 0 8px 0 20px; border: 0; border-left: 4px solid var(--accent); border-radius: 0 0 6px 6px; background: var(--subtask-bg); }
+.task .subtaskGroup[hidden] { display: none; }
+.task .nestedSubtaskContainer { grid-template-columns: 24px minmax(0, 1fr) 6rem 9rem 44px; column-gap: 14px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--surface); }
+.task .nestedSubtaskColumns { display: none; }
+.task .nestedSubtask { column-gap: 14px; padding: 2px 0; background: var(--surface); border-color: var(--nested-border); }
+.task .nestedSubtask:first-child { border: 0; border-radius: 8px 8px 0 0; }
+.task .nestedSubtask:last-child { border-radius: 0 0 8px 8px; }
+.task .nestedSubtask > .checkbox, .task .nestedSubtask > .checkboxSpace { grid-column: 1; grid-row: 1; }
+.task .nestedSubtaskTitle { grid-column: 2; grid-row: 1; }
+.task .nestedSubtaskDuration { grid-column: 3; grid-row: 1; }
+.task .nestedSubtaskStatus { grid-column: 4; grid-row: 1; min-height: 30px; border: 0; font-size: .8125rem; }
+.task .nestedSubtask > button { grid-column: 5; grid-row: 1; }
+.task .addSubtaskRow { margin: 0 14px 8px; padding: 2px 18px; background: var(--subtask-bg); border-radius: 0 0 8px 8px; }
+.task .addSubtaskRow:empty { display: none; }
+.task:has(.subtaskDisclosure[aria-expanded="false"]) { padding-bottom: 8px; }
+.task.completed { background: var(--surface); }
+.task.completed .taskTitle { color: var(--text); text-decoration: none; }
 @container task-card (max-width: 660px) {
-  .nestedSubtaskContainer {
-    grid-template-columns: 24px minmax(0, 1fr) 44px 44px;
-    column-gap: 8px;
-  }
-  .nestedSubtaskColumns {
-    display: none;
-  }
-  .nestedSubtask {
-    grid-template-rows: auto auto auto;
-    row-gap: 8px;
-    padding: 12px 0;
-  }
-  .nestedSubtask > .checkbox, .nestedSubtask > .checkboxSpace {
-    grid-column: 1;
-    grid-row: 1;
-    align-self: start;
-  }
-  .nestedSubtaskTitle {
-    grid-column: 2 / -1;
-    grid-row: 1;
-  }
-  .nestedSubtaskStatus {
-    grid-column: 1 / 3;
-    grid-row: 2;
-    min-height: 44px;
-  }
-  .nestedSubtaskDuration {
-    grid-column: 1 / 3;
-    grid-row: 3;
-  }
-  .nestedSubtask > .iconButton {
-    grid-column: 3;
-    grid-row: 2;
-  }
-  .nestedSubtask > .subtaskDeleteAction {
-    grid-column: 4;
-  }
-  .todayCard .nestedSubtaskContainer { grid-template-columns: 24px minmax(0, 1fr) 44px 44px; column-gap: 8px; padding-left: 12px; }
-  .todayCard .nestedSubtask .checkbox { width: 24px; height: 24px; }
-  .todayCard .nestedSubtaskStatus, .todayCard .nestedSubtask .iconButton { min-height: 44px; width: 100%; height: 44px; }
+  .task .taskHeader { grid-template-columns: 24px minmax(0, 1fr) 44px; gap: 6px 10px; padding: 10px; }
+  .task .taskContent { grid-column: 2; grid-row: 1; }
+  .task .taskActions { display: contents; }
+  .task .taskActions > button { grid-column: 3; grid-row: 1; }
+  .task .taskActions > select { grid-column: 2 / 4; grid-row: 2; width: min(100%, 12rem); margin: 0; min-height: 44px; }
+  .task .taskTitle { font-size: 1rem; }
+  .task .taskTitleRow { gap: 6px; }
+  .task .subtaskDisclosure { width: calc(100% - 16px); margin-inline: 8px; padding: 8px 10px; min-height: 44px; }
+  .task .subtaskGroup { margin-inline: 8px; padding: 0 6px; }
+  .task .nestedSubtaskContainer { grid-template-columns: 24px minmax(0, 1fr) 44px; gap: 8px; padding-inline: 8px; }
+  .task .nestedSubtask { row-gap: 4px; padding: 8px 0; }
+  .task .nestedSubtask > .checkbox, .task .nestedSubtask > .checkboxSpace { grid-column: 1; grid-row: 1; align-self: start; margin-top: 8px; }
+  .task .nestedSubtaskTitle { grid-column: 2; grid-row: 1; }
+  .task .nestedSubtask > button { grid-column: 3; grid-row: 1; }
+  .task .nestedSubtaskStatus { grid-column: 1 / 3; grid-row: 2; min-height: 44px; }
+  .task .nestedSubtaskDuration { grid-column: 3; grid-row: 2; font-size: .8125rem; }
+  .task .addSubtaskRow { margin-inline: 8px; padding: 4px 10px; }
 }
 
-@container task-card (max-width: 480px) {
-  .taskHeader {
-    padding: 12px;
-    gap: 6px;
-  }
-  .taskHeader, .task[data-has-subtasks="true"] .taskHeader {
-    grid-template-columns: 24px minmax(0, 1fr);
-  }
-  .task[data-has-subtasks="true"] .taskHeader {
-    grid-template-columns: 36px 24px minmax(0, 1fr);
-  }
-  .subtaskDisclosure {
-    width: 36px;
-  }
-  .taskHeader > .taskActions {
-    grid-column: 2 / -1;
-    justify-self: start;
-  }
-  .task[data-has-subtasks="true"] .taskHeader > .taskActions {
-    grid-column: 3 / -1;
-  }
-  .subtaskGroup {
-    padding: 8px 12px;
-  }
-  .todayCard .taskHeader, .todayCard[data-has-subtasks="true"] .taskHeader { grid-template-columns: 24px 24px minmax(0, 1fr); gap: 4px 6px; padding: 12px 10px 8px; }
-  .todayCard .taskHeader > .checkbox, .todayCard .taskHeader > .checkboxSpace { width: 24px; height: 24px; }
-  .todayCard .taskActions, .todayCard[data-has-subtasks="true"] .taskHeader > .taskActions { grid-column: 1 / -1; justify-content: flex-start; }
-  .todayCard .taskActions > button:not([data-task-action]) { min-height: 44px; padding: 6px 10px; }
-  .todayCard .taskStatusSelect { min-height: 44px; }
-  .todayCard .subtaskGroup { margin: 0 10px; padding: 8px 0; }
-  .todayCard .taskMetadata > .taskPriority { padding: 3px 8px; }
-}
 @media (max-width: 960px) {
   .form {
     grid-template-columns: minmax(0, 1fr);
@@ -645,3 +584,14 @@
 @media (max-width: 760px) {
   .todayCard .taskActions > button[aria-label^="Додати підзадачу"] { flex-basis: 100%; text-align: left; }
 }
+
+.task[data-has-subtasks="false"] .addSubtaskRow { background: transparent; margin-left: 40px; padding-block: 0; }
+.task .addSubtaskRow > button { min-height: 30px; margin: 0; padding: 4px 8px; font-size: .8125rem; }
+@media (any-pointer: coarse) { .task .addSubtaskRow > button { min-height: 44px; } }
+
+.todayCard .taskStatus[data-status="TODO"] { color: var(--today-status-todo); }
+
+.todayCard .taskMetadata { display: inline-flex; margin-right: 12px; }
+.todayCard .todayTime { display: inline-block; }
+.todayCard .taskContent > p.taskPriority { display: block; margin: 2px 0; padding: 0; background: transparent; color: var(--muted); }
+.task .taskPriority[data-priority="HIGH"] { background: var(--cancel-bg); color: var(--danger); }

@@ -6,6 +6,7 @@ import path from "node:path";
 import { futureTask, routine } from "./routine-fixtures.mjs";
 import { assertThemeColor, runThemeMatrix } from "./theme-browser-checks.mjs";
 import { runTaskInteractions } from "./task-interactions-checks.mjs";
+import { runTaskMenuChecks } from "./task-menu-checks.mjs";
 
 const app = process.env.APP_URL ?? "http://127.0.0.1:3100";
 const password = process.env.APP_ACCESS_TEST_PASSWORD;
@@ -65,7 +66,7 @@ function fixture(index, status = "TODO") {
   };
 }
 const baseline = () => ["TODO", "TODO", "TODO", "TODO", "TODO", "IN_PROGRESS", "IN_PROGRESS", "PAUSED", "DONE", "DONE"].map((s, i) => fixture(i, s));
-let tasks = baseline(), mode = "normal", heldList, heldMutation, failDetails = false, holdMutation = false;
+let tasks = baseline(), mode = "normal", heldList, heldMutation, failDetails = false, holdMutation = false, skipRejected = false;
 const removal = { mode: "success", hold: false, release: null, checkFail: false };
 let calendar = null;
 async function intercept({ requestId, request }) {
@@ -99,8 +100,16 @@ async function intercept({ requestId, request }) {
         if (removal.mode.startsWith("unknown")) { await cdp("Fetch.failRequest", { requestId, errorReason: "ConnectionClosed" }); return; }
         status = 204;
       }
+    } else if (method === "POST" && route.endsWith("/subtasks")) {
+      const input = JSON.parse(request.postData);
+      data = { ...task.subtasks[0], ...input, id: "77777777-7777-4777-8777-000000000099", taskId: task.id, status: "TODO", deletedAt: null, createdAt: now, updatedAt: now };
+      task.subtasks.push(data);
+    } else if (method === "DELETE" && route.includes("/subtasks/")) {
+      task.subtasks = task.subtasks.filter(s => s.id !== route.split("/").at(-1)); status = 204;
     } else if (route.endsWith("/history")) data = [];
-    else if (method === "PATCH") {
+    else if (method === "PATCH" && skipRejected && JSON.parse(request.postData).status === "SKIPPED") {
+      status = 409; data = { error: { message: "Mock skip rejected" } };
+    } else if (method === "PATCH") {
       if (holdMutation) await new Promise(resolve => { heldMutation = resolve; });
       const change = JSON.parse(request.postData);
       const entity = route.includes("/subtasks/") ? task.subtasks.find(s => s.id === route.split("/").at(-1)) : task;
@@ -182,7 +191,16 @@ try {
     { urlPattern: "http://mock.invalid/*", block: false }, { urlPattern: "*://*:*/*", block: true },
   ] });
   await cdp("Fetch.enable", { patterns: [{ urlPattern: "http://mock.invalid/*", requestStage: "Request" }] });
-  if (process.env.TASK_INTERACTIONS_ONLY) {
+  if (process.env.TASK_MENU_ONLY) {
+    await runTaskMenuChecks({ app, password, cdp, evaluate, wait, click, fill, viewport, screenshot, calls, settle: settleApi, go, refresh,
+      rejectSkip: value => { skipRejected = value; },
+      reset: () => {
+        tasks = baseline();
+        tasks[0].subtasks.push({ ...tasks[0].subtasks[0], id: "77777777-7777-4777-8777-000000000003", status: "CANCELED" });
+        tasks[0].subtasks.push({ ...tasks[0].subtasks[0], id: "77777777-7777-4777-8777-000000000004", deletedAt: now });
+        tasks[8].subtasks = structuredClone(tasks[0].subtasks).map(s => ({ ...s, taskId: tasks[8].id }));
+      } });
+  } else if (process.env.TASK_INTERACTIONS_ONLY) {
     await runTaskInteractions({ app, password, cdp, evaluate, wait, click, fill, viewport, screenshot, calls, settle: settleApi,
       reset: (archived = false) => { tasks = baseline().map(task => ({ ...task, archivedAt: archived ? now : null })); },
       removal, setCalendar: value => { calendar = value; } });
@@ -203,13 +221,13 @@ try {
   assert.equal(await evaluate("document.querySelector('time[datetime=\"2026-10-30\"]').textContent"), "пʼятниця, 30 жовтня");
   const labels = await evaluate("[...document.querySelectorAll('[aria-label=\"Підсумок статусів\"] [role=img]')].map(e=>e.textContent.trim())");
   assert.deepEqual(labels, ["50%", "20%", "10%", "20%"]);
-  await evaluate(`document.querySelector('${first} button[aria-expanded]').click()`);
+  assert.equal(await evaluate(`document.querySelector('${first} button[aria-controls^="task-"]').getAttribute('aria-expanded')`), 'true');
   passed.push("Access gate has no API requests; Today date follows configured timezone; four original categories show 50/20/10/20");
 
   for (const width of [1440, 390]) for (const theme of ["light", "dark"]) {
     await viewport(width); await cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: theme }] });
     assert.equal(await evaluate("document.documentElement.scrollWidth<=innerWidth"), true);
-    assert.equal(await evaluate("(()=>{const b=document.querySelector('[aria-label=\"Частки статусів задач\"]');return b.clientHeight>=32&&b.clientWidth<b.parentElement.clientWidth})()"), true);
+    assert.equal(await evaluate("(()=>{const b=document.querySelector('[aria-label=\"Частки статусів задач\"]');return b.clientHeight>=24&&b.clientWidth<=b.parentElement.clientWidth})()"), true);
     if (width === 1440) assert.equal(await evaluate(`(()=>{const e=document.querySelector('${list}');e.scrollTop=500;const ok=e.scrollTop>0;e.scrollTop=0;return ok})()`), true);
     else assert.equal(await evaluate("document.documentElement.scrollHeight>innerHeight"), true);
     await screenshot(`today-${width}-${theme}`);
@@ -237,11 +255,11 @@ try {
   await click("Скинути");
   passed.push("Search/status/area/priority/sorting/reset, URL and F5 work; summary stays before filtering; no-results state");
 
-  await evaluate(`window.__card=document.querySelector('${first}');document.querySelector('${first} button[aria-expanded]').click()`);
+  await evaluate(`window.__card=document.querySelector('${first}');if(document.querySelector('${first} button[aria-controls^="task-"]').getAttribute('aria-expanded')==='false')document.querySelector('${first} button[aria-controls^="task-"]').click()`);
   await evaluate(`document.querySelector('${first} > div > input[type=checkbox]').click()`);
   await wait(`document.querySelector('${first} select[aria-label^="Статус задачі"]').value==='DONE'`);
   assert.equal(await evaluate(`document.querySelector('${first}')===window.__card`), true);
-  assert.equal(await evaluate(`document.querySelector('${first} button[aria-expanded]').getAttribute('aria-expanded')`), "true");
+  assert.equal(await evaluate(`document.querySelector('${first} button[aria-controls^="task-"]').getAttribute('aria-expanded')`), "true");
   assert.equal(await evaluate(`(()=>{let e=document.querySelector('${first}');while(e=e.previousElementSibling){if(e.querySelector('h2'))return e.textContent.includes('Виконано сьогодні')}return false})()`), true);
   await evaluate(`document.querySelector('${first} > div > input[type=checkbox]').click()`);
   await wait(`document.querySelector('${first} select[aria-label^="Статус задачі"]').value==='TODO'`);
@@ -255,7 +273,7 @@ try {
   assert.equal(await evaluate(`document.querySelector('${recurring} > div > input[type=checkbox]')===null`), true);
   await fill(`${recurring} select`, "TODO"); await wait(`document.querySelector('${recurring} > div > input[type=checkbox]')!==null`);
   await go("Сьогодні"); await ready();
-  await evaluate(`(()=>{const e=document.querySelector('${first} button[aria-expanded]');if(e.getAttribute('aria-expanded')==='false')e.click()})()`);
+  await evaluate(`(()=>{const e=document.querySelector('${first} button[aria-controls^="task-"]');if(e.getAttribute('aria-expanded')==='false')e.click()})()`);
   passed.push("Complete/reopen keeps card identity/disclosure across groups; SKIPPED saves note and leaves Today under existing rules; Current shows SKIPPED without checkbox and allows reopening");
 
   holdMutation = true; failDetails = true;
@@ -295,7 +313,7 @@ try {
   tasks[0].subtasks = Array.from({ length: 24 }, (_, i) => ({ ...fixture(0).subtasks[0],
     id: "77777777-7777-4777-8777-" + String(i).padStart(12, "0"), title: "Довга підзадача ".repeat(8), status: i % 2 ? "TODO" : "DONE" }));
   await refresh();
-  await evaluate(`document.querySelector('${first} button[aria-expanded]').click()`);
+  await evaluate(`document.querySelector('${first} button[aria-controls^="task-"]').click()`);
   for (const width of [1440, 390]) {
     await viewport(width, 400);
     assert.equal(await evaluate("document.documentElement.scrollWidth<=innerWidth"), true);

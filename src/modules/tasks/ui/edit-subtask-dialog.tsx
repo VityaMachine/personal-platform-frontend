@@ -39,7 +39,10 @@ export function EditSubtaskDialog({ subtask, opener, disabled, onSave, onClose }
     titleRef.current?.focus();
     return () => {
       dialog?.close();
-      requestAnimationFrame(() => { if (opener.isConnected) opener.focus(); });
+      requestAnimationFrame(() => {
+        if (opener.isConnected && opener.getClientRects().length) opener.focus();
+        else opener.closest("[data-task-id]")?.querySelector<HTMLButtonElement>("[data-task-menu]")?.focus();
+      });
     };
   }, [opener]);
 

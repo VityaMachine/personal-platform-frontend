@@ -40,17 +40,17 @@ export function TaskFiltersPanel({ filters, onChange, onReset, disabled, total, 
             {TASK_STATUSES.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
           </select>
         </label>
-        <label className={uiStyles.field}>Пріоритет
-          <select name="priority" value={filters.priority} onChange={(event) => select("priority", event.target.value)}>
-            <option value="">Усі пріоритети</option>
-            {TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{TASK_PRIORITY_LABELS[priority]}</option>)}
-          </select>
-        </label>
         <label className={`${uiStyles.field} ${styles.area}`}>Сфера
           <select name="area" value={filters.area} onChange={(event) => onChange({ area: event.target.value })}>
             <option value="">Усі сфери</option><option value="none">Без сфери</option>
             {missingArea && <option value={filters.area}>{directory.loading ? "Сфера завантажується…" : directory.error ? "Список сфер недоступний" : "Недоступна сфера"}</option>}
             {directory.areas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
+          </select>
+        </label>
+        <label className={uiStyles.field}>Пріоритет
+          <select name="priority" value={filters.priority} onChange={(event) => select("priority", event.target.value)}>
+            <option value="">Усі пріоритети</option>
+            {TASK_PRIORITIES.map((priority) => <option key={priority} value={priority}>{TASK_PRIORITY_LABELS[priority]}</option>)}
           </select>
         </label>
         <label className={`${uiStyles.field} ${styles.sort}`}>Сортування

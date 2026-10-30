@@ -105,7 +105,7 @@ export async function runThemeMatrix({ app, password, cdp: send, evaluate, wait,
           await color("[aria-label='Підсумок статусів']", "backgroundColor", "today-surface");
           await color("[aria-label='Підсумок статусів'] [role=img]", "backgroundColor", "summary-todo");
           await color("[aria-label='Підсумок статусів'] [role=img]", "color", "summary-label");
-          await color("[data-task-id] select", "backgroundColor", "today-input");
+          await color("[data-task-id] select", "backgroundColor", "badge");
           await color("[data-task-id] select", "color", "today-status-todo");
           await screenshot(`theme-${width}-os-${os}-${choice}-today`);
           await click("+ Нова задача"); await wait("document.querySelector('dialog[open] input[name=title]')!==null");

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
 import Link from "next/link";
-import { taskNavigationHrefs, taskHref, cleanTaskQuery } from "@/modules/tasks/routes";
+import { usePathname } from "next/navigation";
+import { taskNavigationHrefs, taskHref, cleanTaskQuery, isTasksPathname } from "@/modules/tasks/routes";
 import { AreasModal, useAreas } from "../../entities/areas/ui";
 import { LogoutButton } from "../access/ui/app-access";
 import styles from "./app-shell.module.css";
@@ -24,6 +25,7 @@ export function AppShell({ children, contentClassName = "", activeItem, query, a
   onNavigate: (href: string, destination: AppNavigationItem, accepted: () => void) => void;
 }) {
   const areas = useAreas();
+  const tasksModuleActive = isTasksPathname(usePathname());
   const mobile = useSyncExternalStore(subscribeMobile, () => window.matchMedia(mobileQuery).matches, () => false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const desktopAreas = useRef<HTMLButtonElement>(null);
@@ -56,13 +58,14 @@ export function AppShell({ children, contentClassName = "", activeItem, query, a
   const navigation = <nav className={styles.navigation} aria-label="Основна навігація">
     <div className={styles.modules}>
       <button type="button" className={`${styles.navItem} ${styles.navButton} ${styles.moduleHeading}`}
+        data-module-active={tasksModuleActive}
         aria-expanded={expanded} aria-controls="tasks-navigation" onClick={() => setExpanded(!expanded)}>
         <ShellIcon name="tasks" className={styles.moduleIcon} /><span>Задачі</span>
         <ShellIcon name="chevron" className={styles.moduleChevron} />
       </button>
       <div id="tasks-navigation" className={styles.submenu} hidden={!expanded}>
         {items.map(({ key, label, href }) => <Link key={key} className={styles.navItem} href={href} scroll={false}
-          onClick={(event) => navigate(event, href, key)} aria-current={activeItem === key ? "page" : undefined}>{label}</Link>)}
+          onClick={(event) => navigate(event, href, key)} aria-current={activeItem === key ? "page" : undefined}><ShellIcon name={key} />{label}</Link>)}
       </div>
       <button ref={mobile ? undefined : desktopAreas} type="button" className={`${styles.navItem} ${styles.navButton}`} aria-disabled={areasDisabled}
         onClick={(event) => {

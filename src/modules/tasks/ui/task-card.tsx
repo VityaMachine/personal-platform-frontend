@@ -21,7 +21,9 @@ import { SkipTaskDialog } from "./skip-task-dialog";
 import type { TaskMutationState } from "../hooks/use-task-mutations";
 import type { TaskRemovalOutcome, TaskRemovalCheckOutcome } from "../model/task-removal";
 import { DeleteTaskDialog } from "./delete-task-dialog";
-import { TaskAction } from "./task-action";
+import { TaskMenu } from "./task-menu";
+import { TaskDialogPortal } from "./task-dialog-portal";
+import { ShellIcon } from "../../../application/shell/shell-icon";
 
 type Props = {
   layout?: "today";
@@ -78,7 +80,8 @@ export function TaskCard({ layout, task, disabled, mutation, retryDisabled, onRe
   const archived = task.archivedAt !== null;
   const canceled = task.status === "CANCELED";
   const skipped = task.status === "SKIPPED";
-  const completedSubtasks = task.subtasks.filter((subtask) => subtask.status === "DONE").length;
+  const subtasks = task.subtasks.filter((subtask) => subtask.deletedAt === null);
+  const completedSubtasks = subtasks.filter((subtask) => subtask.status === "DONE").length;
   const subtasksId = `task-${task.id}-subtasks`;
 
   function selectStatus(select: HTMLSelectElement) {
@@ -103,22 +106,8 @@ export function TaskCard({ layout, task, disabled, mutation, retryDisabled, onRe
   );
 
   return (
-    <li className={`${taskStyles.task} ${completed ? taskStyles.completed : ""} ${layout === "today" ? taskStyles.todayCard : ""}`} data-task-id={task.id} data-has-subtasks={task.subtasks.length > 0} aria-busy={Boolean(mutation?.pending)}>
+    <li className={`${taskStyles.task} ${completed ? taskStyles.completed : ""} ${layout === "today" ? taskStyles.todayCard : ""}`} data-task-id={task.id} data-has-subtasks={subtasks.length > 0} aria-busy={Boolean(mutation?.pending)}>
       <div className={taskStyles.taskHeader}>
-        {task.subtasks.length > 0 && (
-          <button
-            type="button"
-            className={`${taskStyles.iconButton} ${taskStyles.subtaskDisclosure}`}
-            aria-expanded={expanded}
-            aria-controls={subtasksId}
-            aria-label={`${expanded ? "Згорнути" : "Розгорнути"} підзадачі задачі «${task.title}»: завершено ${completedSubtasks} із ${task.subtasks.length}`}
-            onClick={onToggleSubtasks}
-          >
-            <svg className={taskStyles.disclosureArrow} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-              <path d="m9 5 7 7-7 7" />
-            </svg>
-          </button>
-        )}
         {!canceled && !skipped ? (
           <input
             className={taskStyles.checkbox}
@@ -132,23 +121,13 @@ export function TaskCard({ layout, task, disabled, mutation, retryDisabled, onRe
         <div className={taskStyles.taskContent}>
           <div className={taskStyles.taskTitleRow}>
             <h3 ref={titleRef} tabIndex={-1} className={taskStyles.taskTitle}>{task.title}</h3>
-            {task.subtasks.length > 0 && <span className={taskStyles.subtaskProgress} aria-label={`Завершено підзадач: ${completedSubtasks} із ${task.subtasks.length}`}>{completedSubtasks}/{task.subtasks.length}</span>}
+            {task.area && <span className={taskStyles.areaBadge}><ShellIcon name="areas" />{task.area.name}</span>}
+            <span className={taskStyles.taskPriority} data-priority={task.priority}>{TASK_PRIORITY_LABELS[task.priority]}</span>
+
           </div>
           {task.description && <p className={taskStyles.taskDescription}>{task.description}</p>}
           <RoutineOccurrence task={task} />
           <div className={taskStyles.taskMetadata}>
-            {task.area && <span className={taskStyles.taskPriority}>Сфера: {task.area.name}</span>}
-            <select
-              className={`${taskStyles.taskStatus} ${taskStyles.taskStatusSelect}`}
-              data-status={task.status}
-              value={task.status}
-              aria-label={`Статус задачі: ${task.title}`}
-              aria-disabled={disabled}
-              onChange={(event) => selectStatus(event.currentTarget)}
-            >
-              {TASK_STATUSES.filter((status) => status !== "SKIPPED" || task.routineOccurrence).map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
-            </select>
-            <span className={taskStyles.taskPriority} data-priority={task.priority}>Пріоритет: {TASK_PRIORITY_LABELS[task.priority]}</span>
             <dl className={taskStyles.taskDetails}>
               <TaskDate label="Дедлайн" value={task.dueAt} />
               <TaskDate label="Заплановано" value={task.plannedAt} />
@@ -170,38 +149,40 @@ export function TaskCard({ layout, task, disabled, mutation, retryDisabled, onRe
           {canceled && task.cancellationNote && (
             <p className={taskStyles.cancellationNote}>Причина скасування: {task.cancellationNote}</p>
           )}
-          {layout !== "today" && task.subtasks.length === 0 && addSubtaskButton}
+
         </div>
         <div className={taskStyles.taskActions}>
-          {layout === "today" && task.subtasks.length === 0 && addSubtaskButton}
-          {!archived && task.routineOccurrence && !skipped && <TaskAction icon="skip" label="Пропустити" compact={layout === "today"}
-            accessibleLabel={`Пропустити виконання задачі: ${task.title}`} ariaDisabled={disabled}
-            onClick={(event) => { if (!disabled && onBeginStatusDialog()) setSkipDialog({ task, opener: event.currentTarget }); }} />}
-          <TaskAction icon="details" label="Деталі" compact={layout === "today"} accessibleLabel={`Деталі задачі: ${task.title}`} disabled={disabled} onClick={(event) => {
-            if (!disabled && !document.querySelector("dialog[open]")) setDetailsOpener(event.currentTarget);
-          }} />
-          <TaskAction icon={archived ? "restore" : "archive"} compact={layout === "today"} disabled={disabled} onClick={onArchive}
-            accessibleLabel={`${archived ? "Повернути з архіву" : "Архівувати"}: ${task.title}`}
-            label={mutation?.pending === "archive" ? "Збереження…" : archived ? "Повернути з архіву" : "Архівувати"} />
-          <TaskAction icon="edit" label="Редагувати" compact={layout === "today"}
-            // Keep the opener focusable while the edit reservation is released.
-            ariaDisabled={disabled}
-            accessibleLabel={`Редагувати задачу: ${task.title}`}
-            onClick={(event) => { if (!disabled && onBeginEdit()) setEditing({ task, opener: event.currentTarget }); }}
-          />
-          <TaskAction icon="delete" compact={layout === "today"} disabled={disabled} accessibleLabel={`Видалити: ${task.title}`}
-            label={mutation?.pending === "delete" ? "Видалення…" : "Видалити"}
-            onClick={(event) => {
-              if (!disabled && !document.querySelector("dialog[open]") && onBeginDelete()) setDeleteOpener({ title: task.title, opener: event.currentTarget });
-            }} />
+            <select
+              className={`${taskStyles.taskStatus} ${taskStyles.taskStatusSelect}`}
+              data-status={task.status}
+              value={task.status}
+              aria-label={`Статус задачі: ${task.title}`}
+              aria-disabled={disabled}
+              onChange={(event) => selectStatus(event.currentTarget)}
+            >
+              {TASK_STATUSES.filter((status) => status !== "SKIPPED" || task.routineOccurrence).map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
+            </select>
+          <TaskMenu title={task.title} disabled={disabled} items={[
+            { id: "details", label: "Деталі", select: (opener) => { if (!document.querySelector("dialog[open]")) setDetailsOpener(opener); } },
+            { id: "edit", label: "Редагувати", select: (opener) => { if (onBeginEdit()) setEditing({ task, opener }); } },
+            ...(!archived && task.routineOccurrence && !skipped ? [{ id: "skip", label: "Пропустити", select: (opener: HTMLButtonElement) => { if (onBeginStatusDialog()) setSkipDialog({ task, opener }); } }] : []),
+            { id: archived ? "restore" : "archive", label: archived ? "Відновити" : "Архівувати", select: onArchive },
+            { id: "delete", label: "Видалити", danger: true, select: (opener) => { if (!document.querySelector("dialog[open]") && onBeginDelete()) setDeleteOpener({ title: task.title, opener }); } },
+          ]} />
         </div>
       </div>
-      {task.subtasks.length > 0 && (
-        <div id={subtasksId} className={taskStyles.subtaskGroup} hidden={!expanded}>
-          <TaskSubtaskList readOnly={archived} subtasks={task.subtasks} taskTitle={task.title} disabled={disabled} onStatusChange={onSubtaskStatusChange} onEdit={onEditSubtask} onRequestDelete={(subtask, opener) => setDeleting({ subtask, opener })} />
-          {addSubtaskButton}
-        </div>
-      )}
+      {subtasks.length > 0 && <button type="button" className={taskStyles.subtaskDisclosure}
+        aria-expanded={expanded} aria-controls={subtasksId} onClick={onToggleSubtasks}>
+        <ShellIcon name="chevron" className={taskStyles.disclosureArrow} />
+        <span>Підзадачі · виконано {completedSubtasks} із {subtasks.length}</span>
+        <span className={uiStyles.visuallyHidden}> · {task.title}</span>
+      </button>}
+      <div id={subtasksId} className={taskStyles.subtaskGroup} hidden={!expanded || subtasks.length === 0}>
+        <TaskSubtaskList layout={layout} readOnly={archived} subtasks={subtasks} taskTitle={task.title} disabled={disabled} onStatusChange={onSubtaskStatusChange} onEdit={onEditSubtask} onRequestDelete={(subtask, opener) => setDeleting({ subtask, opener })} />
+      </div>
+      {((expanded && subtasks.length > 0) || subtasks.length === 0) && <div className={taskStyles.addSubtaskRow}>{addSubtaskButton}</div>}
+
+      {(deleting || detailsOpener || deleteOpener || createOpener || editing || statusDialog || skipDialog) && <TaskDialogPortal layout={layout}>
       {deleting && <DeleteSubtaskDialog
         subtaskTitle={deleting.subtask.title}
         opener={deleting.opener}
@@ -240,6 +221,7 @@ export function TaskCard({ layout, task, disabled, mutation, retryDisabled, onRe
       {skipDialog && <SkipTaskDialog taskTitle={skipDialog.task.title} opener={skipDialog.opener}
         disabled={retryDisabled || Boolean(mutation?.pending || mutation?.refreshRequired)}
         onConfirm={onStatusChange} onClose={() => { onEndStatusDialog(); setSkipDialog(null); }} />}
+      </TaskDialogPortal>}
     </li>
   );
 }

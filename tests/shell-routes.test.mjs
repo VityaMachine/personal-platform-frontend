@@ -12,7 +12,16 @@ Module._resolveFilename = function (request, ...args) {
 load.extensions[".ts"] = (module, filename) => module._compile(ts.transpileModule(readFileSync(filename, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText, filename);
-const { taskNavigationHrefs, taskHref, taskSectionFromPathname, resolveLegacyTasksUrl } = load("../src/modules/tasks/routes.ts");
+const { taskNavigationHrefs, taskHref, taskSectionFromPathname, resolveLegacyTasksUrl, isTasksPathname } = load("../src/modules/tasks/routes.ts");
+
+test("Tasks module ownership includes every canonical and nested route without matching Settings or prefixes", () => {
+  for (const pathname of [taskHref("current"), taskHref("today"), taskHref("backlog"), taskHref("archive"), taskHref("routines"), "/tasks/", "/tasks/nested/details"]) {
+    assert.equal(isTasksPathname(pathname), true, pathname);
+  }
+  for (const pathname of ["/settings", "/", "/routines", "/tasks-other", "/task", "/other/tasks"]) {
+    assert.equal(isTasksPathname(pathname), false, pathname);
+  }
+});
 
 test("shell task routes preserve filters, repeated unrelated keys and search drafts across sections", () => {
   const source = new URLSearchParams("archived=true&view=today&q=+draft+&status=TODO&priority=HIGH&area=none&sort=oldest&keep=1&keep=2");

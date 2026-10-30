@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 
 const paths: Record<string, ReactNode> = {
+  today: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M7 3v4m10-4v4M3 10h18" /></>,
+  current: <><path d="M9 6h12M9 12h12M9 18h12" /><circle cx="4" cy="6" r="1" /><circle cx="4" cy="12" r="1" /><circle cx="4" cy="18" r="1" /></>,
+  backlog: <><rect x="4" y="7" width="16" height="14" rx="2" /><path d="M3 3h18v4H3zm7 8h4" /></>,
+  archive: <><rect x="4" y="7" width="16" height="14" rx="2" /><path d="M3 3h18v4H3zm9 7v6m-3-3 3 3 3-3" /></>,
+  routines: <><path d="M20 4v6h-6M4 20v-6h6M20 10a8 8 0 0 0-14-4M4 14a8 8 0 0 0 14 4" /></>,
   tasks: <><rect x="3" y="3" width="18" height="18" rx="5" /><path d="m7 12 3 3 7-7" /></>,
   areas: <><circle cx="12" cy="12" r="9" /><path d="m14 6-5 4-3 7m3-7 7 5 3-5M9 10l5-4m2 9-2 4" /></>,
   settings: <><path d="m9 3-1 3-3 1 1 3-2 2 2 2-1 3 3 1 1 3h6l1-3 3-1-1-3 2-2-2-2 1-3-3-1-1-3Z" /><circle cx="12" cy="12" r="3" /></>,

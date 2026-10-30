@@ -114,16 +114,37 @@ async function active(label) {
   await wait(`document.querySelector('nav a[aria-current="page"]')?.textContent.trim().endsWith(${JSON.stringify(label)})`);
   assert.equal(await evaluate("document.querySelectorAll('nav a[aria-current=page]').length"), 1);
   assert.equal(await evaluate("document.querySelectorAll('nav').length"), 1);
+  await moduleAccent();
   if (await evaluate("!!document.querySelector('#mobile-navigation')")) {
     await escape(); await wait("!document.querySelector('#mobile-navigation')");
   }
 }
+async function moduleAccent() {
+  assert.equal(await evaluate(`(()=>{
+    const parent=document.querySelector('nav button[aria-controls="tasks-navigation"]');
+    const expected=location.pathname==='/tasks'||location.pathname.startsWith('/tasks/');
+    if(parent.hasAttribute('aria-current')||parent.dataset.moduleActive!==String(expected))return false;
+    if(!expected)return true;
+    const probe=document.createElement('span');
+    probe.style.backgroundColor='color-mix(in srgb, var(--shell-nav) 55%, var(--shell-surface))';
+    probe.style.color='var(--shell-accent)';document.body.append(probe);
+    const actual=getComputedStyle(parent),palette=getComputedStyle(probe);
+    const child=document.querySelector('#tasks-navigation a[aria-current=page]');
+    const valid=actual.backgroundColor===palette.backgroundColor&&actual.color===palette.color&&
+      getComputedStyle(parent.querySelector('svg')).color===palette.color&&
+      (!child||getComputedStyle(child).backgroundColor!==actual.backgroundColor);
+    probe.remove();return valid;
+  })()`), true, "Parent module accent must follow the route and remain weaker than the page");
+}
 async function openAreas() {
   await menu();
   await wait(`${areasButton}?.getAttribute('aria-disabled')==='false'`);
+  const pathname = await evaluate("location.pathname");
   await click("Сфери");
   await wait("document.querySelector('dialog[open]')?.innerText.includes('Mock Area')");
   assert.equal(await evaluate("document.querySelectorAll('dialog[open]').length"), 1);
+  assert.equal(await evaluate("location.pathname"), pathname);
+  if (await evaluate("!!document.querySelector('nav')")) await moduleAccent();
 }
 async function closeAreas() {
   await evaluate("document.querySelector('button[aria-label=\"Закрити керування сферами\"]').click()");
@@ -241,7 +262,7 @@ try {
 
   await link("Поточні задачі"); await active("Поточні задачі");
   await wait(`document.querySelector('${taskCard}')!==null`);
-  await evaluate(`document.querySelector('${taskCard} button[aria-expanded]').click()`);
+  await evaluate(`document.querySelector('${taskCard} button[aria-controls^="task-"]').click()`);
   await wait(`document.querySelector('${taskCard} input[aria-label="Завершити підзадачу: Mock Child"]')!==null`);
   holdMutation = true; failDetails = true;
   const beforeChild = mutationCount();
@@ -265,7 +286,7 @@ try {
   failDetails = false; await click("Повторити завантаження");
   await wait(`${areasButton}.getAttribute('aria-disabled')==='false'`);
   assert.equal(mutationCount(), beforeChild + 1);
-  assert.equal(await evaluate(`document.querySelector('${taskCard} button[aria-expanded]').getAttribute('aria-expanded')`), "true");
+  assert.equal(await evaluate(`document.querySelector('${taskCard} button[aria-controls^="task-"]').getAttribute('aria-expanded')`), "true");
   passed.push("Tasks pending/refreshRequired block shell/Areas/logout without dialogs; Back and deferred section retain owner/disclosure; retry is GET only");
 
   await link("Сьогодні"); await active("Сьогодні");
@@ -310,9 +331,15 @@ try {
   for (const width of [1440, 390]) for (const theme of ["light", "dark"]) {
     await cdp("Emulation.setDeviceMetricsOverride", { width, height: 900, deviceScaleFactor: 1, mobile: false });
     await cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: theme }] });
-    for (const label of ["Поточні задачі", "Повторювані задачі", "Налаштування"]) {
+    for (const label of ["Сьогодні", "Поточні задачі", "Беклог", "Архів", "Повторювані задачі", "Налаштування"]) {
       await link(label); await active(label);
       await wait("!document.querySelector('main section[aria-busy=true]')");
+      await menu();
+      await click("Задачі"); await moduleAccent();
+      await click("Задачі"); await moduleAccent();
+      if (await evaluate("!!document.querySelector('#mobile-navigation')")) {
+        await escape(); await wait("!document.querySelector('#mobile-navigation')");
+      }
       assert.equal(await evaluate(`document.documentElement.scrollWidth<=${width}`), true);
       const shot = await cdp("Page.captureScreenshot", { format: "png" });
       await writeFile(path.join(tmpdir(), `app-shell-${width}-${theme}-${label === "Налаштування" ? "settings" : label === "Поточні задачі" ? "tasks" : "routines"}.png`), Buffer.from(shot.data, "base64"));
@@ -378,8 +405,8 @@ try {
 
   await wait(`${areasButton}===undefined || ${areasButton}?.getAttribute('aria-disabled')==='false'`);
   await wait(`document.querySelector('${taskCard}')!==null`);
-  if (await evaluate(`document.querySelector('${taskCard} button[aria-expanded]').getAttribute('aria-expanded')==='false'`)) {
-    await evaluate(`document.querySelector('${taskCard} button[aria-expanded]').click()`);
+  if (await evaluate(`document.querySelector('${taskCard} button[aria-controls^="task-"]').getAttribute('aria-expanded')==='false'`)) {
+    await evaluate(`document.querySelector('${taskCard} button[aria-controls^="task-"]').click()`);
   }
   holdMutation = true; releaseMutation = undefined;
   await evaluate(`document.querySelector('${taskCard} input[aria-label$="підзадачу: Mock Child"]').click()`);

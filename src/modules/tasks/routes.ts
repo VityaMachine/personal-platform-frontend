@@ -8,6 +8,11 @@ const taskPaths = {
   routines: "/tasks/routines",
 } as const;
 
+/** Module ownership includes nested Tasks routes, but never similarly named paths. */
+export function isTasksPathname(pathname: string): boolean {
+  return pathname === taskPaths.current || pathname.startsWith(`${taskPaths.current}/`);
+}
+
 export function taskSectionFromPathname(pathname: string): TaskSection {
   if (pathname === taskPaths.today) return "today";
   if (pathname === taskPaths.backlog) return "backlog";

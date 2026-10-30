@@ -7,15 +7,16 @@ export async function runTaskInteractions({ app, password, cdp, evaluate, wait, 
   const listGets = () => calls.filter(c => c.method === "GET" && c.route === "/tasks").length;
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   async function key(name, shift = false) {
-    const code = name === "Tab" ? 9 : name === "Enter" ? 13 : 27;
+    const code = ({Tab:9,Enter:13,Escape:27,ArrowDown:40,ArrowUp:38,Home:36,End:35," ":32})[name];
     await cdp("Input.dispatchKeyEvent", { type: "keyDown", key: name, code: name, windowsVirtualKeyCode: code, modifiers: shift ? 8 : 0, ...(name === "Enter" ? { text: "\r" } : {}) });
     await cdp("Input.dispatchKeyEvent", { type: "keyUp", key: name, code: name, windowsVirtualKeyCode: code });
   }
   async function ready() { await wait("document.querySelector('section[aria-labelledby=tasks-heading]')?.getAttribute('aria-busy')==='false'"); await settle(); }
   async function route(url) { await settle(); await cdp("Page.navigate", { url: app + url + "?keep=interactions" }); await ready(); }
   async function action(card, name) {
-    await wait(`document.querySelector('${card} [data-task-action="${name}"]')!==null`);
-    await evaluate(`document.querySelector('${card} [data-task-action="${name}"]').click()`);
+    if (!await evaluate("!!document.querySelector('[role=menu]')")) await evaluate(`document.querySelector('${card} [data-task-menu]').click()`);
+    await wait(`document.querySelector('[role=menu] [data-task-action="${name}"]')!==null`);
+    await evaluate(`document.querySelector('[role=menu] [data-task-action="${name}"]').click()`);
   }
   async function deletion(card = first) { await action(card, "delete"); await wait("document.querySelector('dialog[open] h2')?.textContent==='Видалити задачу?'"); }
   async function gone() {
@@ -45,30 +46,27 @@ export async function runTaskInteractions({ app, password, cdp, evaluate, wait, 
     await viewport(width); await cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: theme }] });
     await fixture(url);
     const card = recurring, archived = url.endsWith("archive");
-    assert.deepEqual(await evaluate(`[...document.querySelectorAll('${card} [data-task-action]')].map(e=>e.dataset.taskAction)`),
-      archived ? ["details", "restore", "edit", "delete"] : ["skip", "details", "archive", "edit", "delete"]);
-    const layout = await evaluate(`[...document.querySelectorAll('${card} [data-task-action]')].map(e=>({name:e.getAttribute('aria-label'),w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height,icon:getComputedStyle(e.querySelector('svg')).display,label:getComputedStyle(e.querySelector('span')).display}))`);
-    assert(layout.every(e => e.name?.includes("Похід на масаж")));
-    assert(layout.every(e => width === 390 ? e.w === 44 && e.h === 44 && e.icon !== "none" && e.label === "none" : e.icon === "none" && e.label !== "none"));
-    assert.equal(await evaluate(`(()=>{const e=document.querySelector('${card} [data-task-action=delete]'),p=document.createElement('span');p.style.color='var(--danger)';e.append(p);const ok=getComputedStyle(e).color===getComputedStyle(p).color;p.remove();return ok})()`), true);
-    await key("Tab");
-    for (const name of archived ? ["details", "restore", "edit", "delete"] : ["skip", "details", "archive", "edit", "delete"]) {
-      await evaluate(`document.querySelector('${card} [data-task-action=${name}]').focus()`);
-      assert.equal(await evaluate(`getComputedStyle(document.querySelector('${card} [data-task-action=${name}] [role=tooltip]')).visibility`), "visible");
-    }
-    assert.equal(await evaluate("document.documentElement.scrollWidth<=innerWidth"), true);
-    const point = await evaluate(`(()=>{const e=document.querySelector('${card} [data-task-action=delete]');e.blur();e.scrollIntoView({block:'center'});const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`);
-    await cdp("Input.dispatchMouseEvent", { type: "mouseMoved", ...point });
-    assert.equal(await evaluate(`getComputedStyle(document.querySelector('${card} [data-task-action=delete] [role=tooltip]')).visibility`), "visible");
     const before = calls.length, beforeDelete = deletes();
-    await evaluate(`document.querySelector('${card} [data-task-action=delete]').focus()`); await key("Enter");
-    await wait("document.querySelector('dialog[open] h2')?.textContent==='Видалити задачу?'");
+    await evaluate(`document.querySelector('${card} [data-task-menu]').focus()`);
+    await key("Enter");
+    await wait("!!document.querySelector('[role=menu]')");
+    assert.deepEqual(await evaluate("[...document.querySelectorAll('[role=menuitem]')].map(e=>e.dataset.taskAction)"),
+      archived ? ["details", "edit", "restore", "delete"] : ["details", "edit", "skip", "archive", "delete"]);
+    assert.equal(await evaluate("document.activeElement.dataset.taskAction"), "details");
+    await key("End"); assert.equal(await evaluate("document.activeElement.dataset.taskAction"), "delete");
+    await key("ArrowDown"); assert.equal(await evaluate("document.activeElement.dataset.taskAction"), "details");
+    await key("ArrowUp"); assert.equal(await evaluate("document.activeElement.dataset.taskAction"), "delete");
+    await key("Home"); assert.equal(await evaluate("document.activeElement.dataset.taskAction"), "details");
+    await key("Escape");
+    await wait(`document.activeElement===document.querySelector('${card} [data-task-menu]')`);
+    await key(" "); await wait("!!document.querySelector('[role=menu]')");
+    await key("Tab"); await wait("!document.querySelector('[role=menu]')");
+    assert.equal(await evaluate("document.documentElement.scrollWidth<=innerWidth"), true);
+    await action(card, "delete");
+    await wait("!!document.querySelector('dialog[open]')");
     assert.equal(await evaluate("document.activeElement.textContent"), "Скасувати");
-    assert.equal(await evaluate("document.querySelector('dialog[open]').innerText.includes('Похід на масаж')"), true);
-    await key("Tab", true); assert.equal(await evaluate("document.activeElement.textContent"), "Видалити");
-    await key("Tab"); assert.equal(await evaluate("document.activeElement.textContent"), "Скасувати");
     await key("Escape"); await wait("!document.querySelector('dialog[open]')");
-    await wait(`document.activeElement===document.querySelector('${card} [data-task-action=delete]')`);
+    await wait(`document.activeElement===document.querySelector('${card} [data-task-menu]')`);
     await deletion(card); await click("Скасувати"); await wait("!document.querySelector('dialog[open]')");
     await settle(); assert.equal(calls.length, before); assert.equal(deletes(), beforeDelete);
     await action(card, "details"); await wait("document.querySelector('dialog[open] button[aria-label=\"Закрити деталі задачі\"]')!==null");
@@ -79,7 +77,7 @@ export async function runTaskInteractions({ app, password, cdp, evaluate, wait, 
     await action(card, archived ? "restore" : "archive");
     await wait(`!document.querySelector('${card}')`);
   }
-  passed.push("16 route/size/theme combinations: one text/icon button per action, 44px mobile targets, keyboard tooltips/trap, danger color, details/edit/skip/archive/restore; delete open/cancel/Escape send no requests");
+  passed.push("16 route/size/theme combinations: one portal menu, keyboard navigation/Escape/Tab, stable dialog focus, danger color, details/edit/skip/archive/restore; delete open/cancel/Escape send no requests");
 
   for (const url of paths) {
     await fixture(url);

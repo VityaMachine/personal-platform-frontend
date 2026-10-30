@@ -171,14 +171,16 @@ try {
   assert.equal(await evaluate("location.pathname"), "/tasks/today");
   assert.equal(await evaluate("new URLSearchParams(location.search).get('q')"), "Route ");
   assert.equal(calls.filter(call => call.route === "/tasks").length, beforeFilter, "Frontend filter changes must not refetch Tasks");
-  await evaluate(`document.querySelector('${card} button[aria-expanded]').click()`);
+  await evaluate(`(()=>{const e=document.querySelector('${card} button[aria-controls^="task-"]');if(e.getAttribute('aria-expanded')==='false')e.click()})()`);
   for (const section of ["backlog", "archive", "current", "today"]) {
     await go(section);
-    assert.equal(await evaluate(`document.querySelector('${card} button[aria-expanded]').getAttribute('aria-expanded')`), "true");
+    assert.equal(await evaluate(`document.querySelector('${card} button[aria-controls^="task-"]').getAttribute('aria-expanded')`), "true");
     assert.equal(await evaluate("document.querySelectorAll('nav').length"), 1);
   }
   await evaluate("history.back()"); await ready("current");
-  await evaluate(`window.__owner=document.querySelector('${card}');document.querySelector('${card} button[aria-label="Редагувати задачу: Route Task"]').click()`);
+  await evaluate(`window.__owner=document.querySelector('${card}');document.querySelector('${card} [data-task-menu]').click()`);
+  await wait("!!document.querySelector('[role=menu] [data-task-action=edit]')");
+  await evaluate("document.querySelector('[role=menu] [data-task-action=edit]').click()");
   await wait("document.querySelector('dialog[open] input[name=title]')!==null");
   await fill("dialog[open] input[name=title]", "Draft across pathnames");
   await evaluate("window.__draftDialog=document.querySelector('dialog[open]');history.back()"); await wait("location.pathname==='/tasks/archive'");

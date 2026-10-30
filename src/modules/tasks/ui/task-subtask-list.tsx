@@ -3,6 +3,8 @@
 import taskStyles from "./tasks.module.css";
 import uiStyles from "../../../shared/ui/controls.module.css";
 
+import { TaskMenu } from "./task-menu";
+import { TaskDialogPortal } from "./task-dialog-portal";
 import { useState } from "react";
 import { SUBTASK_STATUSES, type Subtask, type SubtaskDetailsChange, type SubtaskStatusChange } from "@/modules/tasks/model/task-types";
 import { TASK_STATUS_LABELS } from "@/modules/tasks/model/task-labels";
@@ -11,6 +13,7 @@ import { CancelSubtaskDialog } from "./cancel-subtask-dialog";
 import { EditSubtaskDialog } from "./edit-subtask-dialog";
 
 type Props = {
+  layout?: "today";
   subtasks: Subtask[];
   taskTitle: string;
   disabled: boolean;
@@ -20,12 +23,13 @@ type Props = {
   onRequestDelete: (subtask: Subtask, opener: HTMLButtonElement) => void;
 };
 
-export function TaskSubtaskList({ subtasks, taskTitle, disabled, readOnly = false, onStatusChange, onEdit, onRequestDelete }: Props) {
+export function TaskSubtaskList({ layout, subtasks, taskTitle, disabled, readOnly = false, onStatusChange, onEdit, onRequestDelete }: Props) {
   const [canceling, setCanceling] = useState<{ subtask: Subtask; opener: HTMLSelectElement } | null>(null);
   const [editing, setEditing] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
 
   function selectStatus(subtask: Subtask, select: HTMLSelectElement) {
     const status = SUBTASK_STATUSES.find((value) => value === select.value);
+    select.value = subtask.status;
     if (disabled || !status || status === subtask.status) return;
     if (status === "CANCELED") setCanceling({ subtask, opener: select });
     else void onStatusChange(subtask, { status });
@@ -64,32 +68,14 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, readOnly = fals
               {SUBTASK_STATUSES.map((status) => <option key={status} value={status}>{TASK_STATUS_LABELS[status]}</option>)}
             </select>}
             <span className={taskStyles.nestedSubtaskDuration}><span className={uiStyles.visuallyHidden}>Орієнтовна тривалість: </span>{formatDuration(subtask.estimatedDurationMinutes)}</span>
-            {!readOnly && <button
-              type="button"
-              className={taskStyles.iconButton}
-              aria-label={`Редагувати підзадачу: ${subtask.title}`}
-              // Keep the opener focusable after a saved PATCH with a failed GET.
-              aria-disabled={disabled}
-              onClick={(event) => { if (!disabled) setEditing({ subtask, opener: event.currentTarget }); }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-                <path d="m16 3 5 5L8 21H3v-5L16 3Z M13 6l5 5" />
-              </svg>
-            </button>}
-            {!readOnly && <button
-              type="button"
-              className={`${taskStyles.iconButton} ${taskStyles.subtaskDeleteAction}`}
-              disabled={disabled}
-              aria-label={`Видалити підзадачу: ${subtask.title}`}
-              onClick={(event) => { if (!disabled) onRequestDelete(subtask, event.currentTarget); }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-                <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" />
-              </svg>
-            </button>}
+            {!readOnly && <TaskMenu title={subtask.title} disabled={disabled} items={[
+              { id: "edit", label: "Редагувати", select: (opener) => setEditing({ subtask, opener }) },
+              { id: "delete", label: "Видалити", danger: true, select: (opener) => onRequestDelete(subtask, opener) },
+            ]} />}
           </li>
         ))}
       </ul>
+      {(canceling || editing) && <TaskDialogPortal layout={layout}>
       {canceling && (
         <CancelSubtaskDialog
           subtaskTitle={canceling.subtask.title}
@@ -106,6 +92,7 @@ export function TaskSubtaskList({ subtasks, taskTitle, disabled, readOnly = fals
         onClose={() => setEditing(null)}
         onSave={(change) => onEdit(editing.subtask.id, change)}
       />}
+      </TaskDialogPortal>}
     </div>
   );
 }

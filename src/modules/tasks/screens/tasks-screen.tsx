@@ -39,7 +39,7 @@ function TasksPage() {
   const { tasks, setTasks, loading, error: loadError, reload, context, scopeKey, inventoryWarning, observeTask } = useTaskList(section, areas.changeRevision);
   const dialogOpen = useOpenDialog();
   // Keep disclosure state separate from refreshed DTOs and keyed by task ID.
-  const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(() => new Set());
+  const [disclosures, setDisclosures] = useState<Map<string, boolean>>(() => new Map());
   const [pending, setPending] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [creating, setCreating] = useState(false);
@@ -48,7 +48,7 @@ function TasksPage() {
   const createScope = useRef(scopeKey);
   const busy = loading || pending !== null;
   const mutations = useTaskMutations(setTasks, busy, (id) => {
-    setExpandedTaskIds((previous) => new Set(previous).add(id));
+    setDisclosures((previous) => previous.has(id) ? previous : new Map(previous).set(id, true));
   }, { context, scopeKey, section, reload, observeTask });
   const filtersBlocked = creating || dialogOpen || pending !== null || mutations.hasLockedTasks;
   const view = useTaskFilters(filtersBlocked);
@@ -60,6 +60,13 @@ function TasksPage() {
   if (!retainOwners && !loading && owners !== tasks) setOwners(tasks);
   const retained = retainOwners ? selectTasks(owners, view.filters).filter((old) => !selectedTasks.some((task) => task.id === old.id)) : [];
   const shownTasks = [...selectedTasks, ...retained];
+  // Record defaults once per Task in the persistent lists workspace.
+  if (tasks.some(task => !disclosures.has(task.id))) {
+    const next = new Map(disclosures);
+    for (const task of tasks) if (!next.has(task.id)) next.set(task.id, today && task.status !== "DONE");
+    setDisclosures(next);
+  }
+
 
   // History can change behind a modal. Preserve its draft and parent locks
   // until the form closes and pending mutations finish.
@@ -175,13 +182,8 @@ function TasksPage() {
                   onBeginStatusDialog={() => mutations.beginTaskStatusDialog(task.id)}
                   onEndStatusDialog={() => mutations.endTaskStatusDialog(task.id)}
                   onStatusChange={(change) => mutations.changeTaskStatus(task, change)}
-                  expanded={expandedTaskIds.has(task.id)}
-                  onToggleSubtasks={() => setExpandedTaskIds((previous) => {
-                    const next = new Set(previous);
-                    if (next.has(task.id)) next.delete(task.id);
-                    else next.add(task.id);
-                    return next;
-                  })}
+                  expanded={disclosures.get(task.id) ?? (today && task.status !== "DONE")}
+                  onToggleSubtasks={() => setDisclosures((previous) => new Map(previous).set(task.id, !(previous.get(task.id) ?? (today && task.status !== "DONE"))))}
                   onToggle={() => void mutations.toggleTask(task)}
                   listFocusRef={taskListRef}
                   onBeginDelete={() => mutations.beginTaskDelete(task.id)}

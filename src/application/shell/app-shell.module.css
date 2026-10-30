@@ -2,7 +2,7 @@
    scrolling at the original narrow-width and low-height breakpoints. */
 .shell {
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  grid-template-columns: 268px minmax(0, 1fr);
   min-height: 100svh;
   background: var(--shell-page);
 }
@@ -14,7 +14,7 @@
   top: 0;
   align-self: start;
   height: 100dvh;
-  padding: 24px 12px;
+  padding: 18px 16px;
   border-right: 1px solid var(--shell-border);
   background: var(--shell-surface);
   overflow-y: auto;
@@ -25,9 +25,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 8px 32px;
+  margin: 0 8px 28px;
   color: var(--shell-text);
-  font-size: 1.0625rem;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   text-decoration: none;
@@ -58,15 +58,20 @@
 .navigation { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 24px; }
 .modules { flex-shrink: 0; }
 .moduleHeading { color: var(--shell-text); font-weight: 700; }
-.moduleIcon { color: var(--shell-accent); }
-.moduleIcon rect { fill: var(--shell-accent); }
+.moduleIcon { color: var(--shell-text); }
+.moduleIcon rect { fill: currentColor; }
 .moduleIcon path { stroke: var(--shell-surface); }
+.moduleHeading[data-module-active="true"] {
+  background: color-mix(in srgb, var(--shell-nav) 55%, var(--shell-surface));
+  color: var(--shell-accent);
+}
+.moduleHeading[data-module-active="true"] .moduleIcon { color: inherit; }
 .moduleChevron { margin-left: auto; transition: transform 150ms ease; }
 .moduleHeading[aria-expanded="false"] .moduleChevron { transform: rotate(-90deg); }
 .submenu { margin: 2px 0 20px; }
-.submenu .navItem { padding-left: 46px; }
+.submenu .navItem { padding-left: 20px; gap: 18px; }
 .submenu[hidden] { display: none; }
-.navFooter { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--shell-border); flex-shrink: 0; }
+.navFooter { margin-top: auto; padding-top: 16px; flex-shrink: 0; }
 .menuToggle { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 1.5rem; cursor: pointer; }
 .menuToggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .mobileHeader { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--shell-border); background: var(--shell-surface); }
@@ -125,7 +130,7 @@
     scroll-padding-block: 12px;
     padding: 2px 4px 12px 2px;
   }
-  .tasksShell:has(dialog[open]) .taskScroll, .tasksShell:has(dialog[open]) .sidebar {
+  :global(body):has(dialog[open]) .tasksShell .taskScroll, :global(body):has(dialog[open]) .tasksShell .sidebar {
     overflow-y: hidden;
   }
 }
