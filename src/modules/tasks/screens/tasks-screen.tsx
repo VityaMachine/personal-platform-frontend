@@ -44,6 +44,7 @@ function TasksPage() {
   const [notice, setNotice] = useState("");
   const [creating, setCreating] = useState(false);
   const createButtonRef = useRef<HTMLButtonElement>(null);
+  const taskListRef = useRef<HTMLElement>(null);
   const createScope = useRef(scopeKey);
   const busy = loading || pending !== null;
   const mutations = useTaskMutations(setTasks, busy, (id) => {
@@ -128,7 +129,7 @@ function TasksPage() {
           total={tasks.length} found={selectedTasks.length} loading={loading} error={Boolean(loadError)} />
       </div>
 
-      <section className={shellStyles.taskScroll} aria-labelledby="tasks-heading" aria-busy={loading} tabIndex={0}>
+      <section ref={taskListRef} className={shellStyles.taskScroll} aria-labelledby="tasks-heading" aria-busy={loading} tabIndex={0}>
         {loadError && (
           <div role="alert" className={uiStyles.error}>
             <p>{loadError}</p>
@@ -160,7 +161,7 @@ function TasksPage() {
                   key={task.id}
                   layout={today ? "today" : undefined}
                   task={task}
-                  disabled={busy || Boolean(mutations.states[task.id]?.pending || mutations.states[task.id]?.refreshRequired || mutations.states[task.id]?.editing || mutations.states[task.id]?.statusDialog)}
+                  disabled={busy || Boolean(mutations.states[task.id]?.pending || mutations.states[task.id]?.refreshRequired || mutations.states[task.id]?.editing || mutations.states[task.id]?.statusDialog || mutations.states[task.id]?.deleting)}
                   mutation={mutations.states[task.id]}
                   retryDisabled={busy}
                   onRetryRefresh={() => void mutations.retryRefresh(task.id)}
@@ -182,7 +183,20 @@ function TasksPage() {
                     return next;
                   })}
                   onToggle={() => void mutations.toggleTask(task)}
-                  onDelete={() => void mutations.deleteTask(task.id)}
+                  listFocusRef={taskListRef}
+                  onBeginDelete={() => mutations.beginTaskDelete(task.id)}
+                  onEndDelete={() => mutations.endTaskDelete(task.id)}
+                  onDelete={async () => {
+                    const outcome = await mutations.deleteTask(task.id);
+                    if (outcome?.status === "deleted") setNotice("Задачу видалено.");
+                    else if (outcome?.status === "missing") setNotice("Задача вже недоступна. Список оновлено.");
+                    return outcome;
+                  }}
+                  onCheckDeletion={async () => {
+                    const outcome = await mutations.checkTaskRemoval(task.id);
+                    if (outcome?.status === "missing") setNotice("Задача вже недоступна. Список оновлено.");
+                    return outcome;
+                  }}
                   onArchive={() => {
                     setNotice("");
                     void mutations.changeArchived(task).then((changed) => {

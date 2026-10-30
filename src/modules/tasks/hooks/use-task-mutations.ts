@@ -5,6 +5,8 @@ import { archiveTask, unarchiveTask, createSubtask, deleteSubtask, deleteTask, g
 import type { InitialSubtaskInput, Subtask, SubtaskDetailsChange, SubtaskStatusChange, TaskDetailsChange, TaskStatusChange } from "@/modules/tasks/model/task-types";
 
 import { taskInSection, type TaskContext, type TaskSection } from "@/modules/tasks/model/task-context";
+import { ApiError } from "@/shared/api/api";
+import { taskRemovalError, type TaskRemovalOutcome, type TaskRemovalCheckOutcome } from "../model/task-removal";
 
 type Scope = { context: TaskContext; scopeKey: string; section: TaskSection; reload: () => void; observeTask: (task: Task | string) => void };
 
@@ -12,6 +14,8 @@ export type TaskMutationState = {
   pending?: "toggle" | "delete" | "archive" | "subtask" | "refresh" | "edit" | "status";
   editing?: boolean;
   statusDialog?: boolean;
+  deleting?: boolean;
+  deleteUncertain?: boolean;
   refreshRequired?: boolean;
   error?: string;
   notice?: string;
@@ -37,7 +41,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
   const needsRefresh = useRef(new Map<string, string>());
   // Keep this intent through failed GETs; only fresh details reveal the new child.
   const expandAfterRefresh = useRef(new Set<string>());
-  const dialogs = useRef(new Map<string, "edit" | "status">());
+  const dialogs = useRef(new Map<string, "edit" | "status" | "delete">());
   const saving = useRef(new Set<string>());
 
   function setState(id: string, state: TaskMutationState) {
@@ -63,7 +67,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     }
   }
 
-  async function mutate(id: string, pending: "toggle" | "delete" | "archive" | "subtask", action: () => Promise<unknown>, notice: string, refreshError = REFRESH_ERROR) {
+  async function mutate(id: string, pending: "toggle" | "archive" | "subtask", action: () => Promise<unknown>, notice: string, refreshError = REFRESH_ERROR) {
     if (disabled || locks.current.has(id)) return false;
     locks.current.add(id);
     setState(id, { pending });
@@ -77,10 +81,8 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
       return false;
     }
 
-    if (pending === "delete" || pending === "archive") {
-      if (pending === "archive") applyTask(result as Task, requested);
-      else if (latest.current.scopeKey !== requested.scopeKey) latest.current.reload();
-      else { latest.current.observeTask(id); setTasks((previous) => previous.filter((task) => task.id !== id)); }
+    if (pending === "archive") {
+      applyTask(result as Task, requested);
       locks.current.delete(id);
       setStates((previous) => {
         const next = { ...previous };
@@ -94,23 +96,69 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
     return true;
   }
 
-  function dialogState(kind: "edit" | "status"): TaskMutationState {
-    return kind === "edit" ? { editing: true } : { statusDialog: true };
+  function dialogState(kind: "edit" | "status" | "delete"): TaskMutationState {
+    return kind === "edit" ? { editing: true } : kind === "delete" ? { deleting: true } : { statusDialog: true };
   }
 
-  function beginDialog(id: string, kind: "edit" | "status") {
+  function beginDialog(id: string, kind: "edit" | "status" | "delete") {
     if (disabled || locks.current.has(id)) return false;
     locks.current.add(id);
     dialogs.current.set(id, kind);
-    setState(id, dialogState(kind));
+    setState(id, { ...dialogState(kind), ...(kind === "delete" && states[id]?.deleteUncertain ? { deleteUncertain: true, error: states[id].error } : {}) });
     return true;
   }
 
-  function endDialog(id: string, kind: "edit" | "status") {
+  function endDialog(id: string, kind: "edit" | "status" | "delete") {
     if (saving.current.has(id) || dialogs.current.get(id) !== kind) return;
     dialogs.current.delete(id);
     locks.current.delete(id);
-    setState(id, {});
+    setState(id, kind === "delete" && states[id]?.deleteUncertain ? { deleteUncertain: true, error: states[id].error } : {});
+  }
+
+  function removeCommitted(id: string, requested: Scope) {
+    if (latest.current.scopeKey !== requested.scopeKey) latest.current.reload();
+    else {
+      latest.current.observeTask(id);
+      latest.current.setTasks((previous) => previous.filter((task) => task.id !== id));
+    }
+    dialogs.current.delete(id); locks.current.delete(id); setState(id, {});
+  }
+
+  async function remove(id: string): Promise<TaskRemovalOutcome | null> {
+    if (disabled || saving.current.has(id) || dialogs.current.get(id) !== "delete" || states[id]?.deleteUncertain) return null;
+    saving.current.add(id); setState(id, { deleting: true, pending: "delete" });
+    const requested = scope;
+    try {
+      await deleteTask(id);
+      removeCommitted(id, requested);
+      return { status: "deleted" };
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        removeCommitted(id, requested); return { status: "missing" };
+      }
+      const outcome = taskRemovalError(error);
+      setState(id, { deleting: true, deleteUncertain: outcome.uncertain, error: outcome.message });
+      return outcome;
+    } finally { saving.current.delete(id); }
+  }
+
+  async function checkRemoval(id: string): Promise<TaskRemovalCheckOutcome | null> {
+    if (disabled || saving.current.has(id) || dialogs.current.get(id) !== "delete") return null;
+    saving.current.add(id); setState(id, { deleting: true, deleteUncertain: true, pending: "refresh" });
+    const requested = scope;
+    try {
+      const task = await getTask(id, undefined, requested.context);
+      if (task.deletedAt !== null) { removeCommitted(id, requested); return { status: "missing" }; }
+      applyTask(task, requested); setState(id, { deleting: true });
+      return { status: "present" };
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        removeCommitted(id, requested); return { status: "missing" };
+      }
+      const message = "Не вдалося перевірити стан задачі. Результат попереднього видалення залишається невідомим.";
+      setState(id, { deleting: true, deleteUncertain: true, error: message });
+      return { status: "error", message };
+    } finally { saving.current.delete(id); }
   }
 
   async function patchTask(id: string, input: TaskDetailsChange | TaskStatusChange, pending: "edit" | "status" | "toggle", owner?: "edit" | "status") {
@@ -136,7 +184,10 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
 
   return {
     states,
-    hasLockedTasks: Object.values(states).some((state) => state.pending || state.refreshRequired || state.editing || state.statusDialog),
+    hasLockedTasks: Object.values(states).some((state) => state.pending || state.refreshRequired || state.editing || state.statusDialog || state.deleting),
+    beginTaskDelete: (id: string) => beginDialog(id, "delete"),
+    endTaskDelete: (id: string) => endDialog(id, "delete"),
+    checkTaskRemoval: checkRemoval,
     beginTaskEdit: (id: string) => beginDialog(id, "edit"),
     endTaskEdit: (id: string) => endDialog(id, "edit"),
     editTask: (id: string, input: TaskDetailsChange) => patchTask(id, input, "edit", "edit"),
@@ -148,7 +199,7 @@ export function useTaskMutations(setTasks: Dispatch<SetStateAction<Task[]>>, dis
       return patchTask(task.id, change, "status", change.status === "CANCELED" || change.status === "POSTPONED" || change.status === "SKIPPED" ? "status" : undefined);
     },
     toggleTask: (task: Task) => task.status === "SKIPPED" ? Promise.resolve(false) : patchTask(task.id, { status: task.status === "DONE" ? "TODO" : "DONE" }, "toggle"),
-    deleteTask: (id: string) => mutate(id, "delete", () => deleteTask(id), "Задачу видалено."),
+    deleteTask: remove,
     changeArchived: (task: Task) => mutate(task.id, "archive", () => task.archivedAt ? unarchiveTask(task.id, undefined, scope.context) : archiveTask(task.id, undefined, scope.context), ""),
     changeSubtaskStatus: async (taskId: string, subtask: Subtask, change: SubtaskStatusChange) => {
       if (subtask.status === change.status) return true;

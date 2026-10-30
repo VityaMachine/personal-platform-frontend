@@ -4,7 +4,7 @@ import uiStyles from "../../../shared/ui/controls.module.css";
 import taskStyles from "./tasks.module.css";
 import { RoutineOccurrence } from "./routine-occurrence";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type RefObject } from "react";
 import { TASK_STATUSES, type InitialSubtaskInput, type Subtask, type SubtaskDetailsChange, type SubtaskStatusChange, type Task, type TaskDetailsChange, type TaskStatusChange } from "@/modules/tasks/model/task-types";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/modules/tasks/model/task-labels";
 import { formatDuration } from "@/shared/lib/format-duration";
@@ -19,6 +19,9 @@ import { EditTaskModal } from "./edit-task-modal";
 import { TaskStatusDialog } from "./task-status-dialog";
 import { SkipTaskDialog } from "./skip-task-dialog";
 import type { TaskMutationState } from "../hooks/use-task-mutations";
+import type { TaskRemovalOutcome, TaskRemovalCheckOutcome } from "../model/task-removal";
+import { DeleteTaskDialog } from "./delete-task-dialog";
+import { TaskAction } from "./task-action";
 
 type Props = {
   layout?: "today";
@@ -40,7 +43,11 @@ type Props = {
   expanded: boolean;
   onToggleSubtasks: () => void;
   onToggle: () => void;
-  onDelete: () => void;
+  onBeginDelete: () => boolean;
+  onEndDelete: () => void;
+  onDelete: () => Promise<TaskRemovalOutcome | null>;
+  onCheckDeletion: () => Promise<TaskRemovalCheckOutcome | null>;
+  listFocusRef: RefObject<HTMLElement | null>;
   onArchive: () => void;
 };
 
@@ -58,9 +65,10 @@ function TaskDate({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function TaskCard({ layout, task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, onBeginEdit, onEndEdit, onEdit, onBeginStatusDialog, onEndStatusDialog, onStatusChange, expanded, onToggleSubtasks, onToggle, onDelete, onArchive }: Props) {
+export function TaskCard({ layout, task, disabled, mutation, retryDisabled, onRetryRefresh, onSubtaskStatusChange, onEditSubtask, onDeleteSubtask, onCreateSubtask, onBeginEdit, onEndEdit, onEdit, onBeginStatusDialog, onEndStatusDialog, onStatusChange, expanded, onToggleSubtasks, onToggle, onBeginDelete, onEndDelete, onDelete, onCheckDeletion, listFocusRef, onArchive }: Props) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [detailsOpener, setDetailsOpener] = useState<HTMLButtonElement | null>(null);
+  const [deleteOpener, setDeleteOpener] = useState<{ title: string; opener: HTMLButtonElement } | null>(null);
   const [deleting, setDeleting] = useState<{ subtask: Subtask; opener: HTMLButtonElement } | null>(null);
   const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
   const [editing, setEditing] = useState<{ task: Task; opener: HTMLButtonElement } | null>(null);
@@ -166,29 +174,26 @@ export function TaskCard({ layout, task, disabled, mutation, retryDisabled, onRe
         </div>
         <div className={taskStyles.taskActions}>
           {layout === "today" && task.subtasks.length === 0 && addSubtaskButton}
-          {!archived && task.routineOccurrence && !skipped && <button className={uiStyles.secondaryButton} type="button" aria-disabled={disabled}
-            onClick={(event) => { if (!disabled && onBeginStatusDialog()) setSkipDialog({ task, opener: event.currentTarget }); }}>Пропустити</button>}
-          <button className={uiStyles.secondaryButton} type="button" disabled={disabled} onClick={(event) => {
+          {!archived && task.routineOccurrence && !skipped && <TaskAction icon="skip" label="Пропустити" compact={layout === "today"}
+            accessibleLabel={`Пропустити виконання задачі: ${task.title}`} ariaDisabled={disabled}
+            onClick={(event) => { if (!disabled && onBeginStatusDialog()) setSkipDialog({ task, opener: event.currentTarget }); }} />}
+          <TaskAction icon="details" label="Деталі" compact={layout === "today"} accessibleLabel={`Деталі задачі: ${task.title}`} disabled={disabled} onClick={(event) => {
             if (!disabled && !document.querySelector("dialog[open]")) setDetailsOpener(event.currentTarget);
-          }}>Деталі</button>
-          <button className={uiStyles.secondaryButton} type="button" disabled={disabled} onClick={onArchive}>
-            {mutation?.pending === "archive" ? "Збереження…" : archived ? "Повернути з архіву" : "Архівувати"}
-          </button>
-          <button
-            className={taskStyles.iconButton}
-            type="button"
+          }} />
+          <TaskAction icon={archived ? "restore" : "archive"} compact={layout === "today"} disabled={disabled} onClick={onArchive}
+            accessibleLabel={`${archived ? "Повернути з архіву" : "Архівувати"}: ${task.title}`}
+            label={mutation?.pending === "archive" ? "Збереження…" : archived ? "Повернути з архіву" : "Архівувати"} />
+          <TaskAction icon="edit" label="Редагувати" compact={layout === "today"}
             // Keep the opener focusable while the edit reservation is released.
-            aria-disabled={disabled}
-            aria-label={`Редагувати задачу: ${task.title}`}
+            ariaDisabled={disabled}
+            accessibleLabel={`Редагувати задачу: ${task.title}`}
             onClick={(event) => { if (!disabled && onBeginEdit()) setEditing({ task, opener: event.currentTarget }); }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-              <path d="m16 3 5 5L8 21H3v-5L16 3Z M13 6l5 5" />
-            </svg>
-          </button>
-          <button className={uiStyles.deleteButton} type="button" disabled={disabled} aria-label={`Видалити: ${task.title}`} onClick={onDelete}>
-            {mutation?.pending === "delete" ? "Видалення…" : "Видалити"}
-          </button>
+          />
+          <TaskAction icon="delete" compact={layout === "today"} disabled={disabled} accessibleLabel={`Видалити: ${task.title}`}
+            label={mutation?.pending === "delete" ? "Видалення…" : "Видалити"}
+            onClick={(event) => {
+              if (!disabled && !document.querySelector("dialog[open]") && onBeginDelete()) setDeleteOpener({ title: task.title, opener: event.currentTarget });
+            }} />
         </div>
       </div>
       {task.subtasks.length > 0 && (
@@ -206,6 +211,9 @@ export function TaskCard({ layout, task, disabled, mutation, retryDisabled, onRe
         onClose={() => setDeleting(null)}
       />}
       {detailsOpener && <TaskDetailsModal taskId={task.id} opener={detailsOpener} onClose={() => setDetailsOpener(null)} />}
+      {deleteOpener && <DeleteTaskDialog title={deleteOpener.title} opener={deleteOpener.opener} fallbackFocusRef={listFocusRef}
+        disabled={retryDisabled || Boolean(mutation?.pending || mutation?.refreshRequired)} initialUncertain={mutation?.deleteUncertain}
+        onConfirm={onDelete} onCheck={onCheckDeletion} onClose={() => { onEndDelete(); setDeleteOpener(null); }} />}
       {createOpener && <CreateSubtaskDialog
         taskTitle={task.title}
         opener={createOpener}

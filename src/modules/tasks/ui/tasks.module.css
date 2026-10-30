@@ -194,12 +194,16 @@
 }
 
 .taskActions {
+  position: relative;
+  max-width: 26rem;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   min-width: 0;
   gap: 4px;
 }
+.deleteTaskTitle { overflow-wrap: anywhere; white-space: pre-wrap; }
+.taskActions:has(button:focus-visible) button:not(:focus-visible) [role="tooltip"] { visibility: hidden; }
 
 .taskTitleRow {
   display: flex;
@@ -493,10 +497,9 @@
 .todayCard .taskStatus[data-status="IN_PROGRESS"] { color: var(--today-status-progress); }
 .todayCard .taskDetails { flex-basis: 100%; font-size: .75rem; gap: 3px 12px; }
 .todayCard .taskDetails dt { font-weight: 400; }
-.todayCard .taskActions { grid-column: 3; justify-content: flex-end; gap: 4px; border-top: 1px solid var(--card-border); margin-top: 4px; padding-top: 4px; }
-.todayCard .taskActions > button { min-height: 32px; padding: 4px 8px; font-size: .75rem; border-color: transparent; background: transparent; }
-.todayCard .taskActions > .iconButton { width: 32px; height: 32px; padding: 4px; }
-.todayCard .taskActions > button:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--nav); }
+.todayCard .taskActions { grid-column: 3; max-width: none; justify-content: flex-end; gap: 4px; border-top: 1px solid var(--card-border); margin-top: 4px; padding-top: 4px; }
+.todayCard .taskActions > button:not([data-task-action]) { min-height: 32px; padding: 4px 8px; font-size: .75rem; border-color: transparent; background: transparent; }
+.todayCard .taskActions > button:not([data-task-action]):hover:not(:disabled):not([aria-disabled="true"]) { background: var(--nav); }
 .todayCard .taskActions > button[aria-label^="Додати підзадачу"] { margin-right: auto; color: var(--accent); }
 .todayCard .subtaskGroup { margin: 0 16px 0 76px; padding: 4px 0 8px; border-radius: 0; background: transparent; }
 .todayCard .nestedSubtaskContainer { grid-template-columns: 22px minmax(0, 1fr) 10rem 5rem 36px 36px; column-gap: 10px; border-left-style: dashed; padding-left: 20px; }
@@ -585,8 +588,7 @@
   .todayCard .taskHeader, .todayCard[data-has-subtasks="true"] .taskHeader { grid-template-columns: 24px 24px minmax(0, 1fr); gap: 4px 6px; padding: 12px 10px 8px; }
   .todayCard .taskHeader > .checkbox, .todayCard .taskHeader > .checkboxSpace { width: 24px; height: 24px; }
   .todayCard .taskActions, .todayCard[data-has-subtasks="true"] .taskHeader > .taskActions { grid-column: 1 / -1; justify-content: flex-start; }
-  .todayCard .taskActions > button { min-height: 44px; padding: 6px 10px; }
-  .todayCard .taskActions > .iconButton { width: 44px; height: 44px; }
+  .todayCard .taskActions > button:not([data-task-action]) { min-height: 44px; padding: 6px 10px; }
   .todayCard .taskStatusSelect { min-height: 44px; }
   .todayCard .subtaskGroup { margin: 0 10px; padding: 8px 0; }
   .todayCard .taskMetadata > .taskPriority { padding: 3px 8px; }
@@ -638,4 +640,8 @@
     grid-column: 2;
     grid-row: 5;
   }
+}
+
+@media (max-width: 760px) {
+  .todayCard .taskActions > button[aria-label^="Додати підзадачу"] { flex-basis: 100%; text-align: left; }
 }

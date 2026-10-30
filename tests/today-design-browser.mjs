@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { futureTask, routine } from "./routine-fixtures.mjs";
 import { assertThemeColor, runThemeMatrix } from "./theme-browser-checks.mjs";
+import { runTaskInteractions } from "./task-interactions-checks.mjs";
 
 const app = process.env.APP_URL ?? "http://127.0.0.1:3100";
 const password = process.env.APP_ACCESS_TEST_PASSWORD;
@@ -65,6 +66,8 @@ function fixture(index, status = "TODO") {
 }
 const baseline = () => ["TODO", "TODO", "TODO", "TODO", "TODO", "IN_PROGRESS", "IN_PROGRESS", "PAUSED", "DONE", "DONE"].map((s, i) => fixture(i, s));
 let tasks = baseline(), mode = "normal", heldList, heldMutation, failDetails = false, holdMutation = false;
+const removal = { mode: "success", hold: false, release: null, checkFail: false };
+let calendar = null;
 async function intercept({ requestId, request }) {
   const url = new URL(request.url);
   if (url.hostname !== "mock.invalid") return cdp(url.origin === new URL(app).origin ? "Fetch.continueRequest" : "Fetch.failRequest",
@@ -76,15 +79,28 @@ async function intercept({ requestId, request }) {
   else if (route === "/areas") data = [area];
   else if (route === "/routines") data = [routine];
   else if (route === "/tasks" && method === "GET") {
+    const list = calendar ? tasks.map((task, index) => ({ ...task, plannedAt: index === 0 ? calendar.plannedAt : null, dueAt: null,
+      routineOccurrence: null, isToday: calendar.now >= calendar.boundary, isBacklog: calendar.now >= calendar.boundary })) : tasks;
     if (url.searchParams.get("view") === "today") {
       if (mode === "hold") await new Promise(resolve => { heldList = resolve; });
       if (mode === "error") { status = 500; data = { error: { message: "Mock today failure" } }; }
-      else data = mode === "empty" ? [] : tasks.filter(task => task.isToday);
-    } else data = tasks;
+      else data = mode === "empty" ? [] : list.filter(task => task.isToday);
+    } else if (url.searchParams.get("view") === "backlog") data = list.filter(task => task.isBacklog);
+    else data = list;
   } else if (route.startsWith("/tasks/")) {
     const task = tasks.find(t => t.id === route.split("/")[2]);
-    assert(task, "Known mock task");
-    if (method === "PATCH") {
+    if (!task) { status = 404; data = { error: { message: "Mock task missing" } }; }
+    else if (method === "DELETE" && !route.includes("/subtasks/")) {
+      if (removal.hold) await new Promise(resolve => { removal.release = resolve; });
+      if (removal.mode === "error") { status = 409; data = { error: { message: "Mock delete rejected" } }; }
+      else if (removal.mode === "server-error") { status = 500; data = { error: { message: "Mock delete uncertain" } }; }
+      else {
+        if (removal.mode !== "unknown-present") tasks = tasks.filter(t => t.id !== task.id);
+        if (removal.mode.startsWith("unknown")) { await cdp("Fetch.failRequest", { requestId, errorReason: "ConnectionClosed" }); return; }
+        status = 204;
+      }
+    } else if (route.endsWith("/history")) data = [];
+    else if (method === "PATCH") {
       if (holdMutation) await new Promise(resolve => { heldMutation = resolve; });
       const change = JSON.parse(request.postData);
       const entity = route.includes("/subtasks/") ? task.subtasks.find(s => s.id === route.split("/").at(-1)) : task;
@@ -92,6 +108,7 @@ async function intercept({ requestId, request }) {
       if ("isCompleted" in change) entity.status = change.isCompleted ? "DONE" : "TODO";
       if ("status" in change) entity.isCompleted = change.status === "DONE";
       if (entity === task) {
+        if ("archived" in change) task.archivedAt = change.archived ? now : null;
         task.completedAt = task.status === "DONE" ? now : null;
         task.skippedAt = task.status === "SKIPPED" ? now : null;
         task.skipNote = task.status === "SKIPPED" ? change.skipNote ?? null : null;
@@ -99,7 +116,7 @@ async function intercept({ requestId, request }) {
         task.isBacklog = task.status !== "SKIPPED";
       }
       data = entity;
-    } else if (failDetails) { status = 500; data = { error: { message: "Mock refresh failure" } }; }
+    } else if (failDetails || removal.checkFail) { status = 500; data = { error: { message: "Mock refresh failure" } }; }
     else data = task;
   } else throw Error("Unexpected mock request " + method + " " + route);
   await cdp("Fetch.fulfillRequest", { requestId, responseCode: status, responseHeaders: [
@@ -165,7 +182,11 @@ try {
     { urlPattern: "http://mock.invalid/*", block: false }, { urlPattern: "*://*:*/*", block: true },
   ] });
   await cdp("Fetch.enable", { patterns: [{ urlPattern: "http://mock.invalid/*", requestStage: "Request" }] });
-  if (process.env.THEME_MATRIX_ONLY) {
+  if (process.env.TASK_INTERACTIONS_ONLY) {
+    await runTaskInteractions({ app, password, cdp, evaluate, wait, click, fill, viewport, screenshot, calls, settle: settleApi,
+      reset: (archived = false) => { tasks = baseline().map(task => ({ ...task, archivedAt: archived ? now : null })); },
+      removal, setCalendar: value => { calendar = value; } });
+  } else if (process.env.THEME_MATRIX_ONLY) {
     await runThemeMatrix({ app, password, cdp, evaluate, wait, click, fill, viewport, screenshot, calls, settle: settleApi });
   } else {
   const gate = await cdp("Page.addScriptToEvaluateOnNewDocument", { source: "localStorage.clear()" });

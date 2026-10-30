@@ -386,6 +386,10 @@ try {
     await click("Створити задачі");
     if (mode === "initial") {
       await closeResult("Створити задачі");
+      if (await evaluate("matchMedia('(max-width:760px)').matches")) {
+        await tap("document.querySelector('button[aria-label=\"Відкрити меню\"]')");
+        await waitFor("document.querySelector('#mobile-navigation')!==null");
+      }
       await tap("document.querySelector('nav a[href=\"/tasks\"]')");
     } else {
       await waitFor(bodyIncludes("Повторити точний запит"));
