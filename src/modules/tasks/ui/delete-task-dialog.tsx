@@ -82,7 +82,7 @@ export function DeleteTaskDialog({ title, opener, fallbackFocusRef, disabled, in
     <form onSubmit={submit} aria-busy={pending !== null}>
       <h2 className={styles.sectionTitle} id={`${id}-heading`}>Видалити задачу?</h2>
       <p className={`${styles.discardDescription} ${taskStyles.deleteTaskTitle}`} id={`${id}-title`}>{title}</p>
-      <p className={styles.discardDescription} id={`${id}-description`}>Задача буде позначена видаленою та зникне зі списків. Це м’яке видалення: дані фізично не видаляються. Відновлення через цей інтерфейс недоступне.</p>
+      <p className={styles.discardDescription} id={`${id}-description`}>Задача зникне зі списків. Відновлення через інтерфейс недоступне.</p>
       {error && <div className={styles.error} role="alert"><p>{error.message}</p>
         {error.uncertain && <button ref={checkButton} type="button" className={styles.secondaryButton} aria-disabled={pending !== null} onClick={() => void check()}>Перевірити стан задачі</button>}
       </div>}
